@@ -1,2 +1,5 @@
 # FYS-STK4155-Group
-FYS-STK41555 Anvendt dataanalyse og maskinlæring gruppe arbeid
+This repo contains the Projects done in FYS-STK4155 – Applied Data Analysis and Machine Learning by the group consisting og Pernille Xu Amundsen, Maria Andersen and Hannah Westgaard.
+
+
+
