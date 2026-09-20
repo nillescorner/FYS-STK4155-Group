@@ -1,0 +1,23 @@
+Hello! I(Hannah) am making this document to store useful commands for git :). 
+I had some help from GPT-5.6, but might as well organize everything somewhere. Feel free to add more!
+
+"mybranch" is just whatever branch you're working on
+
+-----> Pulling from one branch into main:
+
+#check that your own work is committed
+git status 
+
+git switch mybranch
+git fetch origin
+
+# Optional: inspect commits that main has and your branch lacks
+git log --oneline HEAD..origin/main
+
+git merge origin/main
+
+
+-----> Adding commit message to most recent commit
+
+git switch mybranch
+git commit --amend -m "[Add some message here]"
