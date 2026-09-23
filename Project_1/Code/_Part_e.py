@@ -83,7 +83,7 @@ plt.xscale("log")
 plt.grid()
 plt.show()
 
-"""Plot of convergence as a func of different gammas"""
+"""Plot of convergence as a func of different learning rate"""
 """OLS"""
 gammas = [0.1 * gamma_max_OLS, 0.5 * gamma_max_OLS, 0.99 * gamma_max_OLS, 1.001 * gamma_max_OLS]
 labels = [r"$0.1\, \gamma_{\max}$", r"$0.5\, \gamma_{\max}$", r"$0.99\, \gamma_{\max}$", r"$1.001\, \gamma_{\max}$"]
@@ -117,5 +117,47 @@ plt.legend()
 plt.yscale("log")
 #plt.xscale("log")
 plt.grid()
+plt.show()
+
+
+"""Study of different learning rates"""
+gamma_list = np.linspace(0.001, 1.2 * max(gamma_max_OLS, gamma_max_Ridge), 40)
+
+diffs_ols, diffs_ridge = [], []
+n_ols, n_ridge = [], []
+
+for gam in gamma_list:
+    hist_ols, n_steps_ols = gradient_descent(X, y, gam)
+    hist_Ridge, n_steps_Ridge = gradient_descent(X, y, gam, lam)
+
+    diffs_ols.append(np.linalg.norm(hist_ols[-1] - theta_cf_OLS))
+    diffs_ridge.append(np.linalg.norm(hist_Ridge[-1] - theta_cf_Ridge))
+    n_ols.append(n_steps_ols)
+    n_ridge.append(n_steps_Ridge)
+
+
+plt.plot(gamma_list, diffs_ols, label='OLS')
+plt.plot(gamma_list, diffs_ridge, label='Ridge')
+plt.axvline(gamma_max_OLS, color = 'C0', linestyle = "--", alpha = 0.7, label = f'OLS limit $\\gamma$ = {gamma_max_OLS:.3f}')
+plt.axvline(gamma_max_Ridge, color = 'C1', linestyle = "--", alpha = 0.7, label = f'Ridge limit $\\gamma$ = {gamma_max_Ridge:.3f}')
+plt.xlabel('Learning rate (γ)')
+plt.ylabel(r'$\|\theta_{gd} - \theta_{cf}\|$')
+plt.yscale('log')  
+plt.title('Final parameter error vs. learning rate')
+plt.legend()
+plt.grid(True, which='both', alpha=0.3)
+plt.show()
+
+
+plt.plot(gamma_list, n_ols, label='OLS')
+plt.plot(gamma_list, n_ridge, label='Ridge')
+plt.axvline(gamma_max_OLS, color = 'C0', linestyle = "--", alpha = 0.7, label = f'OLS limit $\\gamma$ = {gamma_max_OLS:.3f}')
+plt.axvline(gamma_max_Ridge, color = 'C1', linestyle = "--", alpha = 0.7, label = f'Ridge limit $\\gamma$ = {gamma_max_Ridge:.3f}')
+plt.xlabel('Learning rate (γ)')
+plt.ylabel('Iterations')
+plt.yscale('log')  
+plt.title('Iterations vs. learning rate')
+plt.legend()
+plt.grid(True, which='both', alpha=0.3)
 plt.show()
 
