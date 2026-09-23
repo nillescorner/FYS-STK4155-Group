@@ -41,7 +41,6 @@ ax.set(xticks=x_axis_20)
 plt.show()
 
 
-
 ns = [40,100,400]
 fig, ax = plt.subplots(1,3, figsize=(16, 4), sharey=True)
 ax.flatten()

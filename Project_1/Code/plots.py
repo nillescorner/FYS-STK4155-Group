@@ -25,7 +25,7 @@ def plot_regression(x, train_data, test_data=None, titles=None, params=None, yla
 
     if len(train_data) > 0 and np.isscalar(train_data[0]):
         train_data = [train_data]
-    if test_data is not None:
+    if test_data is not None and np.isscalar(test_data[0]):
         test_data = [test_data]
 
     ncols = ncols or len(train_data)

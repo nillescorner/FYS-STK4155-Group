@@ -5,11 +5,22 @@ from sklearn.model_selection import train_test_split
 
 
 def runge(x):
+    """
+    Runge function given in Project 1 description
+    """
     return 1.0 / (1.0 + 25.0 * x**2)
 
 
 def design_matrix(x, degree, intercept=True):
-    # polynomial features [1, x, x^2, ..., x^degree] (drop the 1 if intercept=False)
+    """
+    Creates design matrix X
+    Polynomial features [1, x, x^2, ..., x^degree] (drop the 1 if intercept=False)
+
+        Params:
+            x (any): input data
+            degree (int): degree of polynomial
+            intercept
+    """
     start = 0 if intercept else 1
     return np.vstack([x**p for p in range(start, degree + 1)]).T
 

@@ -1,20 +1,43 @@
-"""Functions needed to do an OLS Regression """
+"""
+This python file contains the functions to do the linear regression methods OLS and Ridge based on the analytical
+calculation of mean squared error and r2 score. 
+"""
 
 import numpy as np
-
 from general_functions import design_matrix, scaling
 
 
 def mse(y, y_tilde):
-    """Analytical mean squared error"""
+    """
+    Analytical calculation of mean squared error
+
+        Params:
+            y (NDArray): true/observed data
+            y_tilde(NDArray): predicted data
+    """
     return np.mean((y - y_tilde)**2)
 
 def r2(y,y_tilde):
-    """Analytical r2 score"""
+    """
+    Analytical calculation of the r2 score
+            Params:
+            y (NDArray): true/observed data
+            y_tilde(NDArray): predicted data
+    """
     return 1.0 - np.sum((y - y_tilde)**2) / np.sum((y - np.mean(y))**2)
 
 def regression(x,y, lamba=0.0, mindeg = 1, maxdeg=16, seed=2026):
-    """Regression analysis, set lamba = 0.0 for OLS, else it is Ridge """
+    """
+    Regression method for either OLS (set lamba=0.0) or Ridge (set lamba = non-zero)
+    Returns the mean squared error and r2 score for train and test data and the parameter theta
+    
+        Params:
+            x (ndAraay): input data
+            y (ndArray): input data
+            lamba (float):
+            mindeg(int), maxdeg(int): minimum and maximum degrees
+            seed (int): to recreate same randomized data
+    """
     mse_train, mse_test = [], []
     r2_train, r2_test = [], []
     thetas = []

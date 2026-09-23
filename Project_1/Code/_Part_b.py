@@ -4,7 +4,6 @@ from plots import plot_regression
 
 ######## PART B ##########
 """Analysis for different values of penalty parameter lambda. Thus fixed sigma = 0.1 and fixed n = 100 (i.e default make data)"""
-
 mindegree, maxdegree = 1, 16
 x_axis_15 = np.arange(mindegree, maxdegree)
 x,y = make_data()
