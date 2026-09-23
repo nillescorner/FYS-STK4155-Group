@@ -37,7 +37,7 @@ def bootstrap_resampling(x,y, mindegree=1, maxdegree=21, n_bootstraps=100, seed=
 def cross_validation(x, y, model='ols', lamba=0.0, mindegree=1, maxdegree=21, k=5, max_iter=10000, seed=2026):
     """Cross-validation resampling technique. Works for OLS, Ridge, Lasso"""
     kFold = KFold(n_splits=k, shuffle=True, random_state=seed)
-    mse, mse_fold = [], []
+    mse = []
 
     x = x.reshape(-1, 1)     #reshape x into a 2 dim column vector
     
@@ -55,7 +55,6 @@ def cross_validation(x, y, model='ols', lamba=0.0, mindegree=1, maxdegree=21, k=
          
         scores = -cross_val_score(pipe, x, y, cv=kFold,
                                      scoring='neg_mean_squared_error')
-        mse_fold.append(scores) 
         mse.append(np.mean(scores))
 
-    return mse, mse_fold
+    return mse
