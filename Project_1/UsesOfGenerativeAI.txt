@@ -2,3 +2,4 @@ Hey! Lets use this txt-file to keep track of what we're using generative AI for!
 
 1. Debugging code
 2. Clarifying consepts to better understanding
+3. Plotting function
