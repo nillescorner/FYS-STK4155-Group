@@ -10,7 +10,10 @@ from sklearn.utils import resample
 
 
 def bootstrap_resampling(x,y, mindegree=1, maxdegree=21, n_bootstraps=100, seed=2026):
-    """Bootstrap resampling function for simpler ordinary least squares based on p.65"""                                
+    """
+
+    Bootstrap resampling function for simpler ordinary least squares based on p.65
+    """                                
     x = x.reshape(-1,1)
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=seed)
 
@@ -35,7 +38,9 @@ def bootstrap_resampling(x,y, mindegree=1, maxdegree=21, n_bootstraps=100, seed=
 
 
 def cross_validation(x, y, model='ols', lamba=0.0, mindegree=1, maxdegree=21, k=5, max_iter=10000, seed=2026):
-    """Cross-validation resampling technique. Works for OLS, Ridge, Lasso"""
+    """
+    Cross-validation resampling technique. Works for OLS, Ridge, Lasso
+    """
     kFold = KFold(n_splits=k, shuffle=True, random_state=seed)
     mse = []
 
