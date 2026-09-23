@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-def plot_metric(x, train_data, test_data=None, titles=None, params=None, ylabel='',
+def plot_regression(x, train_data, test_data=None, titles=None, params=None, ylabel='',
                  yscale='linear', ncols=None, figsize=None, legend=True):
     """
     Plot one metric (MSE, R2, theta, ...) across panels — one panel per entry
@@ -22,6 +22,12 @@ def plot_metric(x, train_data, test_data=None, titles=None, params=None, ylabel=
             figsize (tuple or None): defaults based on ncols
             legend (bool): whether to show a legend (only makes sense if test_data given)
     """
+
+    if len(train_data) > 0 and np.isscalar(train_data[0]):
+        train_data = [train_data]
+    if test_data is not None:
+        test_data = [test_data]
+
     ncols = ncols or len(train_data)
     figsize = figsize or (12, 4)
 
