@@ -57,23 +57,3 @@ def lasso_coordinate_descent(X, y, lmbda, n_iter=1000, tol=1e-8):
             break
 
     return history, t + 1
-
-
-def cost_plot(history, X, y, lmbda = 0.0, penalty = "L2"):
-    n = X.shape[0]
-    costs = []
-
-    for theta in history:
-        mse = (1.0 / n) * np.sum((X @ theta - y) **2)
-
-        #penalty for ridge and lasso
-        if penalty == "L2":
-            reg = lmbda * np.sum(theta **2)
-        elif penalty =="L1":
-            reg = lmbda * np.sum(np.abs(theta))
-        else:
-            reg = 0.0
-
-        costs.append(mse + reg)
-
-    return np.array(costs)
