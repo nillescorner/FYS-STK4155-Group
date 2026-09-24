@@ -3,7 +3,7 @@
 import numpy as np
 
 from gradient_descent_methods import gradient
-from optimizer_methods import optimiser_step
+from optimizer_methods import optimiser
 
 
 def make_batches(n, batch_size, rng):
@@ -17,7 +17,7 @@ def step_length(t, t0, t1):
     return t0 / (t + t1)
 
 
-def sgd(X, y, method="plain", n_epochs=50, batch_size=5, gamma=0.1, schedule=None,lam=0.0, seed=2026, theta0=None, **kw):
+def sgd(X, y, method="plain", n_epochs=50, batch_size=5, gamma=0.1, schedule=None,lmbda=0.0, seed=2026, theta0=None, **kw):
     """Minibatch stochastic gradient descent, Eq. (4.34), with any optimiser of optimiser_step.
     schedule=(t0, t1) replaces the constant gamma by Eq. (4.40).  Returns the iterate after every epoch."""
     rng = np.random.default_rng(seed)
@@ -27,8 +27,8 @@ def sgd(X, y, method="plain", n_epochs=50, batch_size=5, gamma=0.1, schedule=Non
     for epoch in range(n_epochs):
         for batch in make_batches(n, batch_size, rng):
             t += 1
-            g = gradient(theta, X[batch], y[batch], lam)            # Eq. (4.33): the minibatch gradient
+            g = gradient(theta, X[batch], y[batch], lmbda)            # Eq. (4.33): the minibatch gradient
             g_t = gamma if schedule is None else step_length(t, *schedule)
-            theta, state = optimiser_step(method, theta, g, state, t, g_t, **kw)
+            theta, state = optimiser(method, theta, g, state, t, g_t, **kw)
         history.append(theta.copy())
     return np.array(history)
