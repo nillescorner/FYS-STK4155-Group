@@ -21,20 +21,23 @@ theta_cf = closed_form(X, y, lmbda = lam)
 H_OLS = 2.0 / len(y) * X.T @ X
 H_Ridge = 2.0 / len(y) * X.T @ X + 2 * lam * np.eye(X.shape[1])
 
+
+"""Studying varying learning rate"""
 gamma_max_OLS = 2.0 / np.linalg.eigvalsh(H_OLS).max()
 gamma_max_Ridge = 2.0 / np.linalg.eigvalsh(H_Ridge).max()
 
 gamma_list = np.linspace(0.001, 1.2 * max(gamma_max_OLS, gamma_max_Ridge), 40)
 
-distances = []
+distances_gamma = []
 for gamma in gamma_list:
     hist = sgd(X, y, n_epochs=100, batch_size=5, gamma=gamma)
     d = np.linalg.norm(hist - theta_cf, axis=1)
-    distances.append(d)
+    distances_gamma.append(d)
 
-final_distances = [d[-1] for d in distances]
+final_distances_gamma = [d[-1] for d in distances_gamma]
 
-plt.plot(gamma_list, final_distances, "o-", label = "sgd - cf")
+"""Plot of distance from closed form solution as function of learning rate"""
+plt.plot(gamma_list, final_distances_gamma, "o-", label = "sgd - cf")
 plt.axvline(gamma_max_OLS, color = 'C0', linestyle = "--", alpha = 0.7, label = f'OLS limit $\\gamma$ = {gamma_max_OLS:.3f}')
 plt.xlabel(r"$\gamma$")
 plt.ylabel(r"$\|\boldsymbol{\theta}_{sgd}-\hat{\boldsymbol{\theta}}_{cf}\|_2$")
@@ -43,6 +46,53 @@ plt.ylabel(r"$\|\boldsymbol{\theta}_{sgd}-\hat{\boldsymbol{\theta}}_{cf}\|_2$")
 plt.grid()
 plt.legend()
 plt.show()
+
+
+"""Studying varying batch sizes"""
+Ms = np.arange(1, 101)
+
+distances_M = []
+for M in Ms:
+    hist = sgd(X, y, n_epochs=100, batch_size=M, gamma=gamma_max_OLS)
+    d = np.linalg.norm(hist - theta_cf, axis=1)
+    distances_M.append(d)
+    
+final_distances_M = [d[-1] for d in distances_M]
+  
+"""Plot of distance from closed form solution as function of batch size"""
+plt.plot(Ms, final_distances_M, "o-", label = "sgd - cf")
+#plt.axvline(gamma_max_OLS, color = 'C0', linestyle = "--", alpha = 0.7, label = f'OLS limit $\\gamma$ = {gamma_max_OLS:.3f}')
+plt.xlabel("Batch size M")
+plt.ylabel(r"$\|\boldsymbol{\theta}_{sgd}-\hat{\boldsymbol{\theta}}_{cf}\|_2$")
+plt.yscale("log")
+#plt.xscale("log")
+plt.grid()
+plt.legend()
+plt.show()  
+
+
+"""Studying varying epoch number"""
+
+ns = np.arange(1, 101)
+
+distances_n = []
+for n in ns:
+    hist = sgd(X, y, n_epochs=n, batch_size=5, gamma=gamma_max_OLS)
+    d = np.linalg.norm(hist - theta_cf, axis=1)
+    distances_n.append(d)
+    
+final_distances_n = [d[-1] for d in distances_n]
+  
+"""Plot of distance from closed form solution as function of epochs"""
+plt.plot(ns, final_distances_n, "o-", label = "sgd - cf")
+#plt.axvline(gamma_max_OLS, color = 'C0', linestyle = "--", alpha = 0.7, label = f'OLS limit $\\gamma$ = {gamma_max_OLS:.3f}')
+plt.xlabel("Number of epochs n")
+plt.ylabel(r"$\|\boldsymbol{\theta}_{sgd}-\hat{\boldsymbol{\theta}}_{cf}\|_2$")
+plt.yscale("log")
+#plt.xscale("log")
+plt.grid()
+plt.legend()
+plt.show()  
 
 
 """Gradient descent for OLS and Ridge"""
@@ -69,7 +119,6 @@ cost_OLS = cost_history(history_OLS, X, y, penalty="None")
 cost_Ridge = cost_history(history_Ridge, X, y, lmbda=lam, penalty="L2")
 cost_Lasso_gd = cost_history(history_lasso_gd, X, y, lmbda=lam, penalty="L1")
 cost_Lasso_cd = cost_history(history_lasso_cd, X, y, lmbda=lam, penalty="L1")
-
 
 history_OLS_sgd = sgd(X, y, gamma = gamma_max_OLS)
 history_Ridge_sgd = sgd(X, y, gamma = gamma_max_Ridge, lmbda = lam)
