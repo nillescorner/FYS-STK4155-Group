@@ -4,6 +4,8 @@ import numpy as np
 def plot_regression(x, train_data, test_data=None, titles=None, params=None, ylabel='',
                  yscale='linear', ncols=None, figsize=None, legend=True):
     """
+    LLM Assisted: Claude made the entire function.
+
     Plot one metric (MSE, R2, theta, ...) across panels — one panel per entry
     in train_data. Just plots what you give it, nothing else.
 
@@ -29,7 +31,7 @@ def plot_regression(x, train_data, test_data=None, titles=None, params=None, yla
         test_data = [test_data]
 
     ncols = ncols or len(train_data)
-    figsize = figsize or (12, 4)
+    figsize = figsize or (10, 6)
 
     if isinstance(titles, str):
         fill = params if params is not None else range(len(train_data))
