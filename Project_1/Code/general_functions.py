@@ -1,4 +1,6 @@
-"""Generalized functions for program"""
+"""
+This python file contains the generalized functions used throughout this project.
+"""
 
 import numpy as np
 from sklearn.model_selection import train_test_split

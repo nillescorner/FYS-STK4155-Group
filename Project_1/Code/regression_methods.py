@@ -1,6 +1,6 @@
 """
 This python file contains the functions to do the linear regression methods OLS and Ridge based on the analytical
-calculation of mean squared error and r2 score. 
+calculation of mean squared error and r2 score and theta.
 """
 
 import numpy as np

@@ -1,3 +1,15 @@
+""""
+This python file contains the code used to derive the figure that shows MSE function for OLS analysis
+from parts a and c as a function of polynomial degree against the MSE from cross-validation for k = 5 and k = 10.
+It also derives the plot for Ridge regression that shows different polynomial degrees are affected by penalty parameter lambda 
+
+x and y arrays were generated using make_data function from general_functions.py, 
+Test MSE for OLS was derived using regression function from regression_methods.py,
+Test MSE from bootstrap resampling was derived using bootstrap_resampling function from resampling_methods.py
+Test MSE and Ridge regression as a function of both polynomial degree and penalty parameter (lambda) was derived from cross_validation function from resampling.py
+"""
+
+
 from general_functions import make_data, np
 from resampling_methods import bootstrap_resampling, cross_validation
 from regression_methods import regression
@@ -5,7 +17,7 @@ import matplotlib.pyplot as plt
 
 mindegree, maxdegree = 1, 21
 x_axis_20 = np.arange(mindegree, maxdegree)
-x,y = make_data()
+x,y = make_data()   #default data
 
 mse_cv_5_OLS = cross_validation(x,y, model='OLS',k=5)
 mse_cv_10_OLS = cross_validation(x,y, model='OLS', k=10)

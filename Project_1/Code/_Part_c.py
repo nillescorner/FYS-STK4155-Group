@@ -1,3 +1,13 @@
+""""
+This python file contains the code used to derive the figure to replicate Fig 2.11 Hastie, Tibshirani and Friedman, 
+and the figure showing bias-variance tradeoff of the Runge Function using simpler ordinary least squares. 
+It also shows the figure that compares bias-variance tradeoff of Runge function to test MSE from OLS regression from part a.
+
+x and y arrays were generated using make_data function from general_functions.py, 
+MSE was derived using regression function from regression_methods.py,
+Bias-variance tradeoff was performed using bootstrap_resampling function from resampling_methods.py
+"""
+
 from regression_methods import regression
 from general_functions import make_data,np
 from plots import plot_regression, plt
@@ -6,7 +16,7 @@ from resampling_methods import bootstrap_resampling
 
 x,y = make_data()   #default data
 
-mindegree, maxdegree = 1, 21
+mindegree, maxdegree = 1, 21    
 mse_train_fig, mse_test_fig, *_ = regression(x,y, maxdeg=maxdegree)
 x_axis_20 = np.arange(mindegree,maxdegree)
 
