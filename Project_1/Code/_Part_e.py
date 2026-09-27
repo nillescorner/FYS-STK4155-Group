@@ -23,8 +23,8 @@ gradient_Ridge = gradient(theta0, X, y, lam)
 """Automatic differentiation"""
 gradient_jax = grad(cost)
 
-gradient_OLS_jax = gradient_jax(theta0, X, y)
-gradient_Ridge_jax = gradient_jax(theta0, X, y, lmbda = lam)
+gradient_OLS_jax = gradient_jax(theta0, X, y, penalty = "None")
+gradient_Ridge_jax = gradient_jax(theta0, X, y, lmbda = lam, penalty = "L2")
 
 """Difference between analytical and automatic differentiation"""
 print(f'OLS:    |AD - analytical| = {np.max(np.abs(gradient_OLS_jax - gradient_OLS)):.2e}')
@@ -45,8 +45,8 @@ theta_OLS = history_OLS[-1]
 theta_Ridge = history_Ridge[-1]
 
 """Cost of OLS and Ridge, for each theta value"""
-cost_OLS = np.array([cost(theta_i, X, y) for theta_i in history_OLS])
-cost_Ridge = np.array([cost(theta_i, X, y, lmbda= lam) for theta_i in history_Ridge])
+cost_OLS = cost_history(history_OLS, X, y, penalty="None")
+cost_Ridge = cost_history(history_Ridge, X, y, lmbda=lam, penalty="L2")
 
 """Plot of cost vs iteration"""
 plt.plot(cost_OLS, label = "OLS")
@@ -83,42 +83,6 @@ plt.xscale("log")
 plt.grid()
 plt.show()
 
-"""Plot of convergence as a func of different learning rate"""
-"""OLS"""
-gammas = [0.1 * gamma_max_OLS, 0.5 * gamma_max_OLS, 0.99 * gamma_max_OLS, 1.001 * gamma_max_OLS]
-labels = [r"$0.1\, \gamma_{\max}$", r"$0.5\, \gamma_{\max}$", r"$0.99\, \gamma_{\max}$", r"$1.001\, \gamma_{\max}$"]
-
-for gamma, label in zip(gammas, labels):
-    hist, n_ = gradient_descent(X, y, gamma)
-    dist_gam_OLS = np.linalg.norm(hist - theta_cf_OLS, axis = 1)
-
-    plt.plot(dist_gam_OLS, label = label, ls = "--" if gamma > gamma_max_OLS else "-")
-
-plt.ylabel(r"$\|\boldsymbol{\theta}_{gd}-\hat{\boldsymbol{\theta}}_{cf}\|_2$")
-plt.title("Convergense of gradient descent: OLS")
-plt.ylim(1e-8, 1e4)
-plt.legend()
-plt.yscale("log")
-#plt.xscale("log")
-plt.grid()
-plt.show()
-
-"""Ridge"""
-for gamma, label in zip(gammas, labels):
-    hist, n_ = gradient_descent(X, y, gamma, lam)
-    dist_gam_Ridge = np.linalg.norm(hist - theta_cf_Ridge, axis = 1)
-
-    plt.plot(dist_gam_Ridge, label = label, ls = "--" if gamma > gamma_max_OLS else "-")
-
-plt.ylabel(r"$\|\boldsymbol{\theta}_{gd}-\hat{\boldsymbol{\theta}}_{cf}\|_2$")
-plt.title("Convergense of gradient descent: Ridge")
-plt.ylim(1e-8, 1e4)
-plt.legend()
-plt.yscale("log")
-#plt.xscale("log")
-plt.grid()
-plt.show()
-
 
 """Study of different learning rates"""
 gamma_list = np.linspace(0.001, 1.2 * max(gamma_max_OLS, gamma_max_Ridge), 40)
@@ -135,6 +99,11 @@ for gam in gamma_list:
     n_ols.append(n_steps_ols)
     n_ridge.append(n_steps_Ridge)
 
+n_min_OLS = np.argmin(n_ols)
+n_min_Ridge = np.argmin(n_ridge)
+
+best_gamma_OLS = gamma_list[n_min_OLS]
+best_gamma_Ridge = gamma_list[n_min_Ridge]
 
 plt.plot(gamma_list, diffs_ols, label='OLS')
 plt.plot(gamma_list, diffs_ridge, label='Ridge')
@@ -153,6 +122,8 @@ plt.plot(gamma_list, n_ols, label='OLS')
 plt.plot(gamma_list, n_ridge, label='Ridge')
 plt.axvline(gamma_max_OLS, color = 'C0', linestyle = "--", alpha = 0.7, label = f'OLS limit $\\gamma$ = {gamma_max_OLS:.3f}')
 plt.axvline(gamma_max_Ridge, color = 'C1', linestyle = "--", alpha = 0.7, label = f'Ridge limit $\\gamma$ = {gamma_max_Ridge:.3f}')
+plt.axvline(best_gamma_OLS, color = 'grey', linestyle = "--", alpha = 0.7, label = f'OLS min iteration $\\gamma$ = {best_gamma_OLS:.3f}')
+plt.axvline(best_gamma_Ridge, color = 'grey', linestyle = "--", alpha = 0.7, label = f'Ridge min iterations $\\gamma$ = {best_gamma_Ridge:.3f}')
 plt.xlabel('Learning rate (γ)')
 plt.ylabel('Iterations')
 plt.yscale('log')  
@@ -161,3 +132,43 @@ plt.legend()
 plt.grid(True, which='both', alpha=0.3)
 plt.show()
 
+
+"""Plot of convergence as a func of different learning rate"""
+"""OLS"""
+gammas_OLS = [0.1 * gamma_max_OLS, 0.5 * gamma_max_OLS, 1.001 * gamma_max_OLS, best_gamma_OLS]
+labels = [r"$0.1\, \gamma_{\max}$", r"$0.5\, \gamma_{\max}$", r"$1.001\, \gamma_{\max}$", r"$\gamma_{best}$"]
+
+for gamma, label in zip(gammas_OLS, labels):
+    hist, n_ = gradient_descent(X, y, gamma)
+    dist_gam_OLS = np.linalg.norm(hist - theta_cf_OLS, axis = 1)
+
+    plt.plot(dist_gam_OLS, label = label, ls = "--" if gamma > gamma_max_OLS else "-")
+
+plt.ylabel(r"$\|\boldsymbol{\theta}_{gd}-\hat{\boldsymbol{\theta}}_{cf}\|_2$")
+plt.xlabel("Iterations")
+plt.title("Convergense of gradient descent: OLS")
+plt.ylim(1e-8, 1e4)
+plt.legend()
+plt.yscale("log")
+#plt.xscale("log")
+plt.grid()
+plt.show()
+
+"""Ridge"""
+gammas_Ridge = [0.1 * gamma_max_Ridge, 0.5 * gamma_max_Ridge, 1.001 * gamma_max_Ridge, best_gamma_Ridge]
+
+for gamma, label in zip(gammas_Ridge, labels):
+    hist, n_ = gradient_descent(X, y, gamma, lam)
+    dist_gam_Ridge = np.linalg.norm(hist - theta_cf_Ridge, axis = 1)
+
+    plt.plot(dist_gam_Ridge, label = label, ls = "--" if gamma > gamma_max_Ridge else "-")
+
+plt.ylabel(r"$\|\boldsymbol{\theta}_{gd}-\hat{\boldsymbol{\theta}}_{cf}\|_2$")
+plt.xlabel("Iterations")
+plt.title("Convergense of gradient descent: Ridge")
+plt.ylim(1e-8, 1e4)
+plt.legend()
+plt.yscale("log")
+#plt.xscale("log")
+plt.grid()
+plt.show()

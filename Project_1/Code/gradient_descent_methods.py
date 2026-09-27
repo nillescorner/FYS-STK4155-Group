@@ -11,16 +11,35 @@ def closed_form(X, y, lmbda=0.0):
     n, p = X.shape
     return np.linalg.solve(X.T @ X + n * lmbda * np.eye(p), X.T @ y)
 
-def cost(theta, X, y, lmbda=0.0):
+def cost(theta, X, y, lmbda=0.0, penalty = "L2"):
     """OLS cost when lmbda=0, otherwise Ridge cost"""
-    return jnp.mean((y - X @ theta)**2) + lmbda * jnp.sum(theta**2)
+    n, p = X.shape
+
+    mse = (1.0 / n) * np.sum((X @ theta - y) **2)
+
+    #penalty for ridge
+    if penalty == "L2": 
+        reg = lmbda * np.sum(theta ** 2)
+
+    #penalty for lasso
+    elif penalty == "L1":
+        reg = lmbda * np.sum(np.abs(theta))
+
+    #OLS
+    else: 
+        reg = 0.0
+
+    return mse + reg
+
+def cost_history(history, X, y, lmbda=0.0, penalty="L2"):
+    """Cost at every theta in a gradient descent history. Returns an array."""
+    return np.array([cost(theta, X, y, lmbda, penalty) for theta in history])
 
 
 def gradient(theta, X, y, lmbda=0.0):
     """Eqs. (4.13) and (4.17): the gradient of (1/n)||X theta - y||^2 + lambda theta^T theta."""
     n = len(y)
     return (2.0 / n) * X.T @ (X @ theta - y) + 2.0 * lmbda * theta
-
 
 def gradient_descent(X, y, gamma, lmbda=0.0, num_iters=10000, tol=1e-8, theta0=None):
     """Plain gradient descent, Eq. (4.15). Returns the iterates and the number of steps."""

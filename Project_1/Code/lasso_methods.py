@@ -40,40 +40,20 @@ def lasso_coordinate_descent(X, y, lmbda, n_iter=1000, tol=1e-8):
     n, p = X.shape
     theta = np.zeros(p)
     col_norms = np.sum(X**2, axis=0)
-    r = y - X @ theta                              # full residual
+    r = y - X @ theta                              #full residual
     history = [theta.copy()]
 
     for t in range(n_iter):
         theta_old = theta.copy()
         for j in range(p):
-            # partial residual: add back the current contribution of column j
+            #partial residual: add back the current contribution of column j
             r += X[:, j] * theta[j]
             rho = X[:, j] @ r
             theta[j] = soft_threshold(rho, lmbda * n / 2.0) / col_norms[j]
-            r -= X[:, j] * theta[j]                # remove the updated one
+            r -= X[:, j] * theta[j]                #remove the updated one
 
         history.append(theta.copy())
         if np.max(np.abs(theta - theta_old)) < tol:
             break
 
     return history, t + 1
-
-
-def cost_plot(history, X, y, lmbda = 0.0, penalty = "L2"):
-    n = X.shape[0]
-    costs = []
-
-    for theta in history:
-        mse = (1.0 / n) * np.sum((X @ theta - y) **2)
-
-        #penalty for ridge and lasso
-        if penalty == "L2":
-            reg = lmbda * np.sum(theta **2)
-        elif penalty =="L1":
-            reg = lmbda * np.sum(np.abs(theta))
-        else:
-            reg = 0.0
-
-        costs.append(mse + reg)
-
-    return np.array(costs)
