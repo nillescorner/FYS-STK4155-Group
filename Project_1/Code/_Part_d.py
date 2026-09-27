@@ -24,6 +24,7 @@ ax.set_ylabel('MSE')
 ax.set_xticks(x_axis_20)
 ax.set_yscale('log')
 ax.legend()
+plt.savefig(fname="figs/Part_d_MSE_comparison.pdf")
 plt.show()
 
 
@@ -53,4 +54,5 @@ ax.set_xlabel(r'$\lambda$')
 ax.set_ylabel('MSE (CV)')
 ax.set_title('Ridge CV-MSE vs lambda for different polynomial degrees')
 ax.legend(ncol=2, fontsize=8)
+plt.savefig(fname="figs/Part_d_RidgeMSE_vsLambda.pdf")
 plt.show()

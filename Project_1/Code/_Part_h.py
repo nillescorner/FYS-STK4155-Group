@@ -45,8 +45,9 @@ plt.ylabel(r"$\|\boldsymbol{\theta}_{sgd}-\hat{\boldsymbol{\theta}}_{cf}\|_2$")
 #plt.xscale("log")
 plt.grid()
 plt.legend()
-plt.show()
-
+plt.savefig(fname="figs/Part_h_ClosedFormDistanceVsLearningRate.pdf")
+# plt.show()
+plt.close()
 
 """Studying varying batch sizes"""
 Ms = np.arange(1, 101)
@@ -68,8 +69,9 @@ plt.yscale("log")
 #plt.xscale("log")
 plt.grid()
 plt.legend()
-plt.show()  
-
+plt.savefig(fname="figs/Part_h_ClosedFormDistanceVsBatches.pdf")
+# plt.show()  
+plt.close()
 
 """Studying varying epoch number"""
 
@@ -92,7 +94,9 @@ plt.yscale("log")
 #plt.xscale("log")
 plt.grid()
 plt.legend()
-plt.show()  
+plt.savefig(fname="figs/Part_h_ClosedFormDistanceVsEpochs.pdf")
+# plt.show()  
+plt.close()
 
 
 """Gradient descent for OLS and Ridge"""
@@ -140,7 +144,10 @@ plt.xscale("log")
 #plt.yscale("log")
 plt.grid()
 plt.legend()
-plt.show()
+plt.savefig(fname="figs/Part_h_CostVsIteration_GradientDescentAndCoordinateDescent.pdf" )
+
+# plt.show()
+plt.close()
 
 plt.plot(cost_OLS_sgd, label = "OLS sgd")
 plt.plot(cost_Ridge_sgd, label = "Ridge sgd")
@@ -151,4 +158,6 @@ plt.xscale("log")
 plt.yscale("log")
 plt.grid()
 plt.legend()
-plt.show()
+plt.savefig(fname="figs/Part_h_CostVsIteration_StochasticDescent.pdf" )
+# plt.show()
+plt.close()
