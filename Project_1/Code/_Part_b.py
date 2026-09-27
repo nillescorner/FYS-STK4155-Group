@@ -1,12 +1,21 @@
+""""
+This python file contains the code used to derive the figures for mean squared error, r2 score
+and theta as a functin of the polynomial degree for linear regression method: Ridge
+This has been done for different penalty parameters (lambda), different data points n and different noise (sigma).
+
+x and y arrays were generated using make_data function from general_functions.py, 
+MSE, R2 score and Theta were derived using regression function from regression_methods.py,
+The plots were generated using plot_regression function from plots.py
+"""
+
 from general_functions import make_data, np
 from regression_methods import regression
 from plots import plot_regression
 
-######## PART B ##########
 """Analysis for different values of penalty parameter lambda. Thus fixed sigma = 0.1 and fixed n = 100 (i.e default make data)"""
 mindegree, maxdegree = 1, 16
 x_axis_15 = np.arange(mindegree, maxdegree)
-x,y = make_data()
+x,y = make_data()   #default arrays
 
 lambas = [0.01, 0.5, 1.0]
 
@@ -28,6 +37,8 @@ plot_regression(x_axis_15, r2_train_R, r2_test_R, titles=r'R2 score for $\lambda
 plot_regression(x_axis_15, theta_norm_R, titles=r'$\theta$ for $\lambda$ = {}', params=lambas, ylabel=r'$\theta$', yscale='linear')
 
 
+##### When analyzing for dependence on number of data points and for noise we set lambda as a constant at 0.1 #####
+
 """Analysis of Ridge regression dependence of the number of on datapoints n"""
 ns = [100, 400, 4000]
 
@@ -37,7 +48,7 @@ r2_train_n, r2_test_n = [], []
 theta_n = []
 
 for n in ns:
-    x_n, y_n = make_data(n=n)
+    x_n, y_n = make_data(n=n) #generate arrays for different number of data points
     mse_train, mse_test, r2_train, r2_test, thetas = regression(x_n, y_n, lamba=lamba)
 
     mse_train_n.append(mse_train);   mse_test_n.append(mse_test)
@@ -58,7 +69,7 @@ r2_train_s, r2_test_s = [], []
 theta_norm_s = []
 
 for sigma in sigmas:
-    x_s, y_s = make_data(noise=sigma)
+    x_s, y_s = make_data(noise=sigma)   #generate arrays for different noise values
     mse_train, mse_test, r2_train, r2_test, thetas = regression(x_s,y_s, lamba=lamba)
 
     mse_train_s.append(mse_train);  mse_test_s.append(mse_test)

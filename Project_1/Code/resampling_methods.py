@@ -1,4 +1,6 @@
-"""Resampling techniques: bootstrap and cross-validation"""
+"""
+This python file contains the functions necessary to do the resampling techniques bootstrap and cross-validation
+"""
 
 import numpy as np
 
