@@ -7,12 +7,37 @@ import jax.numpy as jnp
 jax.config.update("jax_enable_x64", True)   # 64-bit floats, as in numpy
 
 def closed_form(X, y, lmbda=0.0):
-    """Eq. (3.44) with the 1/n convention of Eq. (3.95): (X^T X + n lambda I)^-1 X^T y."""
+    """
+    Calculates the closed form solution of a given data set.
+    Eq. (3.44) with the 1/n convention of Eq. (3.95): (X^T X + n lambda I)^-1 X^T y.
+
+        Params: 
+        X (NDArray): Design matrix X
+        y (NDArray): y
+        lmbda (int): penalty lambda, set to 0.0 for OLS, choose a different value for Ridge or Lasso
+
+        Returns:
+        Array: Theta value
+
+    """
     n, p = X.shape
     return np.linalg.solve(X.T @ X + n * lmbda * np.eye(p), X.T @ y)
 
 def cost(theta, X, y, lmbda=0.0, penalty = "L2"):
-    """OLS cost when lmbda=0, otherwise Ridge cost"""
+    """
+    Calculates the cost function for OLS, Ridge and Lasso regression
+
+        Params:
+        theta (NDArray): optimal parameter theta
+        X (NDArray): Design matrix X
+        y (NDArray): y
+        lmbda (int): penalty lambda, set to 0.0 for OLS, choose a different value for Ridge or Lasso
+        penalty (str): the type of penalty, OLS = "None", Ridge = "L2", Lasso = "L1"
+
+        Returns:
+        Float: value of the cost function
+
+    """
     n, p = X.shape
 
     mse = (1.0 / n) * np.sum((X @ theta - y) **2)
@@ -32,7 +57,19 @@ def cost(theta, X, y, lmbda=0.0, penalty = "L2"):
     return mse + reg
 
 def cost_history(history, X, y, lmbda=0.0, penalty="L2"):
-    """Cost at every theta in a gradient descent history. Returns an array."""
+    """
+    Saves the cost functon values in a list.
+
+        Params:
+        theta (NDArray): optimal parameter theta
+        X (NDArray): Design matrix X
+        y (NDArray): y
+        lmbda (int): penalty lambda, set to 0.0 for OLS, choose a different value for Ridge or Lasso
+        penalty (str): the type of penalty, OLS = "None", Ridge = "L2", Lasso = "L1"
+
+        Returns:
+        Array: list of values of cost function at every theta value in a gradient descent history
+    """
     return np.array([cost(theta, X, y, lmbda, penalty) for theta in history])
 
 
