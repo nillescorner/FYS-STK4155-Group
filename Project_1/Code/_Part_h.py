@@ -42,6 +42,7 @@ plt.yscale("log")
 plt.legend()
 plt.grid()
 plt.tight_layout()
+#plt.savefig("Part_h_cost_learningrates.png")
 plt.show()
 
 
@@ -64,28 +65,8 @@ plt.yscale("log")
 plt.legend()
 plt.grid()
 plt.tight_layout()
+#plt.savefig("Part_h_cost_batchsize.png")
 plt.show()
-
-"""Studying varying epoch number"""
-epochs = [1, 10, 100]
-labels_n = [f"$n = {epochs[0]}$", f"$n = {epochs[1]}$", f"$n = {epochs[2]}$"]
-
-for n_ep, label in zip(epochs, labels_n):
-    hist, n_s = sgd(X, y, n_epochs=n_ep, batch_size=5, gamma=gamma_max_OLS)
-    cost_n = cost_history(hist, X, y, penalty = "None")
-        
-    plt.plot(cost_n, label = label)
- 
-"""Plot of cost as for different number of epochs"""
-plt.title("Cost function for different number of epochs")
-plt.ylabel("Cost")
-plt.xlabel("Iterations")
-plt.xscale("log")
-plt.yscale("log")
-plt.legend()
-plt.grid()
-plt.tight_layout()
-plt.show() 
 
 
 """Gradient descent for OLS and Ridge"""
@@ -134,4 +115,5 @@ plt.yscale("log")
 plt.grid()
 plt.tight_layout()
 plt.legend()
+#plt.savefig("Part_h_sgd_OLS_Ridge.png")
 plt.show()
