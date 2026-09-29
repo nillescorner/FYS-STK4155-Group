@@ -71,6 +71,7 @@ plt.xscale("log")
 #plt.yscale("log")
 plt.grid()
 plt.legend()
+#plt.savefig("Part_e_costfunc_OLS_Ridge.png")
 plt.show()
 
 
@@ -94,6 +95,7 @@ plt.legend()
 #plt.yscale("log")
 plt.xscale("log")
 plt.grid()
+#plt.savefig("Part_e_convergence_gd_cf.png")
 plt.show()
 
 
@@ -128,6 +130,7 @@ plt.yscale('log')
 plt.title('Final parameter error vs. learning rate')
 plt.legend()
 plt.grid(True, which='both', alpha=0.3)
+#plt.savefig("Part_e_error_learningrate.png")
 plt.show()
 
 
@@ -143,6 +146,7 @@ plt.yscale('log')
 plt.title('Iterations vs. learning rate')
 plt.legend()
 plt.grid(True, which='both', alpha=0.3)
+#plt.savefig("Part_e_iteration_learningrate.png")
 plt.show()
 
 
@@ -165,6 +169,7 @@ plt.legend()
 plt.yscale("log")
 #plt.xscale("log")
 plt.grid()
+#plt.savefig("Part_e_convergence_learningrate_OLS.png")
 plt.show()
 
 """Ridge"""
@@ -184,4 +189,5 @@ plt.legend()
 plt.yscale("log")
 #plt.xscale("log")
 plt.grid()
+#plt.savefig("Part_e_convergence_learningrate_Ridge.png")
 plt.show()
