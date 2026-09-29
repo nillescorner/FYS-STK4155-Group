@@ -28,7 +28,7 @@ gammas_OLS = [0.01 * gamma_max_OLS, 0.1 * gamma_max_OLS, 0.5 * gamma_max_OLS]
 labels_gamma = [r"$0.01\, \gamma_{\max}$", r"$0.1\, \gamma_{\max}$", r"$0.5\, \gamma_{\max}$"]
 
 for gamma, label in zip(gammas_OLS, labels_gamma):
-    hist, n_gamma = sgd(X, y, n_epochs=100, batch_size=5, gamma=gamma)
+    hist, n_gamma = sgd(X, y, n_epochs=100, batch_size=5, gamma=gamma, lmbda = lam)
     cost_gamma = cost_history(hist, X, y, penalty = "None")
 
     plt.plot(cost_gamma, label = label)
