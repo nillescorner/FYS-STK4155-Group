@@ -1,4 +1,4 @@
-""""
+"""
 This python file contains the code used to derive the figures for mean squared error, r2 score
 and theta as a functin of the polynomial degree for linear regression method: Ordinary Least Squares (OLS)
 This has been done for different data points n and different noise (sigma).
