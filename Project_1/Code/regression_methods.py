@@ -14,15 +14,23 @@ def mse(y, y_tilde):
         Params:
             y (NDArray): true/observed data
             y_tilde(NDArray): predicted data
+        
+        Returns:
+            mean squared error (any)
     """
     return np.mean((y - y_tilde)**2)
 
 def r2(y,y_tilde):
     """
     Analytical calculation of the r2 score
+
             Params:
             y (NDArray): true/observed data
             y_tilde(NDArray): predicted data
+
+            Returns:
+            r2 score (any)
+
     """
     return 1.0 - np.sum((y - y_tilde)**2) / np.sum((y - np.mean(y))**2)
 
@@ -32,11 +40,18 @@ def regression(x,y, lamba=0.0, mindeg = 1, maxdeg=16, seed=2026):
     Returns the mean squared error and r2 score for train and test data and the parameter theta
     
         Params:
-            x (ndAraay): input data
-            y (ndArray): input data
+            x (NDAraay): input data
+            y (NDArray): input data
             lamba (float):
             mindeg(int), maxdeg(int): minimum and maximum degrees
             seed (int): to recreate same randomized data
+
+        Returns:
+            mse_train (list): mean squared error for training data for polynomials
+            mse_test (list): mean squared error for test data for polynomials
+            r2_train (list): r2 score for train data for polynomials
+            r2_test (list): r2 score for test data for polynomials
+            thetas (list): thetas for polynomials
     """
     mse_train, mse_test = [], []
     r2_train, r2_test = [], []
