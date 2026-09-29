@@ -1,3 +1,15 @@
+
+"""
+The file conatins the code used to derive the plots of the cost functions for OLS and Ridge regression,
+and has been compared to the closed form solutions of the different methods. The difference between 
+the gradient descent method and closed form solution has been plotted as a function of the learning rate.
+The convergence of the different methods for different learning rates is also plotted.
+
+The gradients were found using the gradient function, and the gradient descent found from the gradient_descent
+function from gradient_descent_methods.py. The closed form solution is found using the closed_form function
+also from gradient_descent_methods.py.
+
+"""
 from general_functions import *
 from regression_methods import *
 from gradient_descent_methods import *
@@ -19,6 +31,7 @@ theta0 = np.zeros(X.shape[1])
 """Analytical for OLS and ridge"""
 gradient_OLS = gradient(theta0, X, y)
 gradient_Ridge = gradient(theta0, X, y, lam)
+
 
 """Automatic differentiation"""
 gradient_jax = grad(cost)
