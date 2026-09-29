@@ -12,12 +12,12 @@ def closed_form(X, y, lmbda=0.0):
     Eq. (3.44) with the 1/n convention of Eq. (3.95): (X^T X + n lambda I)^-1 X^T y.
 
         Params: 
-        X (NDArray): Design matrix X
-        y (NDArray): y
+        X (NDArray, shape: (n, p)): Design matrix X
+        y (NDArray, shape: (n, )): y
         lmbda (float): penalty lambda, set to 0.0 for OLS, choose a different value for Ridge or Lasso
 
         Returns:
-        Array: Theta values
+        theta (NDArray, shape: (p, )): theta values
 
     """
     n, p = X.shape
@@ -29,13 +29,13 @@ def cost(theta, X, y, lmbda=0.0, penalty = "L2"):
 
         Params:
         theta (NDArray, shape: (p, )): parameter vector where we will evaluate the cost
-        X (NDArray): Design matrix X
-        y (NDArray): y
+        X (NDArray, shape: (n, p)): Design matrix X
+        y (NDArray, shape: (n, )): y
         lmbda (float): penalty lambda, set to 0.0 for OLS, choose a different value for Ridge or Lasso
         penalty (str): the type of penalty, OLS = "None", Ridge = "L2", Lasso = "L1"
 
         Returns:
-        Float: value of the cost function
+        cost (Float): value of the cost function
 
     """
     n, p = X.shape
@@ -61,14 +61,14 @@ def cost_history(history, X, y, lmbda=0.0, penalty="L2"):
     Saves the cost functon values in a list.
 
         Params:
-        history (NDArray): sequence of theta values
-        X (NDArray): Design matrix X
-        y (NDArray): y
+        history (NDArray, shape:(n_steps, p)): sequence of theta values
+        X (NDArray, shape: (n, p)): Design matrix X
+        y (NDArray, shape: (n, )): y
         lmbda (float): penalty lambda, set to 0.0 for OLS, choose a different value for Ridge or Lasso
         penalty (str): the type of penalty, OLS = "None", Ridge = "L2", Lasso = "L1"
 
         Returns:
-        Array: list of values of cost function at every theta value in a gradient descent history
+        cost history (NDArray, shape:(n_steps, )): list of values of cost function at every theta value in a gradient descent history
     """
     
     return np.array([cost(theta, X, y, lmbda, penalty) for theta in history])
@@ -79,13 +79,13 @@ def gradient(theta, X, y, lmbda=0.0):
     Eqs. (4.13) and (4.17): the gradient of (1/n)||X theta - y||^2 + lambda theta^T theta.
 
         Params:
-        theta (NDArray): optimal parameter theta
-        X (NDArray): Design matrix X
-        y (NDArray): y
+        theta (NDArray, shape: (p, )): parameter vector where we will evaluate the gradient
+        X (NDArray, shape: (n, p)): Design matrix X
+        y (NDArray, shape: (n, )): y
         lmbda (float): penalty lambda, set to 0.0 for OLS, choose a different value for Ridge or Lasso
 
         Returns:
-        Array: gradient values
+        gradient (NDArray, shape: (p, )): gradient values
     """
 
     n = len(y)
@@ -96,16 +96,16 @@ def gradient_descent(X, y, gamma, lmbda=0.0, num_iters=10000, tol=1e-8, theta0=N
     Plain gradient descent, Eq. (4.15). Returns the iterates and the number of steps.
     
         Params:
-        X (NDArray): Design matrix X
-        y (NDArray): y
+        X (NDArray, shape: (n, p)): Design matrix X
+        y (NDArray, shape: (n, )): y
         gamma (float): learning rate gamma
         lmbda (flaot): penalty lambda, set to 0.0 for OLS, choose a different value for Ridge or Lasso
         num_iters (int): number of iterations, default: 10000
         tol (float): tolerence value, code stops if the gradient is under the tolerence, default: 1e-8
-        theta0 (NDArray): starting value of theta value, optional, default: None
+        theta0 (NDArray, shape: (p, )): starting value of theta value, optional, default: None
 
         Returns: 
-        history (NDArray, shape: (n + 1, p)): the theta value at every step
+        history (NDArray, shape: (n_steps + 1, p)): the theta value at every step
         n_steps (int): number of iterations taken
 
     """
