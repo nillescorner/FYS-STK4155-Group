@@ -91,7 +91,7 @@ def gradient(theta, X, y, lmbda=0.0):
     n = len(y)
     return (2.0 / n) * X.T @ (X @ theta - y) + 2.0 * lmbda * theta
 
-def gradient_descent(X, y, gamma, lmbda=0.0, num_iters=10000, tol=1e-8, theta0=None):
+def gradient_descent(X, y, gamma = 0.1, lmbda=0.0, num_iters=10000, tol=1e-8, theta0=None):
     """
     Plain gradient descent, Eq. (4.15). Returns the iterates and the number of steps.
     

@@ -71,4 +71,5 @@ def sgd(X, y, method="plain", n_epochs=50, batch_size=5, gamma=0.1, schedule=Non
             g_t = gamma if schedule is None else step_length(t, *schedule)
             theta, state = optimiser(method, theta, g, state, t, g_t, **kw)
         history.append(theta.copy())
-    return np.array(history)
+
+    return np.array(history), t + 1
