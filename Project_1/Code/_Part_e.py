@@ -40,8 +40,8 @@ gradient_OLS_jax = gradient_jax(theta0, X, y, penalty = "None")
 gradient_Ridge_jax = gradient_jax(theta0, X, y, lmbda = lam, penalty = "L2")
 
 """Difference between analytical and automatic differentiation"""
-print(f'OLS:    |AD - analytical| = {np.max(np.abs(gradient_OLS_jax - gradient_OLS)):.2e}')
-print(f'Ridge:  |AD - analytical| = {np.max(np.abs(gradient_Ridge_jax - gradient_Ridge)):.2e}')
+print(f'OLS:    |AD - analytical| = {np.max(np.abs(gradient_OLS_jax - gradient_OLS)):.4e}')
+print(f'Ridge:  |AD - analytical| = {np.max(np.abs(gradient_Ridge_jax - gradient_Ridge)):.4e}')
 
 
 """Gradient descent for OLS and Ridge"""
@@ -74,7 +74,6 @@ plt.legend()
 #plt.savefig("Part_e_costfunc_OLS_Ridge.png")
 plt.show()
 
-
 """Closed form to compare to"""
 theta_cf_OLS = closed_form(X, y)
 theta_cf_Ridge = closed_form(X, y, lmbda = lam)
@@ -92,7 +91,7 @@ plt.xlabel("Iteration")
 plt.ylabel(r"$\|\boldsymbol{\theta}_{gd}-\hat{\boldsymbol{\theta}}_{cf}\|_2$")
 plt.title("Convergense of gradient descent against closed form")
 plt.legend()
-#plt.yscale("log")
+plt.yscale("log")
 plt.xscale("log")
 plt.grid()
 #plt.savefig("Part_e_convergence_gd_cf.png")
