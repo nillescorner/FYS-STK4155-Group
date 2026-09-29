@@ -3,7 +3,6 @@ This python file contains the function(s?) used throughout this project to plot 
 
 """
 
-
 import matplotlib.pyplot as plt
 import numpy as np
 
