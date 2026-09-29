@@ -4,7 +4,7 @@ import numpy as np
 
 from sklearn.linear_model import LinearRegression, Ridge, Lasso
 from sklearn.preprocessing import PolynomialFeatures, StandardScaler
-from sklearn.model_selection import train_test_split, KFold, cross_val_score
+from sklearn.model_selection import train_test_split, KFold, cross_val_score, cross_val_predict
 from sklearn.pipeline import make_pipeline
 from sklearn.utils import resample
 
@@ -37,15 +37,17 @@ def bootstrap_resampling(x,y, mindegree=1, maxdegree=21, n_bootstraps=100, seed=
     return error, bias, variance
 
 
-def cross_validation(x, y, model='ols', lamba=0.0, mindegree=1, maxdegree=21, k=5, max_iter=10000, seed=2026):
+def cross_validation(x, y, model='ols', lamba=0.0, mindegree=1, maxdegree=21, k=5, max_iter=10000, seed=2026, ypred = False):
     """
     Cross-validation resampling technique. Works for OLS, Ridge, Lasso
+
+    Returns MSE and y_pred
     """
     kFold = KFold(n_splits=k, shuffle=True, random_state=seed)
     mse = []
 
     x = x.reshape(-1, 1)     #reshape x into a 2 dim column vector
-    
+    y_pred = { }
     for deg in range(mindegree, maxdegree):
         if model == 'OLS':
             regression = LinearRegression()
@@ -62,4 +64,11 @@ def cross_validation(x, y, model='ols', lamba=0.0, mindegree=1, maxdegree=21, k=
                                      scoring='neg_mean_squared_error')
         mse.append(np.mean(scores))
 
-    return mse
+        if ypred:
+            #prediction of y, obtained by cross validation. use for visualisation purposes
+            y_pred[deg] = cross_val_predict(pipe, x, y, cv=kFold)
+    
+    if ypred:
+        return mse, y_pred
+    else:
+        return mse
