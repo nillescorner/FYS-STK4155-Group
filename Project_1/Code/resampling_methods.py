@@ -14,7 +14,7 @@ from sklearn.utils import resample
 def bootstrap_resampling(x,y, mindegree=1, maxdegree=21, n_bootstraps=100, seed=2026):
     """
 
-    Bootstrap resampling function for simpler ordinary least squares based on p.65
+    Bootstrap resampling function for simpler ordinary least squares based on code from p.65
 
         Params:
             x (any): input values
