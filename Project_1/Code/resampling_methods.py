@@ -17,17 +17,17 @@ def bootstrap_resampling(x,y, mindegree=1, maxdegree=21, n_bootstraps=100, seed=
     Bootstrap resampling function for simpler ordinary least squares based on p.65
 
         Params:
-            x (any)
-            y (any)
-            mindegree (int)
-            maxdegree (int)
-            n_bootstraps (int)
-            seed (int)
+            x (any): input values
+            y (any): input values
+            mindegree (int): minimum degree
+            maxdegree (int): maximum degree
+            n_bootstraps (int): number of iterations for bootstrap
+            seed (int): randomizer seed
         
         Returns:
-            error (list)
-            bias (list)
-            variance (list)
+            error (list): test error for each polynomial degree
+            bias (list): bias for each polynomial degree
+            variance (list): variance for each polynomial degree
     """                                
     x = x.reshape(-1,1)
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=seed)
@@ -36,7 +36,7 @@ def bootstrap_resampling(x,y, mindegree=1, maxdegree=21, n_bootstraps=100, seed=
 
     for deg in range(mindegree,maxdegree):
         #StandardScaler does X_norm, LinearRegression 
-        model = make_pipeline(PolynomialFeatures(degree=deg, include_bias=False),
+        model = make_pipeline(PolynomialFeatures(degree=deg),
                               StandardScaler(),
                               LinearRegression())
 
@@ -57,18 +57,18 @@ def cross_validation(x, y, model='ols', lamba=0.0, mindegree=1, maxdegree=21, k=
     Cross-validation resampling technique. Works for OLS, Ridge, Lasso
 
         Params:
-            x (any)
-            y (any)
-            model (str)
-            lamba (float)
-            mindegree (int)
-            maxdegree (int)
-            k (int)
-            max_iter (int)
-            seed (int)
+            x (any): input value
+            y (any): input value
+            model (str): which model used
+            lamba (float): penalty parameter
+            mindegree (int): minimum degree
+            maxdegree (int): maximum degree
+            k (int): number of folds
+            max_iter (int): max iterations for Lasso
+            seed (int): randomizer seed 
 
         Returns:
-            mse (list)
+            mse (list): mean squared error per polynomial degree
 
     """
     kFold = KFold(n_splits=k, shuffle=True, random_state=seed)
