@@ -25,7 +25,7 @@ x_raw, y_raw = make_data()
 X_raw = design_matrix(x_raw, degree, intercept = False)
 
 #centering data
-X, y = scaling(X_raw, y_raw, split_data = False)
+X, X_test, y, y_test = scaling(X_raw, y_raw, split_data = True)
 theta0 = np.zeros(X.shape[1])
 
 """Analytical for OLS and ridge"""
@@ -191,3 +191,79 @@ plt.yscale("log")
 plt.grid()
 #plt.savefig("Part_e_convergence_learningrate_Ridge.png")
 plt.show()
+
+
+"""Comparing the trained data and the test data"""
+n_test = X_test.shape[0]
+test_mse_OLS = (1.0 / n_test) * np.sum((X_test @ theta_OLS - y_test) ** 2)
+test_mse_Ridge = (1.0 / n_test) * np.sum((X_test @ theta_Ridge - y_test) ** 2) + lam * np.sum(theta_Ridge ** 2)
+test_vals = [test_mse_OLS, test_mse_Ridge]
+
+n_train = X.shape[0]
+train_mse_OLS = (1.0 / n_train) * np.sum((X @ theta_OLS - y) ** 2)
+train_mse_Ridge = (1.0 / n_train) * np.sum((X @ theta_Ridge - y) ** 2) + lam * np.sum(theta_Ridge ** 2)
+train_vals = [train_mse_OLS, train_mse_Ridge]
+
+labels = ["OLS", "Ridge"]
+x = np.arange(len(labels))
+width = 0.35
+
+plt.bar(x - width/2, train_vals, width, label="Train MSE", color = "#F433DA")
+plt.bar(x + width/2, test_vals, width, label="Test MSE", color = "#7326E6")
+plt.xticks(x, labels)
+plt.ylabel("MSE")
+plt.title("Train vs. test MSE: OLS vs Ridge")
+plt.legend()
+plt.grid(axis='y', alpha=0.3)
+plt.show()
+
+print("Test-set evaluation-------------------------------")
+print(f"OLS:   train={train_mse_OLS:.4e}, test={test_mse_OLS:.4e}, gap={test_mse_OLS - train_mse_OLS:.4e}")
+print(f"Ridge: train={train_mse_Ridge:.4e}, test={test_mse_Ridge:.4e}, gap={test_mse_Ridge - train_mse_Ridge:.4e}")
+
+
+
+
+"""For different lambda values, comparing test and train"""
+lambdas = np.logspace(-4, 2, 30)
+train_errs, test_errs = [], []
+
+for lm in lambdas:
+    theta_lm = closed_form(X, y, lmbda=lm)
+    train_errs.append((1.0/len(y)) * np.sum((X @ theta_lm - y)**2))
+    test_errs.append((1.0/n_test) * np.sum((X_test @ theta_lm - y_test)**2))
+
+plt.plot(lambdas, train_errs, label="Train MSE", color = "#F433DA")
+plt.plot(lambdas, test_errs, label="Test MSE", color = "#7326E6")
+plt.xscale("log")
+plt.yscale("log")
+plt.xlabel(r"$\lambda$")
+plt.ylabel("MSE")
+plt.title("Train vs test error across regularization strength")
+plt.legend()
+plt.tight_layout()
+plt.grid()
+plt.show()
+
+
+
+"""plt.scatter(y, X @ theta_OLS, alpha=0.6, label="OLS")
+plt.scatter(y, X @ theta_Ridge, alpha=0.6, label="Ridge")
+plt.plot([y.min(), y.max()], [y.min(), y.max()], 'k--', label="Perfect prediction")
+plt.xlabel("True y (train)")
+plt.ylabel("Predicted y (train)")
+plt.legend()
+plt.title("Predicted vs. actual on held-out test data")
+plt.grid()
+plt.show()
+
+
+plt.scatter(y_test, X_test @ theta_OLS, alpha=0.6, label="OLS")
+plt.scatter(y_test, X_test @ theta_Ridge, alpha=0.6, label="Ridge")
+plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'k--', label="Perfect prediction")
+plt.xlabel("True y (test)")
+plt.ylabel("Predicted y (test)")
+plt.legend()
+plt.title("Predicted vs. actual on held-out test data")
+plt.grid()
+plt.show()"""

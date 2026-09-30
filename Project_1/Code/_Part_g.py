@@ -15,7 +15,7 @@ x_raw, y_raw = make_data(n = n)
 X_raw = design_matrix(x_raw, degree, intercept = False)
 
 #centering data
-X, y = scaling(X_raw, y_raw, split_data = False)
+X, X_test, y, y_test = scaling(X_raw, y_raw, split_data = True)
 theta0 = np.zeros(X.shape[1])
 
 

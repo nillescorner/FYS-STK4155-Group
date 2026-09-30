@@ -14,7 +14,7 @@ x_raw, y_raw = make_data(n = n)
 X_raw = design_matrix(x_raw, degree, intercept = False)
 
 #centering data
-X, y = scaling(X_raw, y_raw, split_data = False)
+X, X_test, y, y_test = scaling(X_raw, y_raw, split_data = True)
 theta0 = np.zeros(X.shape[1])
 
 theta_cf = closed_form(X, y, lmbda = lam)
@@ -90,14 +90,14 @@ cost_Ridge_sgd = cost_history(history_Ridge_sgd, X, y, lmbda = lam, penalty = "L
 
 
 print("OLS: GD vs. SGD------------------------------")
-print(f'iterations to converge: GS: {n_OLS} SGD: {n_OLS_sgd}')
+print(f'iterations to converge: GD: {n_OLS} SGD: {n_OLS_sgd}')
 print(f'DG: theta = {history_OLS[-1]}')
 print(f'SDG: theta = {history_OLS_sgd[-1]}')
 print(f"theta: |sgd - gd| = {np.max(np.abs(history_OLS[-1] - history_OLS_sgd[-1])):.2e} ")
 
 
 print("Ridge: GD vs. SGD------------------------------")
-print(f'iterations to converge: GS: {n_Ridge} SGD: {n_Ridge_sgd}')
+print(f'iterations to converge: GD: {n_Ridge} SGD: {n_Ridge_sgd}')
 print(f'DG: theta = {history_Ridge[-1]}')
 print(f'SDG: theta = {history_Ridge_sgd[-1]}')
 print(f"theta: |sgd - gd| = {np.max(np.abs(history_Ridge[-1] - history_Ridge_sgd[-1])):.2e} ")
@@ -118,3 +118,4 @@ plt.tight_layout()
 plt.legend()
 plt.savefig("Part_h_sgd_OLS_Ridge.png")
 plt.show()
+
