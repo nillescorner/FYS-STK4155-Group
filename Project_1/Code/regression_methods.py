@@ -42,7 +42,7 @@ def regression(x,y, lamba=0.0, mindeg = 1, maxdeg=16, seed=2026):
         Params:
             x (NDAraay): input data
             y (NDArray): input data
-            lamba (float):
+            lamba (float): penalty parameter
             mindeg(int), maxdeg(int): minimum and maximum degrees
             seed (int): to recreate same randomized data
 

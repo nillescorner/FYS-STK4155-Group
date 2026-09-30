@@ -36,7 +36,7 @@ def plot_regression(x, train_data, test_data=None, titles=None, params=None, yla
         test_data = [test_data]
 
     ncols = ncols or len(train_data)
-    figsize = figsize or (10, 6)
+    figsize = figsize or (12, 4)
 
     if isinstance(titles, str):
         fill = params if params is not None else range(len(train_data))
