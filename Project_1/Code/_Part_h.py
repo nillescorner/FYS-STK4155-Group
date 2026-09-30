@@ -26,12 +26,13 @@ H_Ridge = 2.0 / len(y) * X.T @ X + 2 * lam * np.eye(X.shape[1])
 gamma_max_OLS = 2.0 / np.linalg.eigvalsh(H_OLS).max()
 gammas_OLS = [0.01 * gamma_max_OLS, 0.1 * gamma_max_OLS, 0.5 * gamma_max_OLS]
 labels_gamma = [r"$0.01\, \gamma_{\max}$", r"$0.1\, \gamma_{\max}$", r"$0.5\, \gamma_{\max}$"]
+colors = ["#F433DA", "#7326E6", "#84BCED"]
 
-for gamma, label in zip(gammas_OLS, labels_gamma):
+for gamma, label, color in zip(gammas_OLS, labels_gamma, colors):
     hist, n_gamma = sgd(X, y, n_epochs=100, batch_size=5, gamma=gamma, lmbda = lam)
     cost_gamma = cost_history(hist, X, y, penalty = "None")
 
-    plt.plot(cost_gamma, label = label)
+    plt.plot(cost_gamma, label = label, color = color)
 
 """Plot of cost as for different learning rates"""
 plt.title("Cost function for different learning rates")
@@ -42,7 +43,7 @@ plt.yscale("log")
 plt.legend()
 plt.grid()
 plt.tight_layout()
-#plt.savefig("Part_h_cost_learningrates.png")
+plt.savefig("Part_h_cost_learningrates.png")
 plt.show()
 
 
@@ -50,11 +51,11 @@ plt.show()
 batches = [10, 20, 30, 40]
 labels_M = [f"$M = {batches[0]}$", f"$M = {batches[1]}$", f"$M = {batches[2]}$", f"$M = {batches[3]}$"]
 
-for M, label in zip(batches, labels_M):
+for M, label, color in zip(batches, labels_M, colors):
     hist, n_M = sgd(X, y, n_epochs=100, batch_size=M, gamma=gamma_max_OLS)
     cost_M = cost_history(hist, X, y, penalty = "None")
     
-    plt.plot(cost_M, label = label)
+    plt.plot(cost_M, label = label, color = color)
     
 """Plot of cost as for different batch sizes"""
 plt.title("Cost function for different batch sizes")
@@ -65,7 +66,7 @@ plt.yscale("log")
 plt.legend()
 plt.grid()
 plt.tight_layout()
-#plt.savefig("Part_h_cost_batchsize.png")
+plt.savefig("Part_h_cost_batchsize.png")
 plt.show()
 
 
@@ -103,10 +104,10 @@ print(f"theta: |sgd - gd| = {np.max(np.abs(history_Ridge[-1] - history_Ridge_sgd
 
 
 """Plot of cost vs iteration"""
-plt.plot(cost_OLS, label = "OLS GD", color = "C0")
-plt.plot(cost_OLS_sgd, label = "OLS SGD", color = "C0", linestyle = "--")
-plt.plot(cost_Ridge, label = "Ridge GD", color = "C1")
-plt.plot(cost_Ridge_sgd, label = "Ridge SGD", color = "C1", linestyle = "--")
+plt.plot(cost_OLS, label = "OLS GD", color = "#F433DA")
+plt.plot(cost_OLS_sgd, label = "OLS SGD", color = "#F433DA", linestyle = "--", alpha = 0.4)
+plt.plot(cost_Ridge, label = "Ridge GD", color = "#7326E6")
+plt.plot(cost_Ridge_sgd, label = "Ridge SGD", color = "#7326E6", linestyle = "--", alpha = 0.4)
 plt.xlabel("Iteration")
 plt.ylabel("Cost")
 plt.title("Cost function of stochastic gradient descent")
@@ -115,5 +116,5 @@ plt.yscale("log")
 plt.grid()
 plt.tight_layout()
 plt.legend()
-#plt.savefig("Part_h_sgd_OLS_Ridge.png")
+plt.savefig("Part_h_sgd_OLS_Ridge.png")
 plt.show()

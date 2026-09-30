@@ -69,10 +69,10 @@ print(f"theta: |skl - cd| = {np.max(np.abs(theta_skl_lasso - history_lasso_cd[-1
 
 
 """Plot of cost vs iteration"""
-plt.plot(cost_Lasso_gd, label = "Lasso gradient descent")
-plt.plot(cost_Lasso_cd, label = "Lasso coordinate descent")
-plt.plot(cost_OLS, label = "OLS")
-plt.plot(cost_Ridge, label = "Ridge")
+plt.plot(cost_Lasso_gd, label = "Lasso gradient descent", color = "#7AD2EF")
+plt.plot(cost_Lasso_cd, label = "Lasso coordinate descent", color = "#89EF82")
+plt.plot(cost_OLS, label = "OLS", color = "#F433DA")
+plt.plot(cost_Ridge, label = "Ridge", color = "#7326E6")
 plt.xlabel("Iteration")
 plt.ylabel("Cost")
 plt.title("Cost function of gradient descent")
