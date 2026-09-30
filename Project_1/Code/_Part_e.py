@@ -62,8 +62,8 @@ cost_OLS = cost_history(history_OLS, X, y, penalty="None")
 cost_Ridge = cost_history(history_Ridge, X, y, lmbda=lam, penalty="L2")
 
 """Plot of cost vs iteration"""
-plt.plot(cost_OLS, label = "OLS")
-plt.plot(cost_Ridge, label = "Ridge")
+plt.plot(cost_OLS, label = "OLS", color = "#F433DA")
+plt.plot(cost_Ridge, label = "Ridge", color = "#7326E6")
 plt.xlabel("Iteration")
 plt.ylabel("Cost")
 plt.title("Cost function of gradient descent")
@@ -85,8 +85,8 @@ dist_OLS = np.linalg.norm(history_OLS - theta_cf_OLS, axis = 1)
 dist_Ridge = np.linalg.norm(history_Ridge - theta_cf_Ridge, axis = 1)
 
 """Plot of difference between analytical and closed form"""
-plt.plot(dist_OLS, label = "OLS")
-plt.plot(dist_Ridge, label = "Ridge")
+plt.plot(dist_OLS, label = "OLS", color = "#F433DA")
+plt.plot(dist_Ridge, label = "Ridge", color = "#7326E6")
 plt.xlabel("Iteration")
 plt.ylabel(r"$\|\boldsymbol{\theta}_{gd}-\hat{\boldsymbol{\theta}}_{cf}\|_2$")
 plt.title("Convergense of gradient descent against closed form")
@@ -119,10 +119,10 @@ n_min_Ridge = np.argmin(n_ridge)
 best_gamma_OLS = gamma_list[n_min_OLS]
 best_gamma_Ridge = gamma_list[n_min_Ridge]
 
-plt.plot(gamma_list, diffs_ols, label='OLS')
-plt.plot(gamma_list, diffs_ridge, label='Ridge')
-plt.axvline(gamma_max_OLS, color = 'C0', linestyle = "--", alpha = 0.7, label = f'OLS limit $\\gamma$ = {gamma_max_OLS:.3f}')
-plt.axvline(gamma_max_Ridge, color = 'C1', linestyle = "--", alpha = 0.7, label = f'Ridge limit $\\gamma$ = {gamma_max_Ridge:.3f}')
+plt.plot(gamma_list, diffs_ols, label='OLS', color = "#F433DA")
+plt.plot(gamma_list, diffs_ridge, label='Ridge', color = "#7326E6")
+plt.axvline(gamma_max_OLS, color = "#F433DA", linestyle = "--", alpha = 0.5, label = f'OLS limit $\\gamma$ = {gamma_max_OLS:.3f}')
+plt.axvline(gamma_max_Ridge, color = "#7326E6", linestyle = "--", alpha = 0.5, label = f'Ridge limit $\\gamma$ = {gamma_max_Ridge:.3f}')
 plt.xlabel('Learning rate (γ)')
 plt.ylabel(r'$\|\theta_{gd} - \theta_{cf}\|$')
 plt.yscale('log')  
@@ -133,10 +133,10 @@ plt.grid(True, which='both', alpha=0.3)
 plt.show()
 
 
-plt.plot(gamma_list, n_ols, label='OLS')
-plt.plot(gamma_list, n_ridge, label='Ridge')
-plt.axvline(gamma_max_OLS, color = 'C0', linestyle = "--", alpha = 0.7, label = f'OLS limit $\\gamma$ = {gamma_max_OLS:.3f}')
-plt.axvline(gamma_max_Ridge, color = 'C1', linestyle = "--", alpha = 0.7, label = f'Ridge limit $\\gamma$ = {gamma_max_Ridge:.3f}')
+plt.plot(gamma_list, n_ols, label='OLS', color = "#F433DA")
+plt.plot(gamma_list, n_ridge, label='Ridge', color = "#7326E6")
+plt.axvline(gamma_max_OLS, color = "#F433DA", linestyle = "--", alpha = 0.5, label = f'OLS limit $\\gamma$ = {gamma_max_OLS:.3f}')
+plt.axvline(gamma_max_Ridge, color = "#7326E6", linestyle = "--", alpha = 0.5, label = f'Ridge limit $\\gamma$ = {gamma_max_Ridge:.3f}')
 plt.axvline(best_gamma_OLS, color = 'grey', linestyle = "--", alpha = 0.7, label = f'OLS min iteration $\\gamma$ = {best_gamma_OLS:.3f}')
 plt.axvline(best_gamma_Ridge, color = 'grey', linestyle = "--", alpha = 0.7, label = f'Ridge min iterations $\\gamma$ = {best_gamma_Ridge:.3f}')
 plt.xlabel('Learning rate (γ)')
@@ -153,12 +153,13 @@ plt.show()
 """OLS"""
 gammas_OLS = [0.1 * gamma_max_OLS, 0.5 * gamma_max_OLS, 1.001 * gamma_max_OLS, best_gamma_OLS]
 labels = [r"$0.1\, \gamma_{\max}$", r"$0.5\, \gamma_{\max}$", r"$1.001\, \gamma_{\max}$", r"$\gamma_{best}$"]
+colors = ["#F433DA", "#7326E6", "#26B3E6", "#E62663"]
 
-for gamma, label in zip(gammas_OLS, labels):
+for gamma, label, color in zip(gammas_OLS, labels, colors):
     hist, n_ = gradient_descent(X, y, gamma)
     dist_gam_OLS = np.linalg.norm(hist - theta_cf_OLS, axis = 1)
 
-    plt.plot(dist_gam_OLS, label = label, ls = "--" if gamma > gamma_max_OLS else "-")
+    plt.plot(dist_gam_OLS, label = label, ls = "--" if gamma > gamma_max_OLS else "-", color = color)
 
 plt.ylabel(r"$\|\boldsymbol{\theta}_{gd}-\hat{\boldsymbol{\theta}}_{cf}\|_2$")
 plt.xlabel("Iterations")
@@ -174,11 +175,11 @@ plt.show()
 """Ridge"""
 gammas_Ridge = [0.1 * gamma_max_Ridge, 0.5 * gamma_max_Ridge, 1.001 * gamma_max_Ridge, best_gamma_Ridge]
 
-for gamma, label in zip(gammas_Ridge, labels):
+for gamma, label, color in zip(gammas_Ridge, labels, colors):
     hist, n_ = gradient_descent(X, y, gamma, lam)
     dist_gam_Ridge = np.linalg.norm(hist - theta_cf_Ridge, axis = 1)
 
-    plt.plot(dist_gam_Ridge, label = label, ls = "--" if gamma > gamma_max_Ridge else "-")
+    plt.plot(dist_gam_Ridge, label = label, ls = "--" if gamma > gamma_max_Ridge else "-", color = color)
 
 plt.ylabel(r"$\|\boldsymbol{\theta}_{gd}-\hat{\boldsymbol{\theta}}_{cf}\|_2$")
 plt.xlabel("Iterations")
