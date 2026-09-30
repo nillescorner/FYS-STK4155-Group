@@ -1,17 +1,16 @@
-This folder contains the main report, results and code for Project 1 in FYS-STK4155. 
+Hello and welcome to our Project 1 folder in FYS-STK4155 :)
 
-The following folder contain:
+The Project has been sectioned into the following folders:
 
 Code:
-Main code of the project in a jupyter notebook. This notebook 
+This folder consists of numerous python files that build up the main code for Project 1. Functions needed to solve the different parts have been sorted accordingly into the relevant files. These functions are then called to _Part_(relevant part).py files in order to solve the problems for this Part. 
 
+figs:
+This folder contains the numerous figures derived from the main code which have been used in the Project 1 report. 
 
 Report:
-Report :)
-
-
+This folder contains the finalized report for Project 1 from our group.
 
 Test_and_additonal_results:
-Tests for some of the main functions in the main code to verify if they work. 
-
+This folder contains Tests for some of the main functions in the main code to verfiy their reliability. 
 This folder also contains additional results for some of the parts that were not releveant in the main report. 
