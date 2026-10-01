@@ -4,7 +4,7 @@ import numpy as np
 
 from sklearn.linear_model import LinearRegression, Ridge, Lasso
 from sklearn.preprocessing import PolynomialFeatures, StandardScaler
-from sklearn.model_selection import train_test_split, KFold, cross_val_score, cross_val_predict
+from sklearn.model_selection import train_test_split, KFold, cross_val_score, cross_val_predict, GridSearchCV
 from sklearn.pipeline import make_pipeline
 from sklearn.utils import resample
 
@@ -72,3 +72,51 @@ def cross_validation(x, y, model='ols', lamba=0.0, mindegree=1, maxdegree=21, k=
         return mse, y_pred
     else:
         return mse
+
+
+def grid_search(x_train, x_test, y_train, k,  param_grid = {"ridge__alpha": np.logspace(-5, 3, 30)},
+                  model='Ridge', lamba=0.0,
+                  mindegree=1, maxdegree=21, max_iter=10000,  seed=2026,
+                  return_X = False):
+
+    """
+    Grid search technique using cross validation. 
+    Repeats process for all given degrees and returns a dict indexed by degrees containing GridSearchCV objects.
+
+    Only includes Ridge and Lasso, as OLS doesn't have hyperparameters aside from amount of degrees
+    
+    """
+
+    gridsearch = {}
+    X_train_dict = {}
+    X_test_dict = {}
+    for deg in range(mindegree, maxdegree):
+        if model == 'Ridge' or model == 'ridge':
+            regression = Ridge(alpha=lamba)
+        elif model == 'Lasso' or model == 'lasso':
+            regression = Lasso(alpha=lamba, max_iter=max_iter)
+
+        polyfit = PolynomialFeatures(degree=deg)
+        X_train_dict[deg] = polyfit.fit_transform(x_train.reshape(-1, 1))
+        X_test_dict[deg] = polyfit.fit_transform(x_test.reshape(-1, 1))
+
+
+        pipe = make_pipeline(
+            StandardScaler(),
+            regression
+        )
+
+        gridsearch[deg] = GridSearchCV(
+            estimator=pipe,
+            param_grid=param_grid,
+            scoring="neg_mean_squared_error", #MSE scoring 
+            cv= KFold(n_splits=k, shuffle=True, random_state=seed), #sets cross-validation splitting strategy to the same as in cross_validation
+            refit=True,  #Refit an estimator using the best found parameters on the whole dataset
+            return_train_score = True, #returns training score 
+        )
+
+        gridsearch[deg].fit(X_train_dict[deg], y_train)
+    if return_X:
+        return gridsearch, X_train_dict, X_test_dict
+    else:
+        return gridsearch
