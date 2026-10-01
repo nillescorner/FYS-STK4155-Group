@@ -195,14 +195,14 @@ plt.show()
 
 """Comparing the trained data and the test data"""
 n_test = X_test.shape[0]
-test_mse_OLS = (1.0 / n_test) * np.sum((X_test @ theta_OLS - y_test) ** 2)
-test_mse_Ridge = (1.0 / n_test) * np.sum((X_test @ theta_Ridge - y_test) ** 2) + lam * np.sum(theta_Ridge ** 2)
-test_vals = [test_mse_OLS, test_mse_Ridge]
+cost_test_OLS = cost(theta_OLS, X_test, y_test, penalty = "None")
+cost_test_Ridge = cost(theta_Ridge, X_test, y_test, lmbda=lam, penalty = "L2")
+test_vals = [cost_test_OLS, cost_test_Ridge]
 
 n_train = X.shape[0]
-train_mse_OLS = (1.0 / n_train) * np.sum((X @ theta_OLS - y) ** 2)
-train_mse_Ridge = (1.0 / n_train) * np.sum((X @ theta_Ridge - y) ** 2) + lam * np.sum(theta_Ridge ** 2)
-train_vals = [train_mse_OLS, train_mse_Ridge]
+cost_train_OLS = cost(theta_OLS, X, y, penalty = "None")
+cost_train_Ridge = cost(theta_Ridge, X, y, lmbda=lam, penalty = "L2")
+train_vals = [cost_train_OLS, cost_train_Ridge]
 
 labels = ["OLS", "Ridge"]
 x = np.arange(len(labels))
@@ -215,13 +215,12 @@ plt.ylabel("MSE")
 plt.title("Train vs. test MSE: OLS vs Ridge")
 plt.legend()
 plt.grid(axis='y', alpha=0.3)
+#plt.savefig("Part_e_hist_testtrain.png")
 plt.show()
 
 print("Test-set evaluation-------------------------------")
-print(f"OLS:   train={train_mse_OLS:.4e}, test={test_mse_OLS:.4e}, gap={test_mse_OLS - train_mse_OLS:.4e}")
-print(f"Ridge: train={train_mse_Ridge:.4e}, test={test_mse_Ridge:.4e}, gap={test_mse_Ridge - train_mse_Ridge:.4e}")
-
-
+print(f"OLS:   train={cost_train_OLS:.4e}, test={cost_test_OLS:.4e}, gap={cost_test_OLS - cost_train_OLS:.4e}")
+print(f"Ridge: train={cost_train_Ridge:.4e}, test={cost_test_Ridge:.4e}, gap={cost_test_Ridge - cost_test_Ridge:.4e}")
 
 
 """For different lambda values, comparing test and train"""
@@ -230,40 +229,19 @@ train_errs, test_errs = [], []
 
 for lm in lambdas:
     theta_lm = closed_form(X, y, lmbda=lm)
-    train_errs.append((1.0/len(y)) * np.sum((X @ theta_lm - y)**2))
-    test_errs.append((1.0/n_test) * np.sum((X_test @ theta_lm - y_test)**2))
+    train_errs.append(cost(theta_lm, X, y))
+    test_errs.append(cost(theta_lm, X_test, y_test))
 
 plt.plot(lambdas, train_errs, label="Train MSE", color = "#F433DA")
 plt.plot(lambdas, test_errs, label="Test MSE", color = "#7326E6")
 plt.xscale("log")
 plt.yscale("log")
 plt.xlabel(r"$\lambda$")
-plt.ylabel("MSE")
+plt.ylabel("Cost")
 plt.title("Train vs test error across regularization strength")
 plt.legend()
 plt.tight_layout()
 plt.grid()
+#plt.savefig("Part_e_cost_lambda_testtrain.png")
 plt.show()
 
-
-
-"""plt.scatter(y, X @ theta_OLS, alpha=0.6, label="OLS")
-plt.scatter(y, X @ theta_Ridge, alpha=0.6, label="Ridge")
-plt.plot([y.min(), y.max()], [y.min(), y.max()], 'k--', label="Perfect prediction")
-plt.xlabel("True y (train)")
-plt.ylabel("Predicted y (train)")
-plt.legend()
-plt.title("Predicted vs. actual on held-out test data")
-plt.grid()
-plt.show()
-
-
-plt.scatter(y_test, X_test @ theta_OLS, alpha=0.6, label="OLS")
-plt.scatter(y_test, X_test @ theta_Ridge, alpha=0.6, label="Ridge")
-plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'k--', label="Perfect prediction")
-plt.xlabel("True y (test)")
-plt.ylabel("Predicted y (test)")
-plt.legend()
-plt.title("Predicted vs. actual on held-out test data")
-plt.grid()
-plt.show()"""
