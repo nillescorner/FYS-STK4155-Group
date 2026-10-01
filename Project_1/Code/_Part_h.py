@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 degree = 5
 lam = 1e-2
-n = 100
+n = 1000
 
 #making data
 x_raw, y_raw = make_data(n = n)

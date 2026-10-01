@@ -19,9 +19,10 @@ import matplotlib.pyplot as plt
 
 degree = 5
 lam = 1e-2
+n = 1000
 
 #making data
-x_raw, y_raw = make_data()
+x_raw, y_raw = make_data(n = n)
 X_raw = design_matrix(x_raw, degree, intercept = False)
 
 #centering data
@@ -208,8 +209,8 @@ labels = ["OLS", "Ridge"]
 x = np.arange(len(labels))
 width = 0.35
 
-plt.bar(x - width/2, train_vals, width, label="Train MSE", color = "#F433DA")
-plt.bar(x + width/2, test_vals, width, label="Test MSE", color = "#7326E6")
+plt.bar(x - width/2, train_vals, width, label="Train MSE", color = "#F433DA", alpha = 0.7)
+plt.bar(x + width/2, test_vals, width, label="Test MSE", color = "#7326E6", alpha = 0.7)
 plt.xticks(x, labels)
 plt.ylabel("MSE")
 plt.title("Train vs. test MSE: OLS vs Ridge")
