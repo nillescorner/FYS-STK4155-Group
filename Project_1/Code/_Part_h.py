@@ -43,7 +43,7 @@ plt.yscale("log")
 plt.legend()
 plt.grid()
 plt.tight_layout()
-plt.savefig("Part_h_cost_learningrates.png")
+#plt.savefig("Part_h_cost_learningrates.png")
 plt.show()
 
 
@@ -66,7 +66,7 @@ plt.yscale("log")
 plt.legend()
 plt.grid()
 plt.tight_layout()
-plt.savefig("Part_h_cost_batchsize.png")
+#plt.savefig("Part_h_cost_batchsize.png")
 plt.show()
 
 
@@ -116,6 +116,6 @@ plt.yscale("log")
 plt.grid()
 plt.tight_layout()
 plt.legend()
-plt.savefig("Part_h_sgd_OLS_Ridge.png")
+#plt.savefig("Part_h_sgd_OLS_Ridge.png")
 plt.show()
 
