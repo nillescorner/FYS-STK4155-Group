@@ -48,8 +48,8 @@ plt.show()
 
 
 """Studying varying batch sizes"""
-batches = [10, 20, 30, 40]
-labels_M = [f"$M = {batches[0]}$", f"$M = {batches[1]}$", f"$M = {batches[2]}$", f"$M = {batches[3]}$"]
+batches = [10, 20, 30]
+labels_M = [f"$M = {batches[0]}$", f"$M = {batches[1]}$", f"$M = {batches[2]}$"]
 
 for M, label, color in zip(batches, labels_M, colors):
     hist, n_M = sgd(X, y, n_epochs=100, batch_size=M, gamma=gamma_max_OLS)
@@ -119,3 +119,43 @@ plt.legend()
 #plt.savefig("Part_h_sgd_OLS_Ridge.png")
 plt.show()
 
+
+"""Comparing train and test MSE across OLS, Ridge, and Lasso"""
+n_train = X.shape[0]
+n_test = X_test.shape[0]
+
+theta_OLS_GD = history_OLS[-1]
+theta_OLS_SGD= history_OLS_sgd[-1]
+theta_Ridge_GD = history_Ridge[-1]
+theta_Ridge_SGD= history_Ridge_sgd[-1]
+
+methods = {
+    "OLS (GD)": theta_OLS_GD,
+    "OLS (SGD)": theta_OLS_SGD,
+    "Ridge (GD)": theta_Ridge_GD,
+    "Ridge (SGD)": theta_Ridge_SGD}
+
+print("Test vs train MSE for different regression methods--------------------")
+train_vals, test_vals = [], []
+for name, theta in methods.items():
+    tr = cost(theta, X, y)
+    te = cost(theta, X_test, y_test)
+    train_vals.append(tr)
+    test_vals.append(te)
+    print(f"{name:16s}: train MSE = {tr:.4e}, test MSE = {te:.4e}, gap = {te - tr:.4e}")
+
+labels = list(methods.keys())
+x = np.arange(len(labels))
+width = 0.35
+
+plt.figure(figsize=(8, 5))
+plt.bar(x - width/2, train_vals, width, label="Train MSE", color="#F433DA", alpha = 0.7)
+plt.bar(x + width/2, test_vals, width, label="Test MSE", color="#7326E6", alpha = 0.7)
+plt.xticks(x, labels, rotation=15)
+plt.ylabel("MSE")
+plt.title("Train vs. test MSE: OLS, Ridge, Lasso")
+plt.legend()
+plt.grid(axis='y', alpha=0.3)
+plt.tight_layout()
+#plt.savefig("Part_h_hist_testtrain_sgd.png")
+plt.show()
