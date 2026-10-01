@@ -62,19 +62,6 @@ theta_Ridge = history_Ridge[-1]
 cost_OLS = cost_history(history_OLS, X, y, penalty="None")
 cost_Ridge = cost_history(history_Ridge, X, y, lmbda=lam, penalty="L2")
 
-"""Plot of cost vs iteration"""
-plt.plot(cost_OLS, label = "OLS", color = "#F433DA")
-plt.plot(cost_Ridge, label = "Ridge", color = "#7326E6")
-plt.xlabel("Iteration")
-plt.ylabel("Cost")
-plt.title("Cost function of gradient descent")
-plt.xscale("log")
-#plt.yscale("log")
-plt.grid()
-plt.legend()
-#plt.savefig("Part_e_costfunc_OLS_Ridge.png")
-plt.show()
-
 """Closed form to compare to"""
 theta_cf_OLS = closed_form(X, y)
 theta_cf_Ridge = closed_form(X, y, lmbda = lam)
@@ -150,6 +137,35 @@ plt.grid(True, which='both', alpha=0.3)
 plt.show()
 
 
+"""The cost, but now with the optimal learning rate"""
+history_OLS_best, n_OLS_best = gradient_descent(X, y, best_gamma_OLS)
+history_Ridge_best, n_Ridge_best = gradient_descent(X, y, best_gamma_Ridge, lam)
+theta_OLS_best = history_OLS_best[-1]
+theta_Ridge_best = history_Ridge_best[-1]
+
+"""Cost of OLS and Ridge, for each theta value"""
+cost_OLS_best = cost_history(history_OLS_best, X, y, penalty="None")
+cost_Ridge_best = cost_history(history_Ridge_best, X, y, lmbda=lam, penalty="L2")
+
+print(f'OLS:    theta: |gamma_max - gamma_best| = {np.max(np.abs(theta_OLS - theta_OLS_best)):.3e}, converges after {n_OLS_best} iterations')
+print(f'Ridge:  theta: |gamma_max - gamma_best| = {np.max(np.abs(theta_Ridge - theta_Ridge_best)):.3e}, converges after {n_Ridge_best} iterations')
+
+"""Plot of cost vs iteration"""
+plt.plot(cost_OLS_best, label = "OLS, $\\gamma_{best}$", color = "#F433DA")
+plt.plot(cost_Ridge_best, label = "Ridge, $\\gamma_{best}$", color = "#7326E6")
+plt.plot(cost_OLS, label = "OLS, $\\gamma_{max}$", color = "#F433DA", linestyle = "--")
+plt.plot(cost_Ridge, label = "Ridge, $\\gamma_{max}$", color = "#7326E6", linestyle = "--")
+plt.xlabel("Iteration")
+plt.ylabel("Cost")
+plt.title("Cost function of gradient descent with $\\gamma_{best}$ and $\\gamma_{max}$")
+plt.xscale("log")
+#plt.yscale("log")
+plt.grid()
+plt.legend()
+#plt.savefig("Part_e_costfunc_OLS_Ridge.png")
+plt.show()
+
+
 """Plot of convergence as a func of different learning rate"""
 """OLS"""
 gammas_OLS = [0.1 * gamma_max_OLS, 0.5 * gamma_max_OLS, 1.001 * gamma_max_OLS, best_gamma_OLS]
@@ -196,13 +212,13 @@ plt.show()
 
 """Comparing the trained data and the test data"""
 n_test = X_test.shape[0]
-cost_test_OLS = cost(theta_OLS, X_test, y_test, penalty = "None")
-cost_test_Ridge = cost(theta_Ridge, X_test, y_test, lmbda=lam, penalty = "L2")
+cost_test_OLS = cost(theta_OLS_best, X_test, y_test, penalty = "None")
+cost_test_Ridge = cost(theta_Ridge_best, X_test, y_test, lmbda=lam, penalty = "L2")
 test_vals = [cost_test_OLS, cost_test_Ridge]
 
 n_train = X.shape[0]
-cost_train_OLS = cost(theta_OLS, X, y, penalty = "None")
-cost_train_Ridge = cost(theta_Ridge, X, y, lmbda=lam, penalty = "L2")
+cost_train_OLS = cost(theta_OLS_best, X, y, penalty = "None")
+cost_train_Ridge = cost(theta_Ridge_best, X, y, lmbda=lam, penalty = "L2")
 train_vals = [cost_train_OLS, cost_train_Ridge]
 
 labels = ["OLS", "Ridge"]
@@ -243,7 +259,7 @@ plt.xscale("log")
 plt.yscale("log")
 plt.xlabel(r"$\lambda$")
 plt.ylabel("Cost")
-plt.title("Train vs test error across regularization strength")
+plt.title("Train vs test cost for Ridge")
 plt.legend()
 plt.tight_layout()
 plt.grid()
