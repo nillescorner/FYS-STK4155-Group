@@ -48,7 +48,7 @@ Divided degrees into two for figure to be clearer and not so compact
 n = 100
 lambdas = np.logspace(-8,5,n)
 
-degrees = np.arange(1, 11)
+degrees = np.arange(1, 21)
 mse_polynomials = np.zeros((len(lambdas), len(degrees)))
 spread_polynomials = np.zeros((len(lambdas), len(degrees)))
 

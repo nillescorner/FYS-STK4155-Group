@@ -5,61 +5,37 @@ This python file contains the function(s?) used throughout this project to plot 
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.colors import LogNorm
 
-def plot_regression(x, train_data, test_data=None, titles=None, params=None, ylabel='',
-                 yscale='linear', ncols=None, figsize=None, legend=True):
+
+def plot_heatmap_grid(data, xvals, yvals, title, cbar_label, log=False, cmap='plasma'):
     """
-    LLM Assisted: Claude made the entire function.
+    Function used to plot 2D arrays MSE and R2 score to see how they display how these parameters
+    are affected by number of data points (n) and noise (sigma)
+    
+    The whole function has been made by Claude.
+    Docstring has been manually written, but takes basis in Claude's old docstring which was:
+        'data: 2D array, rows = sigma (y axis), cols = n (x axis)'
 
-    Plot one metric (MSE, R2, theta, ...) across panels — one panel per entry
-    in train_data. Just plots what you give it, nothing else.
+        Params:
+        data(NDArray): 2D array of what parameter we want to analyze
+        xvals (NDarray): array with the number of datapoints
+        yvals (NDArray): array with the noise values
+        title (str): title of the heatmap
+        cbar_label (str): title for the colorbar
+        log (bool): linear og logarithmic axis
+        cmap (str): choose color map
 
-        Parameters:
-            x (array): shared x-axis (e.g. polynomial degrees)
-            train_data (list of arrays): one curve per panel
-            test_data (list of arrays or None): optional second curve per panel
-            titles (list of str, str template, or None):
-                - list of str: one title per panel, used as-is
-                - str with '{}': filled per panel using params[i] (or panel index if params is None)
-                - None: no titles
-            params (list or None): values to fill into a titles template, one per panel
-            ylabel (str): y-axis label (put on first panel only)
-            yscale (str): 'linear' or 'log'
-            ncols (int or None): defaults to len(train_data)
-            figsize (tuple or None): defaults based on ncols
-            legend (bool): whether to show a legend (only makes sense if test_data given)
     """
 
-    if len(train_data) > 0 and np.isscalar(train_data[0]):
-        train_data = [train_data]
-    if test_data is not None and np.isscalar(test_data[0]):
-        test_data = [test_data]
+    fig, ax = plt.subplots(figsize=(7, 5))
+    norm = LogNorm() if log else None
+    im = ax.pcolormesh(xvals, yvals, data, cmap=cmap, norm=norm, shading='nearest')
 
-    ncols = ncols or len(train_data)
-    figsize = figsize or (12, 4)
+    ax.set_xlabel('Number of data points n')
+    ax.set_ylabel(r'Noise $\sigma$')
+    ax.set_title(title)
+    fig.colorbar(im, ax=ax, label=cbar_label)
+    fig.tight_layout()
+    return ax
 
-    if isinstance(titles, str):
-        fill = params if params is not None else range(len(train_data))
-        titles = [titles.format(p) for p in fill]
-
-    fig, ax = plt.subplots(1, ncols, sharey=True, figsize=figsize)
-    ax = np.atleast_1d(ax).flatten()
-
-    for i in range(len(train_data)):
-        ax[i].plot(x, train_data[i], 'o-', label='Training data')
-        if test_data is not None:
-            ax[i].plot(x, test_data[i], 'o-', label='Testing data')
-        if titles is not None:
-            ax[i].set_title(titles[i])
-        ax[i].set_xlabel('Polynomial Degree')
-        ax[i].set_xticks(x)
-        if yscale != 'linear':
-            ax[i].set_yscale(yscale)
-
-    ax[0].set_ylabel(ylabel)
-    if legend and test_data is not None:
-        ax[0].legend()
-
-    plt.tight_layout()
-    plt.show()
-    return fig, ax

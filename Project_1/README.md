@@ -14,3 +14,5 @@ This folder contains the finalized report for Project 1 from our group.
 Test_and_additonal_results:
 This folder contains Tests for some of the main functions in the main code to verfiy their reliability. 
 This folder also contains additional results for some of the parts that were not releveant in the main report. 
+
+Vi må legge til en requirements som inneholder alle biblioteker for dette prosjektet.
