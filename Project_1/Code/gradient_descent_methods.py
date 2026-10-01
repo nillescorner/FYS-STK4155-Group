@@ -7,12 +7,37 @@ import jax.numpy as jnp
 jax.config.update("jax_enable_x64", True)   # 64-bit floats, as in numpy
 
 def closed_form(X, y, lmbda=0.0):
-    """Eq. (3.44) with the 1/n convention of Eq. (3.95): (X^T X + n lambda I)^-1 X^T y."""
+    """
+    Calculates the closed form solution of a given data set.
+    Eq. (3.44) with the 1/n convention of Eq. (3.95): (X^T X + n lambda I)^-1 X^T y.
+
+        Params: 
+        X (NDArray, shape: (n, p)): Design matrix X
+        y (NDArray, shape: (n, )): y
+        lmbda (float): penalty lambda, set to 0.0 for OLS, choose a different value for Ridge or Lasso
+
+        Returns:
+        theta (NDArray, shape: (p, )): theta values
+    """
+
     n, p = X.shape
     return np.linalg.solve(X.T @ X + n * lmbda * np.eye(p), X.T @ y)
 
 def cost(theta, X, y, lmbda=0.0, penalty = "L2"):
-    """OLS cost when lmbda=0, otherwise Ridge cost"""
+    """
+    Calculates the cost function for OLS, Ridge and Lasso regression
+
+        Params:
+        theta (NDArray, shape: (p, )): parameter vector where we will evaluate the cost
+        X (NDArray, shape: (n, p)): Design matrix X
+        y (NDArray, shape: (n, )): y
+        lmbda (float): penalty lambda, set to 0.0 for OLS, choose a different value for Ridge or Lasso
+        penalty (str): the type of penalty, OLS = "None", Ridge = "L2", Lasso = "L1"
+
+        Returns:
+        cost (Float): value of the cost function
+
+    """
     n, p = X.shape
 
     mse = (1.0 / n) * np.sum((X @ theta - y) **2)
@@ -31,18 +56,74 @@ def cost(theta, X, y, lmbda=0.0, penalty = "L2"):
 
     return mse + reg
 
+def hessian_eigs(X, lmbda=0.0):
+    """
+    Eigenvalues of the Hessian (2/n) X^T X + 2 lambda I, Eqs. (4.14) and (4.17).
+
+        Params:
+        X (NDArray, shape: (n, p)): Design matrix X
+        lmbda (float): penalty lambda, set to 0.0 for OLS, choose a different value for Ridge or Lasso
+
+        Returns:
+        eig (NDArray, shape: (p, )): eigen values
+    """
+    n = len(X)
+    return np.linalg.eigvalsh((2.0 / n) * X.T @ X + 2.0 * lmbda * np.eye(X.shape[1]))
+
+
 def cost_history(history, X, y, lmbda=0.0, penalty="L2"):
-    """Cost at every theta in a gradient descent history. Returns an array."""
+    """
+    Saves the cost functon values in a list.
+
+        Params:
+        history (NDArray, shape:(n_steps, p)): sequence of theta values
+        X (NDArray, shape: (n, p)): Design matrix X
+        y (NDArray, shape: (n, )): y
+        lmbda (float): penalty lambda, set to 0.0 for OLS, choose a different value for Ridge or Lasso
+        penalty (str): the type of penalty, OLS = "None", Ridge = "L2", Lasso = "L1"
+
+        Returns:
+        cost history (NDArray, shape:(n_steps, )): list of values of cost function at every theta value in a gradient descent history
+    """
+    
     return np.array([cost(theta, X, y, lmbda, penalty) for theta in history])
 
 
 def gradient(theta, X, y, lmbda=0.0):
-    """Eqs. (4.13) and (4.17): the gradient of (1/n)||X theta - y||^2 + lambda theta^T theta."""
+    """
+    Eqs. (4.13) and (4.17): the gradient of (1/n)||X theta - y||^2 + lambda theta^T theta.
+
+        Params:
+        theta (NDArray, shape: (p, )): parameter vector where we will evaluate the gradient
+        X (NDArray, shape: (n, p)): Design matrix X
+        y (NDArray, shape: (n, )): y
+        lmbda (float): penalty lambda, set to 0.0 for OLS, choose a different value for Ridge or Lasso
+
+        Returns:
+        gradient (NDArray, shape: (p, )): gradient values
+    """
+
     n = len(y)
     return (2.0 / n) * X.T @ (X @ theta - y) + 2.0 * lmbda * theta
 
-def gradient_descent(X, y, gamma, lmbda=0.0, num_iters=10000, tol=1e-8, theta0=None):
-    """Plain gradient descent, Eq. (4.15). Returns the iterates and the number of steps."""
+def gradient_descent(X, y, gamma = 0.1, lmbda=0.0, num_iters=10000, tol=1e-8, theta0=None):
+    """
+    Plain gradient descent, Eq. (4.15). Returns the iterates and the number of steps.
+    
+        Params:
+        X (NDArray, shape: (n, p)): Design matrix X
+        y (NDArray, shape: (n, )): y
+        gamma (float): learning rate gamma
+        lmbda (flaot): penalty lambda, set to 0.0 for OLS, choose a different value for Ridge or Lasso
+        num_iters (int): number of iterations, default: 10000
+        tol (float): tolerence value, code stops if the gradient is under the tolerence, default: 1e-8
+        theta0 (NDArray, shape: (p, )): starting value of theta value, optional, default: None
+
+        Returns: 
+        history (NDArray, shape: (n_steps + 1, p)): the theta value at every step
+        n_steps (int): number of iterations taken
+
+    """
     p = X.shape[1]
     theta = np.zeros(p) if theta0 is None else theta0.copy()
     history = [theta.copy()]

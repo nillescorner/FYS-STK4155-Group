@@ -2,12 +2,40 @@
 
 import numpy as np
 
-#need a soft threshold for the l1 penalty since we cant differentiate at theta = 0
 def soft_threshold(z, gamma):
+    """
+    Need a soft threshold for the l1 penalty since we cant differentiate at theta = 0
+
+        Params:
+        z (NDArray): value to give a soft threshold
+        gamma(float): threshold, shrinkage amount
+
+        Returns:
+        soft threshold (NDArray, same shape as z): the soft threshold values 
+
+    """
+
     return np.sign(z) * np.maximum(np.abs(z) - gamma, 0.0)
 
-"""lasso gradient descent"""
-def lasso_gd(X, y, gamma, lmbda = 0.0, n_iters = 40000, tol = 1e-8, theta0 = None):
+
+def lasso_gd(X, y, gamma, lmbda = 0.0, n_iters = 10000, tol = 1e-8, theta0 = None):
+    """
+    Lasso by gradient descent 
+
+        Params: 
+        X (NDArray, shape: (n, p)): Design matrix X
+        y (NDArray, shape: (n, )): y
+        gamma (float): learning rate gamma
+        lmbda (flaot): penalty lambda, set to 0.0 for OLS, choose a different value for Ridge or Lasso
+        num_iters (int): number of iterations, default: 10000
+        tol (float): tolerence value, code stops if the gradient is under the tolerence, default: 1e-8
+        theta0 (NDArray, shape: (p, )): starting value of theta value, optional, default: None
+
+        Returns: 
+        history (NDArray, shape: (n_steps + 1, p)): the theta value at every step
+        n_steps (int): number of iterations taken
+    """
+
     n, p = X.shape
     theta = np.zeros(p) if theta0 is None else theta0.copy()
     history = [theta.copy()]
@@ -29,14 +57,26 @@ def lasso_gd(X, y, gamma, lmbda = 0.0, n_iters = 40000, tol = 1e-8, theta0 = Non
     return history, t + 1
 
 
-"""Coordinate descent"""
-def lasso_coordinate_descent(X, y, lmbda, n_iter=1000, tol=1e-8):
-    """Lasso by cyclic coordinate descent.
+def lasso_coordinate_descent(X, y, lmbda, n_iter=10000, tol=1e-8):
+    """
+    Lasso by cyclic coordinate descent.
 
     Minimises ||y - X theta||^2 / n + lmbda * ||theta||_1.
     The columns of X are assumed centred and standardised, and no
     intercept is penalised
+
+        Params: 
+        X (NDArray, shape: (n, p)): Design matrix X
+        y (NDArray, shape: (n, )): y
+        lmbda (flaot): penalty lambda, set to 0.0 for OLS, choose a different value for Ridge or Lasso
+        num_iters (int): number of iterations, default: 10000
+        tol (float): tolerence value, code stops if the gradient is under the tolerence, default: 1e-8
+
+        Returns: 
+        history (NDArray, shape: (n_steps + 1, p)): the theta value at every step
+        n_steps (int): number of iterations taken
     """
+
     n, p = X.shape
     theta = np.zeros(p)
     col_norms = np.sum(X**2, axis=0)

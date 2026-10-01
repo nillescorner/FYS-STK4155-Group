@@ -1,4 +1,6 @@
-"""Generalized functions for program"""
+"""
+This python file contains the generalized functions used throughout this project.
+"""
 
 import numpy as np
 from sklearn.model_selection import train_test_split
@@ -7,6 +9,12 @@ from sklearn.model_selection import train_test_split
 def runge(x):
     """
     Runge function given in Project 1 description
+
+        Params:
+            x (any): input data to generate Runge function
+        
+        Returns:
+            Runge function (any) from input x
     """
     return 1.0 / (1.0 + 25.0 * x**2)
 
@@ -20,6 +28,9 @@ def design_matrix(x, degree, intercept=True):
             x (any): input data
             degree (int): degree of polynomial
             intercept
+        
+        Returns:
+            Design matrix X (NDArray)
     """
     start = 0 if intercept else 1
     return np.vstack([x**p for p in range(start, degree + 1)]).T
@@ -34,6 +45,10 @@ def make_data(n=100, noise=0.1, seed=2026):
             n (int): Number of data points (observables)
             noise (float): Noise on the data (sigma)
             seed (int): Use the same seed to generate same numbers 
+        
+        Returns:
+            x (NDArray): input data x
+            y (NDArray): target data/true data
     """
     rng = np.random.default_rng(seed)
     x = np.sort(rng.uniform(-1, 1, n))
@@ -51,10 +66,21 @@ def scaling(X,y, seed=2026, split_data=False):
        Based on p116 fit with intercept from lecturebook
        
            Params:
-               X (NDArray): Design matrix X
-               y (NDArray): y
-               seed (int)
+               X (any): Design matrix X
+               y (any): Target/true data 
+               seed (int): Seed for randomizer
                split_data(bool): set to True if want to split into train and test data_points
+        
+            Returns:
+                If split == True:
+                    X_train_norm (NDArray): Design matrix training data normalized
+                    X_test_norm (NDArray): Design matrix test data normalized
+                    y_train_centered (NDArray): True/target training data centered
+                    y_test_centered (NDArray): True/target test data centered
+                else:
+                    X_norm (NDArray): Design matrix normalized
+                    y_centered (NDArray): True/target data cenetered
+
     """
     if split_data == True:
         X_train, X_test, y_train, y_test = train_test_split(X,y, test_size=0.2, random_state=seed)

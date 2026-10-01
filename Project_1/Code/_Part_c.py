@@ -1,17 +1,38 @@
+""""
+This python file contains the code used to derive the figure to replicate Fig 2.11 Hastie, Tibshirani and Friedman, 
+and the figure showing bias-variance tradeoff of the Runge Function using simpler ordinary least squares. 
+It also shows the figure that compares bias-variance tradeoff of Runge function to test MSE from OLS regression from part a.
+
+x and y arrays were generated using make_data function from general_functions.py, 
+MSE was derived using regression function from regression_methods.py,
+Bias-variance tradeoff was performed using bootstrap_resampling function from resampling_methods.py
+"""
+
 from regression_methods import regression
 from general_functions import make_data,np
-from plots import plot_regression, plt
+from plots import plt
 from resampling_methods import bootstrap_resampling
 
-
-x,y = make_data()   #default data
+x,y = make_data(n=100)   #default data
 
 mindegree, maxdegree = 1, 21
-mse_train_fig, mse_test_fig, *_ = regression(x,y, maxdeg=maxdegree)
-x_axis_20 = np.arange(mindegree,maxdegree)
+mse_train_fig, mse_test_fig, *_ = regression(x,y, mindeg=mindegree, maxdeg=maxdegree)
+degrees = np.arange(mindegree,maxdegree)
 
-plot_regression(x_axis_20, mse_train_fig, mse_test_fig, titles='Recreating Fig 2.11 with OLS using MSE train and test data', yscale='log')
+fig,ax = plt.subplots()
+ax.plot(degrees,mse_train_fig, color="#DD55FF", label='Training data')
+ax.plot(degrees,mse_test_fig, color="#0AC23E", label='Test data')
+ax.set_title('Recreating Figure 2.11 with MSE from OLS Regression')
+ax.set_xlabel('Polynomial degree')
+ax.set_ylabel('MSE')
+#ax.set_yscale('log')
+ax.set_xticks(degrees)
+ax.legend()
+plt.show()
 
+
+
+'''
 error, bias, variance = bootstrap_resampling(x,y,mindegree=mindegree, maxdegree=maxdegree)
 
 fig, ax = plt.subplots(figsize=(8,4))
@@ -41,6 +62,7 @@ ax.set(xticks=x_axis_20)
 plt.show()
 
 
+"""Analysis of bootstrap for different n values"""
 ns = [40,100,400]
 fig, ax = plt.subplots(1,3, figsize=(16, 4), sharey=True)
 ax.flatten()
@@ -60,3 +82,5 @@ ax[0].set_ylabel('MSE Decomposition')
 ax[0].legend()
 plt.tight_layout()
 plt.show()
+
+'''

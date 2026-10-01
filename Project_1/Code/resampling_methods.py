@@ -1,4 +1,6 @@
-"""Resampling techniques: bootstrap and cross-validation"""
+"""
+This python file contains the functions necessary to do the resampling techniques bootstrap and cross-validation
+"""
 
 import numpy as np
 
@@ -12,7 +14,20 @@ from sklearn.utils import resample
 def bootstrap_resampling(x,y, mindegree=1, maxdegree=21, n_bootstraps=100, seed=2026):
     """
 
-    Bootstrap resampling function for simpler ordinary least squares based on p.65
+    Bootstrap resampling function for simpler ordinary least squares based on code from p.65
+
+        Params:
+            x (any): input values
+            y (any): input values
+            mindegree (int): minimum degree
+            maxdegree (int): maximum degree
+            n_bootstraps (int): number of iterations for bootstrap
+            seed (int): randomizer seed
+        
+        Returns:
+            error (list): test error for each polynomial degree
+            bias (list): bias for each polynomial degree
+            variance (list): variance for each polynomial degree
     """                                
     x = x.reshape(-1,1)
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=seed)
@@ -21,13 +36,13 @@ def bootstrap_resampling(x,y, mindegree=1, maxdegree=21, n_bootstraps=100, seed=
 
     for deg in range(mindegree,maxdegree):
         #StandardScaler does X_norm, LinearRegression 
-        model = make_pipeline(PolynomialFeatures(degree=deg, include_bias=False),
+        model = make_pipeline(PolynomialFeatures(degree=deg),
                               StandardScaler(),
                               LinearRegression())
 
         y_pred = np.empty((y_test.shape[0], n_bootstraps))
         for i in range(n_bootstraps):
-            x_, y_ = resample(x_train, y_train, random_state=seed + i)
+            x_, y_ = resample(x_train, y_train, random_state= seed + i)
             y_pred[:, i] = model.fit(x_, y_).predict(x_test).ravel()
 
         error.append(np.mean(np.mean((y_test[:, None] - y_pred)**2, axis=1)))
@@ -41,7 +56,21 @@ def cross_validation(x, y, model='ols', lamba=0.0, mindegree=1, maxdegree=21, k=
     """
     Cross-validation resampling technique. Works for OLS, Ridge, Lasso
 
-    Returns MSE and y_pred
+        Params:
+            x (any): input value
+            y (any): input value
+            model (str): which model used
+            lamba (float): penalty parameter
+            mindegree (int): minimum degree
+            maxdegree (int): maximum degree
+            k (int): number of folds
+            max_iter (int): max iterations for Lasso
+            seed (int): randomizer seed 
+
+        Returns:
+            mse (list): mean squared error per polynomial degree
+            y_pred (dict): dictionary indexed by degrees containing predicted y-values for the model. might be unsuitable to compare scoring metrics based upon y_pred
+
     """
     kFold = KFold(n_splits=k, shuffle=True, random_state=seed)
     mse = []
