@@ -220,8 +220,8 @@ plt.grid(axis='y', alpha=0.3)
 plt.show()
 
 print("Test-set evaluation-------------------------------")
-print(f"OLS:   train={cost_train_OLS:.4e}, test={cost_test_OLS:.4e}, gap={cost_test_OLS - cost_train_OLS:.4e}")
-print(f"Ridge: train={cost_train_Ridge:.4e}, test={cost_test_Ridge:.4e}, gap={cost_test_Ridge - cost_train_Ridge:.4e}")
+print(f"OLS:   train = {cost_train_OLS:.4e}, test = {cost_test_OLS:.4e}, gap = {cost_test_OLS - cost_train_OLS:.4e}")
+print(f"Ridge: train = {cost_train_Ridge:.4e}, test = {cost_test_Ridge:.4e}, gap = {cost_test_Ridge - cost_train_Ridge:.4e}")
 
 
 """For different lambda values, comparing test and train"""
