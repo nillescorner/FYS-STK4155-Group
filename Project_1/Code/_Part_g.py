@@ -20,24 +20,38 @@ theta0 = np.zeros(X.shape[1])
 
 
 """Gradient descent for OLS and Ridge"""
-#the largest safe learning rate for plain gradient descent: gamma < 2 / lambda_max(hessian)
-H_OLS = hessian_eigs(X)
-H_Ridge = hessian_eigs(X, lmbda= lam)
+theta_cf_OLS = closed_form(X, y)
+theta_cf_Ridge = closed_form(X, y, lmbda = lam)
+gamma_list = np.linspace(0.001, 0.4, 40)
 
-gamma_max_OLS = 2.0 / H_OLS.max()
-gamma_max_Ridge = 2.0 / H_Ridge.max()
+diffs_ols, diffs_ridge = [], []
+n_ols, n_ridge = [], []
 
-history_OLS, n_OLS = gradient_descent(X, y, gamma_max_OLS)
-history_Ridge, n_Ridge = gradient_descent(X, y, gamma_max_Ridge, lam)
+for gam in gamma_list:
+    hist_ols, n_steps_ols = gradient_descent(X, y, gam)
+    hist_Ridge, n_steps_Ridge = gradient_descent(X, y, gam, lam)
+
+    diffs_ols.append(np.linalg.norm(hist_ols[-1] - theta_cf_OLS))
+    diffs_ridge.append(np.linalg.norm(hist_Ridge[-1] - theta_cf_Ridge))
+    n_ols.append(n_steps_ols)
+    n_ridge.append(n_steps_Ridge)
+
+n_min_OLS = np.argmin(n_ols)
+n_min_Ridge = np.argmin(n_ridge)
+
+best_gamma_OLS = gamma_list[n_min_OLS]
+best_gamma_Ridge = gamma_list[n_min_Ridge]
+
+history_OLS, n_OLS = gradient_descent(X, y, best_gamma_OLS)
+history_Ridge, n_Ridge = gradient_descent(X, y, best_gamma_Ridge, lam)
 theta_OLS = history_OLS[-1]
 theta_Ridge = history_Ridge[-1]
-
-"""Cost of OLS and Ridge, for each theta value"""
 cost_OLS = cost_history(history_OLS, X, y, penalty="None")
 cost_Ridge = cost_history(history_Ridge, X, y, lmbda=lam, penalty="L2")
 
+
 """Gradient descent"""
-history_lasso_gd, n_lasso_gd = lasso_gd(X, y, gamma_max_Ridge, lmbda = lam)
+history_lasso_gd, n_lasso_gd = lasso_gd(X, y, best_gamma_Ridge, lmbda = lam)
 
 """Coordinate descent"""
 history_lasso_cd, n_lasso_cd = lasso_coordinate_descent(X, y, lmbda=lam)
@@ -87,9 +101,7 @@ plt.show()
 n_train = X.shape[0]
 n_test = X_test.shape[0]
 
-# Final theta for each method
 theta_lasso_gd = history_lasso_gd[-1]
-theta_lasso_cd = history_lasso_cd[-1]
 
 methods = {
     "OLS": theta_OLS,
