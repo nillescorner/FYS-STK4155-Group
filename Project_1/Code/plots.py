@@ -39,3 +39,48 @@ def plot_heatmap_grid(data, xvals, yvals, title, cbar_label, log=False, cmap='pl
     fig.tight_layout()
     return ax
 
+def plot_theta(thetas, x_values, xlabel='Polynomial Degree',
+               title='Coefficients', max_coeffs=None, intercept=True,
+               log=False, linthresh=1e-1, xlog=False, ax=None):
+    """
+    Plots each coefficient theta_j as a function of x_values
+    (polynomial degree, lambda, etc.).
+
+    thetas     : list of arrays, one theta per x value (different lengths allowed)
+    x_values   : degrees or lambdas, same length as thetas
+    xlabel     : label for the x-axis
+    max_coeffs : plot only the first max_coeffs coefficients (None = all)
+    intercept  : True if theta[0] is the intercept (labels start at theta_0)
+    log        : symlog y-scale
+    xlog       : log x-scale (use for lambdas)
+    ax         : existing axis to draw on (None = new figure)
+    """
+    max_len = max(len(np.ravel(t)) for t in thetas)
+    theta_matrix = np.full((len(thetas), max_len), np.nan)
+    for i, theta in enumerate(thetas):
+        theta = np.ravel(theta)
+        theta_matrix[i, :len(theta)] = theta
+
+    n_plot = max_len if max_coeffs is None else min(max_coeffs, max_len)
+    start = 0 if intercept else 1
+
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(8, 5))
+    else:
+        fig = ax.figure
+
+    for j in range(n_plot):
+        ax.plot(x_values, theta_matrix[:, j], label=rf'$\theta_{{{j + start}}}$')
+
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(r'$\theta_j$')
+    ax.set_title(title)
+    if xlog:
+        ax.set_xscale('log')
+    else:
+        ax.set_xticks(x_values)
+    if log:
+        ax.set_yscale('symlog', linthresh=linthresh)
+    ax.legend(ncol=2, fontsize=8, bbox_to_anchor=(1.02, 1), loc='upper left')
+    fig.tight_layout()
+    return fig, ax
