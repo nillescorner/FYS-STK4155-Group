@@ -4,7 +4,7 @@ from gradient_descent_methods import *
 
 import matplotlib.pyplot as plt
 from sklearn.linear_model import Lasso
-
+from plots import plot_theta
 
 degree = 5
 lam = 1e-2
@@ -125,6 +125,8 @@ plt.show()
 lambdas = np.logspace(-4, 2, 30)
 train_errs_Ridge, test_errs_Ridge = [], []
 train_errs_Lasso, test_errs_Lasso = [], []
+thetas_Ridge, thetas_Lasso = [], []          
+
 
 for lm in lambdas:
     H_Ridge_lm = hessian_eigs(X, lmbda= lm)
@@ -141,6 +143,9 @@ for lm in lambdas:
     train_errs_Lasso.append(cost(theta_lm_Lasso, X, y, lmbda=lm, penalty = "L1"))
     test_errs_Lasso.append(cost(theta_lm_Lasso, X_test, y_test, lmbda=lm, penalty = "L1"))
 
+    thetas_Ridge.append(theta_lm_Ridge)     
+    thetas_Lasso.append(theta_lm_Lasso)     
+
 plt.plot(lambdas, train_errs_Ridge, label="Train Ridge", color = "#F433DA")
 plt.plot(lambdas, test_errs_Ridge, label="Test Ridge", color = "#F433DA", linestyle = "--")
 plt.plot(lambdas, train_errs_Lasso, label="Train Lasso", color = "#7326E6")
@@ -154,4 +159,11 @@ plt.legend()
 plt.tight_layout()
 plt.grid()
 #plt.savefig("Part_g_cost_lambda_testtrain.png")
+plt.show()
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(13, 5), sharey=True)
+
+plot_theta(thetas_Ridge, lambdas, xlabel=r'$\lambda$', title='Ridge coefficients', intercept=False, xlog=True, ax=ax1)
+plot_theta(thetas_Lasso, lambdas, xlabel=r'$\lambda$', title='Lasso coefficients', intercept=False, xlog=True, ax=ax2)
+#plt.savefig("Part_g_theta_lambda.png")
 plt.show()

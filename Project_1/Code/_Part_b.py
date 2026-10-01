@@ -8,51 +8,56 @@ MSE, R2 score and Theta were derived using regression function from regression_m
 The plots were generated using plot_regression function from plots.py
 """
 
-from general_functions import make_data, np
+from general_functions import make_data, np, design_matrix, scaling
 from regression_methods import regression
-from plots import plt, plot_heatmap_grid
+from plots import plt, plot_heatmap_grid, plot_theta
 
-"""Analysis for different values of penalty parameter lambda. Thus default data and fixed degree"""
-
+"""Analysis for different values of penalty parameter lambda. Let's Ridge's lambda do the model selection"""
 x,y = make_data()   #default arrays
-degree = 8
+degree = 15
 mse_train_R, mse_test_R, = [], []
 r2_train_R, r2_test_R = [], [] 
-theta_per_degree = []
+thetas_R = []
 
-lambas = np.logspace(-8,4, 1000)
+#Needed to calculate the degree of freedom
+X = design_matrix(x, degree=degree)
+X_train, X_test, y_train, y_test = scaling(X, y, seed=2026, split_data=True)
+s = np.linalg.svd(X_train, compute_uv=False)
+dfs = []
+
+lambas = np.logspace(-8,4, 61)
 for lamba in lambas:
     mse_train, mse_test, r2_train, r2_test, thetas = regression(x,y, lamba, mindeg=degree, maxdeg=degree+1)
-    mse_train_R.append(mse_train);  mse_test_R.append(mse_test)
-    r2_train_R.append(r2_train);    r2_test_R.append(r2_test)
+    mse_train_R.append(mse_train[0]);  mse_test_R.append(mse_test[0])
+    r2_train_R.append(r2_train[0]);    r2_test_R.append(r2_test[0])
+    thetas_R.append(thetas)
+    dfs.append(np.sum(s**2 / (s**2 + lamba)))
 
-    theta_per_degree.append([np.linalg.norm(theta) for theta in thetas])
-
-best_index = np.argmin(mse_test_R)
+best_index = int(np.argmin(mse_test_R))
 best_lambda = lambas[best_index]
 
-fig, ax = plt.subplots(nrows=3, sharex=True, figsize=(6.4,7))
+fig, ax = plt.subplots(nrows=2, sharex=True, figsize=(7,7))
 fig.suptitle(fr'Analysis on how different $\lambda$s affect degree {degree} polynomial')
 ax[0].plot(lambas, mse_train_R, color="#DD55FF", label='Training data')
 ax[0].plot(lambas, mse_test_R, color="#0AC23E", label='Test data')
-ax[0].axvline(x=best_lambda, color="#696968", ls='--', label=rf'Best $\lambda$ = {best_lambda:.4f}')
+ax[0].axvline(x=best_lambda, color="#696968", ls='--', label=rf'Best $\lambda$ = {best_lambda:.3f}, df = {dfs[best_index]:.2f}')
 ax[0].legend()
-ax[0].set_ylabel('Mean Squared error')
+ax[0].set_ylabel('MSE')
+ax[0].set_yscale('log')
 
 ax[1].plot(lambas, r2_train_R, color="#DD55FF", label='Training data')
 ax[1].plot(lambas, r2_test_R, color="#0AC23E", label='Test data')
 ax[1].axvline(x=best_lambda, color="#696968", ls='--', label=rf'Best $\lambda$ = {best_lambda}')
-ax[1].set_ylabel('R2 score')
+ax[1].set_xscale('log')
+ax[1].set_xlabel(r'$\lambda$')
+plt.show()
 
-ax[2].plot(lambas, theta_per_degree, color="#9A2E2D")
-ax[2].set_ylabel(r'$\|\theta\|_2$')
-ax[2].set_yscale('log')
-ax[2].set_xscale('log')
-ax[2].set_xlabel(r'$\lambda$')
+plot_theta(thetas_R, lambas, xlabel=r'$\lambda$',
+           title='Ridge coefficients vs $\\lambda$ (degree 15)',
+           xlog=True, log=False)
 plt.show()
 
 #For further analysis that depends on other parameters then lambda, we use the best lambda derived above.
-
 """Analysis of how the MSE, R2 score and Theta are affected by polynomial degree"""
 mindegree, maxdegree = 1, 16
 degrees = np.arange(mindegree, maxdegree)
@@ -63,25 +68,23 @@ theta_per_degree = [np.linalg.norm(theta) for theta in thetas]
 best_index = np.argmin(mse_test)
 best_degree = degrees[best_index]
 
-fig, ax = plt.subplots(nrows=3, sharex=True, figsize=(6.4,7))
+fig, ax = plt.subplots(nrows=2, sharex=True, figsize=(7,7))
 fig.suptitle(fr'Parameters dependence on Polynomial degree for Ridge with $\lambda$ = {best_lambda:.4f}')
 ax[0].plot(degrees, mse_train, color="#DD55FF", label='Training data')
 ax[0].plot(degrees, mse_test, color="#0AC23E", label='Test data')
 ax[0].axvline(x=best_degree, color="#696968", ls='--', label=rf'Best degree = {best_degree}')
 ax[0].legend()
-ax[0].set_ylabel('Mean Squared error')
+ax[0].set_yscale('log')
+ax[0].set_ylabel('MSE')
 
 ax[1].plot(degrees, r2_train, color="#DD55FF", label='Training data')
 ax[1].plot(degrees, r2_test, color="#0AC23E", label='Test data')
 ax[1].axvline(x=best_degree, color="#696968", ls='--', label=rf'Best degree = {best_lambda}')
-ax[1].set_ylabel('R2 score')
-
-ax[2].plot(degrees, theta_per_degree, color="#9A2E2D")
-ax[2].set_ylabel(r'$\|\theta\|_2$')
-ax[2].set_yscale('log')
-ax[2].set_xlabel('Polynomial Degree')
-ax[2].set_xticks(degrees)
+ax[1].set_ylabel('R2')
+ax[1].set_xlabel('Polynomial Degree')
+ax[1].set_xticks(degrees)
 plt.show()
+
 
 """Analysis of how different amounts of data points (n) and different noise (sigma) affect affect
 MSE and R2 score for the test data at the best degree"""
