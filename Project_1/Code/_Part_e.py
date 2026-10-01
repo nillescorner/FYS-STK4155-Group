@@ -46,11 +46,11 @@ print(f'Ridge:  |AD - analytical| = {np.max(np.abs(gradient_Ridge_jax - gradient
 
 """Gradient descent for OLS and Ridge"""
 #the largest safe learning rate for plain gradient descent: gamma < 2 / lambda_max(hessian)
-H_OLS = 2.0 / len(y) * X.T @ X
-H_Ridge = 2.0 / len(y) * X.T @ X + 2 * lam * np.eye(X.shape[1])
+H_OLS = hessian_eigs(X)
+H_Ridge = hessian_eigs(X, lmbda= lam)
 
-gamma_max_OLS = 2.0 / np.linalg.eigvalsh(H_OLS).max()
-gamma_max_Ridge = 2.0 / np.linalg.eigvalsh(H_Ridge).max()
+gamma_max_OLS = 2.0 / H_OLS.max()
+gamma_max_Ridge = 2.0 / H_Ridge.max()
 
 history_OLS, n_OLS = gradient_descent(X, y, gamma_max_OLS)
 history_Ridge, n_Ridge = gradient_descent(X, y, gamma_max_Ridge, lam)
@@ -220,7 +220,7 @@ plt.show()
 
 print("Test-set evaluation-------------------------------")
 print(f"OLS:   train={cost_train_OLS:.4e}, test={cost_test_OLS:.4e}, gap={cost_test_OLS - cost_train_OLS:.4e}")
-print(f"Ridge: train={cost_train_Ridge:.4e}, test={cost_test_Ridge:.4e}, gap={cost_test_Ridge - cost_test_Ridge:.4e}")
+print(f"Ridge: train={cost_train_Ridge:.4e}, test={cost_test_Ridge:.4e}, gap={cost_test_Ridge - cost_train_Ridge:.4e}")
 
 
 """For different lambda values, comparing test and train"""
@@ -228,9 +228,13 @@ lambdas = np.logspace(-4, 2, 30)
 train_errs, test_errs = [], []
 
 for lm in lambdas:
-    theta_lm = closed_form(X, y, lmbda=lm)
-    train_errs.append(cost(theta_lm, X, y))
-    test_errs.append(cost(theta_lm, X_test, y_test))
+    H_Ridge_lm = hessian_eigs(X, lmbda= lm)
+    gamma_max_Ridge_lm = 2.0 / H_Ridge_lm.max()
+
+    history_Ridge, n_Ridge = gradient_descent(X, y, gamma_max_Ridge_lm, lm)
+    theta_lm = history_Ridge[-1]
+    train_errs.append(cost(theta_lm, X, y, lmbda=lm))
+    test_errs.append(cost(theta_lm, X_test, y_test, lmbda=lm))
 
 plt.plot(lambdas, train_errs, label="Train MSE", color = "#F433DA")
 plt.plot(lambdas, test_errs, label="Test MSE", color = "#7326E6")

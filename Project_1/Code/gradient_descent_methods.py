@@ -18,8 +18,8 @@ def closed_form(X, y, lmbda=0.0):
 
         Returns:
         theta (NDArray, shape: (p, )): theta values
-
     """
+
     n, p = X.shape
     return np.linalg.solve(X.T @ X + n * lmbda * np.eye(p), X.T @ y)
 
@@ -55,6 +55,21 @@ def cost(theta, X, y, lmbda=0.0, penalty = "L2"):
         reg = 0.0
 
     return mse + reg
+
+def hessian_eigs(X, lmbda=0.0):
+    """
+    Eigenvalues of the Hessian (2/n) X^T X + 2 lambda I, Eqs. (4.14) and (4.17).
+
+        Params:
+        X (NDArray, shape: (n, p)): Design matrix X
+        lmbda (float): penalty lambda, set to 0.0 for OLS, choose a different value for Ridge or Lasso
+
+        Returns:
+        eig (NDArray, shape: (p, )): eigen values
+    """
+    n = len(X)
+    return np.linalg.eigvalsh((2.0 / n) * X.T @ X + 2.0 * lmbda * np.eye(X.shape[1]))
+
 
 def cost_history(history, X, y, lmbda=0.0, penalty="L2"):
     """
