@@ -147,8 +147,8 @@ theta_Ridge_best = history_Ridge_best[-1]
 cost_OLS_best = cost_history(history_OLS_best, X, y, penalty="None")
 cost_Ridge_best = cost_history(history_Ridge_best, X, y, lmbda=lam, penalty="L2")
 
-print(f'OLS:    theta: |gamma_max - gamma_best| = {np.max(np.abs(theta_OLS - theta_OLS_best)):.3e}, converges after {n_OLS_best} iterations')
-print(f'Ridge:  theta: |gamma_max - gamma_best| = {np.max(np.abs(theta_Ridge - theta_Ridge_best)):.3e}, converges after {n_Ridge_best} iterations')
+print(f'OLS:    |analytical_best - closed form| = {np.max(np.abs(theta_OLS_best - theta_cf_OLS)):.3e}, converges after {n_OLS_best} iterations')
+print(f'Ridge:  |analytical_best - closed form| = {np.max(np.abs(theta_Ridge_best - theta_cf_Ridge)):.3e}, converges after {n_Ridge_best} iterations')
 
 """Plot of cost vs iteration"""
 plt.plot(cost_OLS_best, label = "OLS, $\\gamma_{best}$", color = "#F433DA")
