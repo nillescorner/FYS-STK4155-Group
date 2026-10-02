@@ -83,7 +83,7 @@ ax.set_title('Shrinkage through SVD')
 ax.set_xlabel(r'Singular value $\sigma_i$')
 ax.set_ylabel(r'Shrinkage $\sigma_i^2$/($\sigma_i^2 + \lambda$)')
 ax.legend()
-#plt.savefig(FIG_DIR / "Part_b_SVD_shrinkage.png")
+plt.savefig(FIG_DIR / "Part_b_SVD_shrinkage.pdf")
 plt.show()
 
 #For further analysis that depends on other parameters then lambda, we use the best lambda derived above.
@@ -122,12 +122,12 @@ ax[2].set_ylabel(r'$\|\theta\|_2$')
 ax[2].set_xlabel('Polynomial Degree')
 ax[2].set_xticks(degrees)
 ax[2].legend()
-#plt.savefig(FIG_DIR / "Part_b_Parms_vs_degree.png")
-#plt.show()
+plt.savefig(FIG_DIR / "Part_b_Parms_vs_degree.pdf")
+plt.show()
 
 plot_theta(thetas, degrees, title=r'Coefficients of $\theta_j$ for Ridge over polynomial degree')
-#plt.savefig(FIG_DIR / "Part_b_theta_vs_degree.png")
-#plt.show()
+plt.savefig(FIG_DIR / "Part_b_theta_vs_degree.pdf")
+plt.show()
 
 
 """Analysis of how different amounts of data points (n) and different noise (sigma) affect affect
@@ -154,7 +154,7 @@ axes[0].set_xlabel('')  #they share x axis so xlabel on top plot is empty
 
 fig.suptitle(rf'Dependence on data points and noise at degree {best_degree} for Ridge with $\lambda$ = {best_lambda:.3f}')
 fig.tight_layout()
-#plt.savefig(FIG_DIR / "Part_b_heatmaps_MSE_R2.png")
-#plt.show()
+plt.savefig(FIG_DIR / "Part_b_heatmaps_MSE_R2.pdf")
+plt.show()
 
 

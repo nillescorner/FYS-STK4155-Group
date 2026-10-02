@@ -32,7 +32,7 @@ def bootstrap_resampling(x,y, mindegree=1, maxdegree=21, n_bootstraps=100, seed=
     x = x.reshape(-1,1)
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=seed)
 
-    error, bias, variance = [], [], []
+    error, bias, variance, = [], [], []
 
     for deg in range(mindegree,maxdegree):
         #StandardScaler does X_norm, LinearRegression 

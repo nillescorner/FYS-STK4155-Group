@@ -48,12 +48,12 @@ ax[2].set_ylabel(r'$\|\theta\|_2$')
 ax[2].set_xlabel('Polynomial Degree')
 ax[2].legend()
 ax[2].set_xticks(degrees)
-#plt.savefig(FIG_DIR / "Part_a_Paramets_over_polynomial.png")
-#plt.show()
+plt.savefig(FIG_DIR / "Part_a_Paramets_over_polynomial.pdf")
+plt.show()
 
 plot_theta(thetas, degrees, title=r'Coefficients $\theta_j$ for OLS over polynomial degree')
-#plt.savefig(FIG_DIR / "Part_a_theta_coeff")
-#plt.show()
+plt.savefig(FIG_DIR / "Part_a_theta_coeff.pdf")
+plt.show()
 
 """Analysis of how different amounts of data points (n) and different noise (sigma) affect
 MSE and R2 score for the test data at the best degree"""
@@ -82,5 +82,5 @@ axes[0].set_xlabel('')  #they share x axis so xlabel on top plot is empty
 
 fig.suptitle(f'Dependence on data points and noise at degree {best_degree} for OLS')
 fig.tight_layout()
-#plt.savefig(FIG_DIR / "Part_a_heatmaps_MSE_R2.png")
-#plt.show()
+plt.savefig(FIG_DIR / "Part_a_heatmaps_MSE_R2.pdf")
+plt.show()
