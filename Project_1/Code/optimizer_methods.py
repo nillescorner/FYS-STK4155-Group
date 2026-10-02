@@ -104,9 +104,11 @@ def optimise(grad, optimizer, num_iters):
     return run
 
 
-def funct_comparison(Xj, yj, FUNCT_RUNS, num_iters=1000, lmbda=0.0):
+def funct_comparison(X, y, FUNCT_RUNS, num_iters=1000, lmbda=0.0):
     """Compare optimizers using excess cost."""
 
+    Xj = jnp.array(X)
+    yj = jnp.array(y)
 
     n, p = Xj.shape
     theta_cf = jnp.linalg.solve(

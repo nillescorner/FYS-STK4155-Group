@@ -86,7 +86,7 @@ def scaling(X,y, seed=2026, split_data=False):
         X_train, X_test, y_train, y_test = train_test_split(X,y, test_size=0.2, random_state=seed)
 
         X_train_mean, X_train_std = X_train.mean(axis=0), X_train.std(axis=0)
-        X_train_std[X_train_std == 0.0 ] = 1.0  #leave constant columns alone
+        X_train_std = np.where(X_train_std == 0, 1, X_train_std ) #leave constant columns alone
         y_train_mean = y_train.mean()
 
         #Scaling training data
@@ -101,7 +101,7 @@ def scaling(X,y, seed=2026, split_data=False):
     
     else:
         X_mean, X_std = X.mean(axis=0), X.std(axis=0)
-        X_std[X_std == 0.0] = 1.0           #leave constant columns alone
+        X_std = np.where(X_std == 0, 1, X_std ) #leave constant columns alone
         y_mean = y.mean()
 
         #Scale data
