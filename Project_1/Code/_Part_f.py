@@ -58,4 +58,4 @@ for ax, tolerance in zip(axs,tolerances):
 axs[-1].set_xlabel(r"learning rate $\gamma$"); 
 fig.suptitle("Needed iterations for convergence of different machine learning methods based on learning rates")
 ax.legend(fontsize=8); fig.tight_layout()
-plt.savefig(f"figs/Part_f_MethodsComparison_withLearningRate.pdf")
+plt.savefig(FIG_DIR / "Part_f_MethodsComparison_withLearningRate.png")

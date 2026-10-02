@@ -8,8 +8,8 @@ import numpy as np
 from matplotlib.colors import LogNorm
 
 
-def plot_heatmap_grid(data, xvals, yvals, title, cbar_label, xlabel='Number of data points n', 
-                      ylabel=r'Noise $\sigma$', ylog=False, log=False, cmap='plasma'):
+def plot_heatmap_grid(data, xvals, yvals, title, cbar_label, xlabel='Number of data points n',
+                      ylabel=r'Noise $\sigma$', ylog=False, log=False, cmap='plasma', ax=None):
     """
     LLM Assisted. 
 
@@ -30,8 +30,11 @@ def plot_heatmap_grid(data, xvals, yvals, title, cbar_label, xlabel='Number of d
         cmap (str): choose color map
 
     """
-
-    fig, ax = plt.subplots(figsize=(7, 5))
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(7, 5))
+    else:
+        fig = ax.figure
+        
     norm = LogNorm() if log else None
     im = ax.pcolormesh(xvals, yvals, data, cmap=cmap, norm=norm, shading='nearest')
     if ylog:
@@ -40,7 +43,6 @@ def plot_heatmap_grid(data, xvals, yvals, title, cbar_label, xlabel='Number of d
     ax.set_ylabel(ylabel)
     ax.set_title(title)
     fig.colorbar(im, ax=ax, label=cbar_label)
-    fig.tight_layout()
     return ax
 
 def plot_theta(thetas, x_values, xlabel='Polynomial Degree',

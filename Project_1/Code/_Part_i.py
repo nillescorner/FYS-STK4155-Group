@@ -1,4 +1,4 @@
-from general_functions import make_data, np, scaling
+from general_functions import make_data, np, scaling, FIG_DIR
 from resampling_methods import bootstrap_resampling, cross_validation
 from regression_methods import regression
 import matplotlib.pyplot as plt
@@ -62,7 +62,7 @@ axs[0].set_yscale('log')
 fig.supxlabel('Polynomial Degree')
 fig.supylabel('MSE')
 axs[0].legend()
-plt.savefig(fname="figs/Part_i_MSE_comparison_lams.pdf")
+plt.savefig(FIG_DIR/"Part_i_MSE_comparison_lams.pdf")
 plt.show()
 
 
@@ -73,5 +73,5 @@ plt.show()
 # ax.set_yscale('log')
 # ax.grid(which='both', alpha= 0.5)
 # ax.legend()
-# plt.savefig(fname="figs/Part_i_MSE_comparison.pdf")
+# plt.savefig(FIG_DIR/"Part_i_MSE_comparison.pdf")
 # plt.show()

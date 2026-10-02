@@ -39,8 +39,7 @@ def bootstrap_resampling(x,y, mindegree=1, maxdegree=21, n_bootstraps=100, seed=
     else:
         x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=seed)
 
-
-    error, bias, variance = [], [], []
+    error, bias, variance, = [], [], []
 
     for deg in range(mindegree,maxdegree):
         if best_estimator == None:
@@ -119,7 +118,7 @@ def kfold_resampling(x,y,k, best_est, mindegree=1, maxdegree=21, n_resamples=100
 
 
 
-def cross_validation(x, y, model='OLS', lamba=0.0, mindegree=1, maxdegree=21, k=5, max_iter=10000, seed=2026):
+def cross_validation(x, y, model='OLS', lamba=0.0, mindegree=1, maxdegree=21, k=5, max_iter=10000, seed=2026, return_std=False):
     """
     Cross-validation resampling technique. Works for OLS, Ridge, Lasso
 
@@ -133,6 +132,7 @@ def cross_validation(x, y, model='OLS', lamba=0.0, mindegree=1, maxdegree=21, k=
             k (int): number of folds
             max_iter (int): max iterations for Lasso
             seed (int): randomizer seed 
+            return_std (bool): if True it returns the std over the kfolds
 
         Returns:
             mse (list): mean squared error per polynomial degree
@@ -140,7 +140,7 @@ def cross_validation(x, y, model='OLS', lamba=0.0, mindegree=1, maxdegree=21, k=
 
     """
     kFold = KFold(n_splits=k, shuffle=True, random_state=seed)
-    mse = []
+    mse, std = [], []
 
     x = x.reshape(-1, 1)     #reshape x into a 2 dim column vector
 
@@ -159,9 +159,12 @@ def cross_validation(x, y, model='OLS', lamba=0.0, mindegree=1, maxdegree=21, k=
         scores = -cross_val_score(pipe, x, y, cv=kFold,
                                      scoring='neg_mean_squared_error')
         mse.append(np.mean(scores))
-    
-    return mse
+        std.append(np.std(scores))
 
+    output = [mse]
+    if return_std:
+        output.append(std)
+    return output[0] if len(output) == 1 else tuple(output)
 
 def grid_search(x_train, x_test, y_train, k,  param_grid = {"ridge__alpha": np.logspace(-5, 3, 30)},
                   model='Ridge', lamba=0.0,
