@@ -13,18 +13,21 @@ from regression_methods import regression
 from plots import plt, plot_heatmap_grid, plot_theta
 
 """Analysis for different values of penalty parameter lambda. Let's Ridge's lambda do the model selection"""
-x,y = make_data()   #default arrays
+sigma = 0.1
+x,y = make_data(n=100, noise=sigma)   #default data
+
 degree = 15
 mse_train_R, mse_test_R, = [], []
 r2_train_R, r2_test_R = [], [] 
 thetas_R = []
 
-#Needed to calculate the degree of freedom, intercept = False to avoid 
+#Needed to calculate the degree of freedom, set intercept = False to avoid 0 column
 X = design_matrix(x, degree=degree, intercept=False)
 X_train, X_test, y_train, y_test = scaling(X, y, seed=2026, split_data=True)
 s = np.linalg.svd(X_train, compute_uv=False)
 dfs = []
 
+#Based on w35tuesday.ipynb to calculate degrees of freedom
 lambas = np.logspace(-8,4, 61)
 for lamba in lambas:
     mse_train, mse_test, r2_train, r2_test, thetas = regression(x,y, lamba, mindeg=degree, maxdeg=degree+1)
@@ -35,30 +38,36 @@ for lamba in lambas:
 
 theta_norm_R = [np.linalg.norm(theta) for theta in thetas_R]
 
+#Find best degree given lambda
 best_index = int(np.argmin(mse_test_R))
 best_lambda = lambas[best_index]
+best_mse = mse_test_R[best_index]
+print(f'Best MSE Ridge as function of lambda {best_mse:.4f}')
 
 fig, ax = plt.subplots(nrows=3, sharex=True, figsize=(7,7))
 fig.suptitle(fr'Analysis on how different $\lambda$s affect degree {degree} polynomial')
 ax[0].plot(lambas, mse_train_R, color="#DD55FF", label='Training data')
 ax[0].plot(lambas, mse_test_R, color="#0AC23E", label='Test data')
-ax[0].axvline(x=best_lambda, color="#696968", ls='--', label=rf'Best $\lambda$ = {best_lambda:.3f}, df = {dfs[best_index]:.2f}')
-ax[0].legend()
+ax[0].axvline(x=best_lambda, color="grey", ls='--', label=rf'Best $\lambda$ = {best_lambda:.3f}, df = {dfs[best_index]:.2f}')
+ax[0].axhline(sigma**2, color='black', ls=':', label=rf'Noise floor $\sigma^2$ = {sigma**2:.3g}')
+ax[0].legend(loc='lower right', bbox_to_anchor=(1.1, -0.15))
 ax[0].set_ylabel('MSE')
 ax[0].set_yscale('log')
 
 ax[1].plot(lambas, r2_train_R, color="#DD55FF")
 ax[1].plot(lambas, r2_test_R, color="#0AC23E")
-ax[1].axvline(x=best_lambda, color="#696968", ls='--')
+ax[1].axvline(x=best_lambda, color="grey", ls='--')
 
 ax[2].plot(lambas, theta_norm_R, color="#001E43", label=r'$\|\theta\|_2$')
 ax[2].set_xscale('log')
 ax[2].set_yscale('log')
 ax[2].set_ylabel(r'$\|\theta\|_2$')
 ax[2].legend()
+#plt.savefig(FIG_DIR / "Part_b_Params_vs_lambda.png")
 plt.show()
 
-plot_theta(thetas_R, lambas, xlabel=r'$\lambda$', title='Coefficients for $\\theta_j$ over $\\lambda$ at degree 15', xlog=True, log=False)
+plot_theta(thetas_R, lambas, xlabel=r'$\lambda$', title=rf'Ridge coefficients $\theta_j$ over $\lambda$ at degree {degree}', xlog=True, log=False)
+#plt.savefig(FIG_DIR / "Part_b_theta_vs_lambda.png")
 plt.show()
 
 """Shrinkage, through the SVD"""
@@ -74,6 +83,7 @@ ax.set_title('Shrinkage through SVD')
 ax.set_xlabel(r'Singular value $\sigma_i$')
 ax.set_ylabel(r'Shrinkage $\sigma_i^2$/($\sigma_i^2 + \lambda$)')
 ax.legend()
+#plt.savefig(FIG_DIR / "Part_b_SVD_shrinkage.png")
 plt.show()
 
 #For further analysis that depends on other parameters then lambda, we use the best lambda derived above.
@@ -85,14 +95,19 @@ mse_train, mse_test, r2_train, r2_test, thetas = regression(x,y,lamba=best_lambd
 
 best_index = np.argmin(mse_test)
 best_degree = degrees[best_index]
+best_mse = mse_test[best_index]
+print(f'Best MSE Ridge as function of polynomial {best_mse:.4f}')
+
+
 theta_norms_R = [np.linalg.norm(theta) for theta in thetas]
 
 fig, ax = plt.subplots(nrows=3, sharex=True, figsize=(7,7))
 fig.suptitle(fr'Parameters dependence on Polynomial degree for Ridge with $\lambda$ = {best_lambda:.3f}')
 ax[0].plot(degrees, mse_train, color='#8C564B', label='Training data')
 ax[0].plot(degrees, mse_test, color='#0AC23E', label='Test data')
-ax[0].axvline(x=best_degree, color='#696968', ls='--', label=rf'Best degree = {best_degree}')
-ax[0].legend()
+ax[0].axvline(x=best_degree, color='grey', ls='--', label=rf'Best degree = {best_degree}')
+ax[0].axhline(sigma**2, color='black', ls=':', label=rf'Noise floor $\sigma^2$ = {sigma**2:.3g}')
+ax[0].legend(loc='upper right', bbox_to_anchor=(1.05, 1.15))
 ax[0].set_yscale('log')
 ax[0].set_ylabel('MSE')
 
@@ -107,10 +122,12 @@ ax[2].set_ylabel(r'$\|\theta\|_2$')
 ax[2].set_xlabel('Polynomial Degree')
 ax[2].set_xticks(degrees)
 ax[2].legend()
-plt.show()
+#plt.savefig(FIG_DIR / "Part_b_Parms_vs_degree.png")
+#plt.show()
 
 plot_theta(thetas, degrees, title=r'Coefficients of $\theta_j$ for Ridge over polynomial degree')
-plt.show()
+#plt.savefig(FIG_DIR / "Part_b_theta_vs_degree.png")
+#plt.show()
 
 
 """Analysis of how different amounts of data points (n) and different noise (sigma) affect affect
@@ -129,8 +146,15 @@ for i, sigma in enumerate(sigmas):
         mse_test[i,j] = mse_te[0]
         r2_test[i,j] = r2_te[0]        
 
-plot_heatmap_grid(mse_test, ns, sigmas, rf'Test MSE with Ridge at degree {best_degree} for $\lambda$ = {best_lambda:.3f}', 'MSE', log=True)
-plot_heatmap_grid(r2_test, ns, sigmas, rf'Test R2 Score with Ridge at degree {best_degree} for $\lambda$ = {best_lambda:.3f}', 'R2', log=False)
+fig, axes = plt.subplots(2, 1, figsize=(7, 7), sharex=True)
+
+plot_heatmap_grid(mse_test, ns, sigmas, 'Test MSE', 'MSE', log=True, ax=axes[0])
+plot_heatmap_grid(r2_test, ns, sigmas, r'Test $R^2$', r'$R^2$', log=False, ax=axes[1])
+axes[0].set_xlabel('')  #they share x axis so xlabel on top plot is empty
+
+fig.suptitle(rf'Dependence on data points and noise at degree {best_degree} for Ridge with $\lambda$ = {best_lambda:.3f}')
+fig.tight_layout()
+#plt.savefig(FIG_DIR / "Part_b_heatmaps_MSE_R2.png")
 #plt.show()
 
 

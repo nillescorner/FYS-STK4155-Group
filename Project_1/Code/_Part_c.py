@@ -35,12 +35,14 @@ error, bias, variance = np.asarray(bootstrap_resampling(x,y,mindegree=mindegree,
 
 best_index = np.argmin(error)
 best_degree = degrees[best_index]
+best_mse = error[best_index]
+print(f'Best mse for bootstrap {best_mse:.4f}')
 
-fig, ax = plt.subplots(figsize=(8,4))
+fig, ax = plt.subplots()
 ax.plot(degrees, error, 'o-', color='#FF2B2B', label='Test MSE Bootstrap')
 ax.plot(degrees, bias, 's-', color='#4E20A1', label=r'Bias$^2$ (+ $\sigma^2$) Bootstrap')
 ax.plot(degrees, variance, 'd-', color='#FFB107', label='Variance Bootstrap')
-ax.plot(degrees, mse_test_fig, 'o-', color='#0AC23E', label='Testing MSE OLS' )
+ax.plot(degrees, mse_test_fig, 'o-', color='#0AC23E', label='Test MSE OLS' )
 ax.axvline(x=best_degree, color="#696968", ls='--', label=rf'Best degree Bootstrap = {best_degree}')
 
 ax.set_yscale('log')
