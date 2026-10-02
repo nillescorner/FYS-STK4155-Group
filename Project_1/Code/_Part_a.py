@@ -8,7 +8,7 @@ MSE, R2 score and Theta were derived using regression function from regression_m
 The plots were generated using plot_heatmap_grid function from plots.py
 """
 
-from general_functions import make_data, np
+from general_functions import make_data, np, FIG_DIR
 from regression_methods import regression
 from plots import plot_heatmap_grid, plt, plot_theta
 
@@ -27,9 +27,9 @@ fig, ax = plt.subplots(nrows=3, sharex=True, figsize=(7,7))
 fig.suptitle('Parameters dependence on Polynomial degree for OLS')
 ax[0].plot(degrees, mse_train, color='#8C564B', label='Training data')
 ax[0].plot(degrees, mse_test, color='#0AC23E', label='Test data')
-ax[0].axvline(x=best_degree, color='#696968', ls='--', label=f'Best degree = {best_degree}')
+ax[0].axvline(x=best_degree, color='grey', ls='--', label=f'Best degree = {best_degree}')
 ax[0].axhline(sigma**2, color='black', ls=':', label=rf'Noise floor $\sigma^2$ = {sigma**2:.3f}')
-ax[0].legend()
+ax[0].legend(loc='upper right', bbox_to_anchor=(1.02, 1))
 ax[0].set_ylabel('MSE')
 ax[0].set_yscale('log')
 
@@ -47,7 +47,7 @@ ax[2].legend()
 ax[2].set_xticks(degrees)
 plt.show()
 
-plot_theta(thetas, degrees, title=r'Coefficients of $\theta_j$ for Ridge over polynomial degree')
+plot_theta(thetas, degrees, title=r'Coefficients $\theta_j$ for OLS over polynomial degree')
 plt.show()
 
 """Analysis of how different amounts of data points (n) and different noise (sigma) affect
@@ -69,7 +69,13 @@ for i, sigma in enumerate(sigmas):
         mse_test[i,j] = mse_te[0]
         r2_test[i,j] = r2_te[0]        
 
-plot_heatmap_grid(mse_test, ns, sigmas, f'Test MSE using OLS at degree {best_degree}', 'MSE', log=True)
-plot_heatmap_grid(r2_test, ns, sigmas, f'Test R2 Score using OLS at degree {best_degree}', 'R2', log=False)
-#plt.show()
+fig, axes = plt.subplots(2, 1, figsize=(7, 7), sharex=True)
 
+plot_heatmap_grid(mse_test, ns, sigmas, 'Test MSE', 'MSE', log=True, ax=axes[0])
+plot_heatmap_grid(r2_test, ns, sigmas, r'Test $R^2$', r'$R^2$', log=False, ax=axes[1])
+axes[0].set_xlabel('')   # avoid repeating the y-label
+
+fig.suptitle(f'OLS at degree {best_degree}')
+fig.tight_layout()
+plt.savefig(FIG_DIR / "Part_a_heatmaps_MSE_R2.png")
+#plt.show()
