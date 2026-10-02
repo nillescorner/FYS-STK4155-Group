@@ -8,7 +8,6 @@ Level 	Label 	      Meaning
 3 	    Skeleton 	    LLM generated the overall structure of a script/class; you filled in domain-specific logic
 4 	    Substantial 	LLM wrote the majority of a file; you adapted, tested, and commented it
 
-
 TEMP
 
 1. Debugging code
@@ -32,24 +31,24 @@ TEMP
 
 **Ours**
 
-| File / notebook             | LLM level | Description |
-| --------------------------- | --------- | ----------- |
-| _Part_a.py                  |           |             |
-| _Part_b.py                  |           |             |
-| _Part_c.py                  |           |             |
-| _Part_d.py                  |           |             |
-| _Part_e.py                  |           |             |
-| _Part_f.py                  |           |             |
-| _Part_g.py                  |           |             |
-| _Part_h.py                  |           |             |
-| _Part_i.py                  |           |             |
-| general_functions.py        |           |             |
-| gradient_descent_methods.py |           |             |
-| lasso_methods.py            |           |             |
-| optimizer_methods.py        |           |             |
-| plots.py                    |           |             |
-| regression_methods.py       |           |             |
-| resampling_methods.py       |           |             |
-| sgd_methods.py              |           |             |
-|                             |           |             |
-|                             |           |             |
+| File / notebook             | LLM level | Description                                                                                                                                                                                                                                                                                   |
+| --------------------------- | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| _Part_a.py                  |           |                                                                                                                                                                                                                                                                                               |
+| _Part_b.py                  |           |                                                                                                                                                                                                                                                                                               |
+| _Part_c.py                  |           |                                                                                                                                                                                                                                                                                               |
+| _Part_d.py                  |           |                                                                                                                                                                                                                                                                                               |
+| _Part_e.py                  |           |                                                                                                                                                                                                                                                                                               |
+| _Part_f.py                  |           |                                                                                                                                                                                                                                                                                               |
+| _Part_g.py                  |           |                                                                                                                                                                                                                                                                                               |
+| _Part_h.py                  |           |                                                                                                                                                                                                                                                                                               |
+| _Part_i.py                  |           |                                                                                                                                                                                                                                                                                               |
+| general_functions.py        |           |                                                                                                                                                                                                                                                                                               |
+| gradient_descent_methods.py |           |                                                                                                                                                                                                                                                                                               |
+| lasso_methods.py            |           |                                                                                                                                                                                                                                                                                               |
+| optimizer_methods.py        |           |                                                                                                                                                                                                                                                                                               |
+| plots.py                    |           |                                                                                                                                                                                                                                                                                               |
+| regression_methods.py       | 2         | K-fold resampling algorithm mostly LLM made<br />Implemented test_wholedataset function in bootstrap_resampling based on selfmade version in kfold_resampling<br />Ran through for glaring bugs<br />Assisted with doc strings for train_through_gridsearchCV, mse_decomposer and grid_search |
+| resampling_methods.py       |           |                                                                                                                                                                                                                                                                                               |
+| sgd_methods.py              |           |                                                                                                                                                                                                                                                                                               |
+|                             |           |                                                                                                                                                                                                                                                                                               |
+|                             |           |                                                                                                                                                                                                                                                                                               |
