@@ -43,7 +43,7 @@ plt.yscale("log")
 plt.legend()
 plt.grid()
 plt.tight_layout()
-#plt.savefig("Part_h_cost_learningrates.png")
+plt.savefig(FIG_DIR/"Part_h_cost_learningrates.png")
 plt.show()
 
 
@@ -64,31 +64,9 @@ plt.xlabel("Iterations")
 plt.xscale("log")
 plt.yscale("log")
 plt.legend()
-plt.show()  
-
-
-"""Studying varying epoch number"""
-
-ns = np.arange(1, 101)
-
-distances_n = []
-for n in ns:
-    hist = sgd(X, y, n_epochs=n, batch_size=5, gamma=gamma_max_OLS)
-    d = np.linalg.norm(hist - theta_cf, axis=1)
-    distances_n.append(d)
-    
-final_distances_n = [d[-1] for d in distances_n]
-  
-"""Plot of distance from closed form solution as function of epochs"""
-plt.plot(ns, final_distances_n, "o-", label = "sgd - cf")
-#plt.axvline(gamma_max_OLS, color = 'C0', linestyle = "--", alpha = 0.7, label = f'OLS limit $\\gamma$ = {gamma_max_OLS:.3f}')
-plt.xlabel("Number of epochs n")
-plt.ylabel(r"$\|\boldsymbol{\theta}_{sgd}-\hat{\boldsymbol{\theta}}_{cf}\|_2$")
-plt.yscale("log")
-#plt.xscale("log")
 plt.grid()
 plt.tight_layout()
-#plt.savefig("Part_h_cost_batchsize.png")
+plt.savefig(FIG_DIR/"Part_h_cost_batchsize.png")
 plt.show()
 
 
@@ -137,7 +115,7 @@ plt.yscale("log")
 plt.grid()
 plt.tight_layout()
 plt.legend()
-#plt.savefig("Part_h_sgd_OLS_Ridge.png")
+plt.savefig(FIG_DIR/"Part_h_sgd_OLS_Ridge.png")
 plt.show()
 
 
@@ -178,5 +156,5 @@ plt.title("Train vs. test MSE: OLS, Ridge, Lasso")
 plt.legend()
 plt.grid(axis='y', alpha=0.3)
 plt.tight_layout()
-#plt.savefig("Part_h_hist_testtrain_sgd.png")
+plt.savefig(FIG_DIR/"Part_h_hist_testtrain_sgd.png")
 plt.show()

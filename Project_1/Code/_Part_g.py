@@ -92,7 +92,7 @@ plt.xscale("log")
 #plt.yscale("log")
 plt.grid()
 plt.legend()
-#plt.savefig("Part_g_convergence_Lasso.png")
+plt.savefig(FIG_DIR/"Part_g_convergence_Lasso.png")
 plt.show()
 
 
@@ -130,7 +130,7 @@ plt.title("Train vs. test MSE: OLS, Ridge, Lasso")
 plt.legend()
 plt.grid(axis='y', alpha=0.3)
 plt.tight_layout()
-#plt.savefig("Part_g_hist_testtrain_lasso.png")
+plt.savefig(FIG_DIR/"Part_g_hist_testtrain_lasso.png")
 plt.show()
 
 """For different lambda values, comparing test and train"""
@@ -170,13 +170,12 @@ plt.title("Train vs test error across regularization strength")
 plt.legend()
 plt.tight_layout()
 plt.grid()
-#plt.savefig("Part_g_cost_lambda_testtrain.png")
+plt.savefig(FIG_DIR/"Part_g_cost_lambda_testtrain.png")
 plt.show()
 
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(13, 5), sharey=True)
+fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(7, 7), sharey=True)
 
 plot_theta(thetas_Ridge, lambdas, xlabel=r'$\lambda$', title='Ridge coefficients', intercept=False, xlog=True, ax=ax1)
 plot_theta(thetas_Lasso, lambdas, xlabel=r'$\lambda$', title='Lasso coefficients', intercept=False, xlog=True, ax=ax2)
-#plt.savefig("Part_g_theta_lambda.png")
-#plt.savefig(fname = "figs/Part_g_CostVsIterationLasso_GradientAndCoordinateDescent.pdf") what is this??
+plt.savefig(FIG_DIR/"Part_g_theta_lambda.png")
 plt.show()

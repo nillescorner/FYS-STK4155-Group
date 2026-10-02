@@ -82,7 +82,7 @@ plt.legend()
 plt.yscale("log")
 plt.xscale("log")
 plt.grid()
-#plt.savefig("Part_e_convergence_gd_cf.png")
+plt.savefig(FIG_DIR / "Part_e_convergence_gd_cf.png")
 plt.show()
 
 
@@ -117,7 +117,7 @@ plt.yscale('log')
 plt.title('Final parameter error vs. learning rate')
 plt.legend()
 plt.grid(True, which='both', alpha=0.3)
-#plt.savefig("Part_e_error_learningrate.png")
+plt.savefig(FIG_DIR / "Part_e_error_learningrate.png")
 plt.show()
 
 
@@ -133,7 +133,7 @@ plt.yscale('log')
 plt.title('Iterations vs. learning rate')
 plt.legend()
 plt.grid(True, which='both', alpha=0.3)
-#plt.savefig("Part_e_iteration_learningrate.png")
+plt.savefig(FIG_DIR / "Part_e_iteration_learningrate.png")
 plt.show()
 
 
@@ -162,7 +162,7 @@ plt.xscale("log")
 #plt.yscale("log")
 plt.grid()
 plt.legend()
-#plt.savefig("Part_e_costfunc_OLS_Ridge.png")
+plt.savefig(FIG_DIR / "Part_e_costfunc_OLS_Ridge.png")
 plt.show()
 
 
@@ -186,7 +186,7 @@ plt.legend()
 plt.yscale("log")
 #plt.xscale("log")
 plt.grid()
-#plt.savefig("Part_e_convergence_learningrate_OLS.png")
+plt.savefig(FIG_DIR / "Part_e_convergence_learningrate_OLS.png")
 plt.show()
 
 """Ridge"""
@@ -206,7 +206,7 @@ plt.legend()
 plt.yscale("log")
 #plt.xscale("log")
 plt.grid()
-#plt.savefig("Part_e_convergence_learningrate_Ridge.png")
+plt.savefig(FIG_DIR / "Part_e_convergence_learningrate_Ridge.png")
 plt.show()
 
 
@@ -232,7 +232,7 @@ plt.ylabel("MSE")
 plt.title("Train vs. test MSE: OLS vs Ridge")
 plt.legend()
 plt.grid(axis='y', alpha=0.3)
-#plt.savefig("Part_e_hist_testtrain.png")
+plt.savefig(FIG_DIR / "Part_e_hist_testtrain.png")
 plt.show()
 
 print("Test-set evaluation-------------------------------")
@@ -263,6 +263,6 @@ plt.title("Train vs test cost for Ridge")
 plt.legend()
 plt.tight_layout()
 plt.grid()
-#plt.savefig("Part_e_cost_lambda_testtrain.png")
+plt.savefig(FIG_DIR / "Part_e_cost_lambda_testtrain.png")
 plt.show()
 

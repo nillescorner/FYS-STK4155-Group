@@ -4,7 +4,11 @@ This python file contains the generalized functions used throughout this project
 
 import numpy as np
 from sklearn.model_selection import train_test_split
+from pathlib import Path
 
+
+FIG_DIR = Path(__file__).resolve().parent.parent / "figs"   # Project_1/figs
+FIG_DIR.mkdir(exist_ok=True)
 
 def runge(x):
     """
@@ -109,3 +113,4 @@ def scaling(X,y, seed=2026, split_data=False):
         y_centered = y - y_mean
 
         return X_norm, y_centered
+
