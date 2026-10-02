@@ -10,7 +10,7 @@ Test MSE and Ridge regression as a function of both polynomial degree and penalt
 """
 
 
-from general_functions import make_data, np
+from general_functions import make_data, np, FIG_DIR
 from resampling_methods import bootstrap_resampling, cross_validation
 from regression_methods import regression
 from plots import plt

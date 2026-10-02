@@ -8,7 +8,7 @@ MSE, R2 score and Theta were derived using regression function from regression_m
 The plots were generated using plot_heatmap_grid and plot_theta functions from plots.py
 """
 
-from general_functions import make_data, np, design_matrix, scaling
+from general_functions import make_data, np, design_matrix, scaling, FIG_DIR
 from regression_methods import regression
 from plots import plt, plot_heatmap_grid, plot_theta
 

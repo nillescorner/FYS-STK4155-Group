@@ -9,7 +9,7 @@ Bias-variance tradeoff was performed using bootstrap_resampling function from re
 """
 
 from regression_methods import regression
-from general_functions import make_data,np
+from general_functions import make_data,np, FIG_DIR
 from plots import plt
 from resampling_methods import bootstrap_resampling
 
