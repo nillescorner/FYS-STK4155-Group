@@ -1,7 +1,0 @@
-Hey! Lets use this txt-file to keep track of what we're using generative AI for!
-
-1. Debugging code
-2. Clarifying consepts to better understanding
-3. Plotting function for regression
-4. Understading the regulatization parameter lambda when comparing estimators (GPT-5.6 Terra)
-5. Improved reusability of calculated arrays with copilot GPT.6 Luna
