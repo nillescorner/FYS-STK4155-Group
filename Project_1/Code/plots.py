@@ -8,8 +8,11 @@ import numpy as np
 from matplotlib.colors import LogNorm
 
 
-def plot_heatmap_grid(data, xvals, yvals, title, cbar_label, log=False, cmap='plasma'):
+def plot_heatmap_grid(data, xvals, yvals, title, cbar_label, xlabel='Number of data points n', 
+                      ylabel=r'Noise $\sigma$', ylog=False, log=False, cmap='plasma'):
     """
+    LLM Assisted. 
+
     Function used to plot 2D arrays MSE and R2 score to see how they display how these parameters
     are affected by number of data points (n) and noise (sigma)
     
@@ -31,9 +34,10 @@ def plot_heatmap_grid(data, xvals, yvals, title, cbar_label, log=False, cmap='pl
     fig, ax = plt.subplots(figsize=(7, 5))
     norm = LogNorm() if log else None
     im = ax.pcolormesh(xvals, yvals, data, cmap=cmap, norm=norm, shading='nearest')
-
-    ax.set_xlabel('Number of data points n')
-    ax.set_ylabel(r'Noise $\sigma$')
+    if ylog:
+        ax.set_yscale('log')
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
     ax.set_title(title)
     fig.colorbar(im, ax=ax, label=cbar_label)
     fig.tight_layout()
@@ -43,6 +47,8 @@ def plot_theta(thetas, x_values, xlabel='Polynomial Degree',
                title='Coefficients', max_coeffs=None, intercept=True,
                log=False, linthresh=1e-1, xlog=False, ax=None):
     """
+    LLM Assisted.
+    
     Plots each coefficient theta_j as a function of x_values
     (polynomial degree, lambda, etc.).
 
@@ -69,8 +75,9 @@ def plot_theta(thetas, x_values, xlabel='Polynomial Degree',
     else:
         fig = ax.figure
 
+    colors = plt.cm.viridis(np.linspace(0, 1, n_plot))   # one distinct color per coefficient
     for j in range(n_plot):
-        ax.plot(x_values, theta_matrix[:, j], label=rf'$\theta_{{{j + start}}}$')
+        ax.plot(x_values, theta_matrix[:, j], color=colors[j], label=rf'$\theta_{{{j + start}}}$')
 
     ax.set_xlabel(xlabel)
     ax.set_ylabel(r'$\theta_j$')

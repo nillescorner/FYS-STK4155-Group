@@ -42,7 +42,7 @@ def bootstrap_resampling(x,y, mindegree=1, maxdegree=21, n_bootstraps=100, seed=
 
         y_pred = np.empty((y_test.shape[0], n_bootstraps))
         for i in range(n_bootstraps):
-            x_, y_ = resample(x_train, y_train, random_state= seed + i)
+            x_, y_ = resample(x_train, y_train, random_state= i+1)
             y_pred[:, i] = model.fit(x_, y_).predict(x_test).ravel()
 
         error.append(np.mean(np.mean((y_test[:, None] - y_pred)**2, axis=1)))

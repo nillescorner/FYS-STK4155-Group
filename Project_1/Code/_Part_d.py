@@ -13,12 +13,11 @@ Test MSE and Ridge regression as a function of both polynomial degree and penalt
 from general_functions import make_data, np
 from resampling_methods import bootstrap_resampling, cross_validation
 from regression_methods import regression
-import matplotlib.pyplot as plt
-
+from plots import plt
 
 """Analysis of the MSE as a function of polynomial degree for OLS and Bootstrap, Cross-validation"""
 mindegree, maxdegree = 1, 21
-x_axis_20 = np.arange(mindegree, maxdegree)
+degrees = np.arange(mindegree, maxdegree)
 x,y = make_data()   #default data
 
 mse_cv_5_OLS = cross_validation(x,y, model='OLS',k=5)
@@ -29,13 +28,13 @@ bootstrap_compare, *_ = bootstrap_resampling(x, y, maxdegree=maxdegree)
 #Compare bootstrap, OLS and CV
 fig, ax = plt.subplots(figsize=(8,4))
 ax.set_title('Mean squared error comparison different methods')
-ax.plot(x_axis_20, mse_test_ols_compare, 'o-',label='OLS MSE')
-ax.plot(x_axis_20, bootstrap_compare, 'o-', label='Bootstrap')
-ax.plot(x_axis_20, mse_cv_5_OLS, 's-', label='Cross value MSE kfold=5')
-ax.plot(x_axis_20,mse_cv_10_OLS, 'd-', label='Cross value MSE kfold=10')
+ax.plot(degrees, mse_test_ols_compare, 'o-', color='#F433DA',label='OLS MSE')
+ax.plot(degrees, bootstrap_compare, 'o-',  color='#FF2B2B', label='Bootstrap')
+ax.plot(degrees, mse_cv_5_OLS, 's-', color="#0F2D9A",label='Cross value MSE kfold=5')
+ax.plot(degrees,mse_cv_10_OLS, 'd-', color="#FB7100", label='Cross value MSE kfold=10')
 ax.set_xlabel('Polynomial Degree')
 ax.set_ylabel('MSE')
-ax.set_xticks(x_axis_20)
+ax.set_xticks(degrees)
 ax.set_yscale('log')
 ax.legend()
 plt.savefig(fname="figs/Part_d_MSE_comparison.pdf")
@@ -47,9 +46,10 @@ Analysis of Ridge Regression for Cross-validation method over different lambdas
 Divided degrees into two for figure to be clearer and not so compact
 """
 n = 100
-lambdas = np.logspace(-8,5,n)
-
+lambdas = np.logspace(-8,4,n)
 degrees = np.arange(1, 21)
+
+mse_ridge = {}
 mse_polynomials = np.zeros((len(lambdas), len(degrees)))
 spread_polynomials = np.zeros((len(lambdas), len(degrees)))
 
