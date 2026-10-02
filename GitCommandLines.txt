@@ -3,7 +3,7 @@ I had some help from GPT-5.6, but might as well organize everything somewhere. F
 
 "mybranch" is just whatever branch you're working on
 
------> Pulling from one branch into main:
+-----> Pulling from main into "mybranch":
 
 #check that your own work is committed
 git status 
@@ -21,3 +21,13 @@ git merge origin/main
 
 git switch mybranch
 git commit --amend -m "[Add some message here]"
+
+
+-----> Merging "mybranch" into main:
+
+# when already merged in from main into your own branch and it is safe to push into main
+
+git switch mybranch
+git push
+
+# finish off merge on github site

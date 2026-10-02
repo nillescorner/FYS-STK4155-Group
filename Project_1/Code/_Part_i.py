@@ -14,6 +14,14 @@ Splitting into test and train sets, where test it 0.2 of the total data
 
 lambdas when comparing the estimators is not directly equivalent works differently for each model
 
+Basic outline of this part:
+
+1. Do CV for model and penalty and deg for full visualisation of interplay
+2. Do GridSearch to find best suited hyperparams (in our case the penalty lambda)
+3. Retrain models per degree per best suited hypermaram
+4. Do MSE-decomposition to get a full picture on the bias-variance tradeoff
+
+
 """
 
 # mse_cv_5_OLS = cross_validation(x,y, model='OLS',k=5)
