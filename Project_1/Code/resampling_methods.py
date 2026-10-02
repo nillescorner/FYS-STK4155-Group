@@ -52,7 +52,7 @@ def bootstrap_resampling(x,y, mindegree=1, maxdegree=21, n_bootstraps=100, seed=
     return error, bias, variance
 
 
-def cross_validation(x, y, model='ols', lamba=0.0, mindegree=1, maxdegree=21, k=5, max_iter=10000, seed=2026, ypred = False):
+def cross_validation(x, y, model='ols', lamba=0.0, mindegree=1, maxdegree=21, k=5, max_iter=10000, seed=2026, ypred = False, return_std=False):
     """
     Cross-validation resampling technique. Works for OLS, Ridge, Lasso
 
@@ -66,6 +66,7 @@ def cross_validation(x, y, model='ols', lamba=0.0, mindegree=1, maxdegree=21, k=
             k (int): number of folds
             max_iter (int): max iterations for Lasso
             seed (int): randomizer seed 
+            return_std (bool): if True it returns the std over the kfolds
 
         Returns:
             mse (list): mean squared error per polynomial degree
@@ -73,7 +74,7 @@ def cross_validation(x, y, model='ols', lamba=0.0, mindegree=1, maxdegree=21, k=
 
     """
     kFold = KFold(n_splits=k, shuffle=True, random_state=seed)
-    mse = []
+    mse, std = [], []
 
     x = x.reshape(-1, 1)     #reshape x into a 2 dim column vector
     y_pred = { }
@@ -92,16 +93,18 @@ def cross_validation(x, y, model='ols', lamba=0.0, mindegree=1, maxdegree=21, k=
         scores = -cross_val_score(pipe, x, y, cv=kFold,
                                      scoring='neg_mean_squared_error')
         mse.append(np.mean(scores))
+        std.append(np.std(scores))
 
         if ypred:
             #prediction of y, obtained by cross validation. use for visualisation purposes
             y_pred[deg] = cross_val_predict(pipe, x, y, cv=kFold)
-    
-    if ypred:
-        return mse, y_pred
-    else:
-        return mse
 
+    output = [mse]
+    if ypred:
+        output.append(y_pred)
+    if return_std:
+        output.append(std)
+    return output[0] if len(output) == 1 else tuple(output)
 
 def grid_search(x_train, x_test, y_train, k,  param_grid = {"ridge__alpha": np.logspace(-5, 3, 30)},
                   model='Ridge', lamba=0.0,
