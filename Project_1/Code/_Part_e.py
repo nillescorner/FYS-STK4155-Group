@@ -1,4 +1,3 @@
-
 """
 The file conatins the code used to derive the plots of the cost functions for OLS and Ridge regression,
 and has been compared to the closed form solutions of the different methods. The difference between 
@@ -8,11 +7,12 @@ The convergence of the different methods for different learning rates is also pl
 The gradients were found using the gradient function, and the gradient descent found from the gradient_descent
 function from gradient_descent_methods.py. The closed form solution is found using the closed_form function
 also from gradient_descent_methods.py.
-
 """
+
 from general_functions import *
 from regression_methods import *
 from gradient_descent_methods import *
+from colors import *
 
 from jax import grad
 import matplotlib.pyplot as plt

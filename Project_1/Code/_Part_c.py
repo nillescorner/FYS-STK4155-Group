@@ -1,4 +1,4 @@
-""""
+"""
 This python file contains the code used to derive the figure to replicate Fig 2.11 Hastie, Tibshirani and Friedman, 
 and the figure showing bias-variance tradeoff of the Runge Function using simpler ordinary least squares and compares it 
  to test MSE from OLS regression from part a.

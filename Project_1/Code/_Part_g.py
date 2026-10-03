@@ -1,6 +1,28 @@
+"""
+The file contains the code used to derive the plots of the cost functions for OLS, Ridge and Lasso
+regression, and compares the gradient descent solutions to the closed-form solutions for OLS and
+Ridge, and to SciKit-learn's solution for SKLearn for Lasso (as it doesnt have a closed form solution). 
+For Lasso regression, both gradient and coordinate descent have been implemented, and then compared to
+each other and to SKLearn values.
+
+The best learning rate for OLS and Ridge gradient descent is found by sweeping over a range of learning 
+rates and selecting the one requiring the fewest iterations to converge to the closed-form solution. 
+This best learning rate is then used for the main comparisons.
+
+Train and test MSE are compared across OLS, Ridge and Lasso to study generalisation, and a sweep
+over regularisation strength lambda is used to study the bias-variance trade-off for Ridge and
+Lasso, including how the individual coefficients shrink as lambda increases.
+
+The gradients were found using the gradient function, and gradient descent using the gradient_descent
+function, both from gradient_descent_methods.py. The closed form solution is found using the
+closed_form function, also from gradient_descent_methods.py. The Lasso-specific functions lasso_gd
+and lasso_coordinate_descent are from lasso_methods.py.
+"""
+
 from lasso_methods import *
 from general_functions import *
 from gradient_descent_methods import *
+from colors import *
 
 import matplotlib.pyplot as plt
 from sklearn.linear_model import Lasso

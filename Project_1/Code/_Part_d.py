@@ -1,4 +1,4 @@
-""""
+"""
 This python file contains the code used to derive the figure that shows MSE for OLS analysis
 from parts a and c as a function of polynomial degree against the MSE from cross-validation for k = 5 and k = 10.
 It also derives the plot for Ridge regression that shows different polynomial degrees are affected by penalty parameter lambda 

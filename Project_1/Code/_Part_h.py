@@ -1,7 +1,30 @@
+"""
+The file contains the code used to derive the plots of the cost functions for OLS and Ridge
+regression using stochastic gradient descent (SGD), and compares SGD to plain (full-batch)
+gradient descent for both methods.
+
+The effect of learning rate and minibatch size on SGD's convergence is first studied separately,
+sweeping over several learning rates (at a fixed batch size) and several batch sizes (at a fixed
+learning rate), and plotting the resulting cost curves.
+
+Plain gradient descent and SGD are then compared directly for OLS and Ridge, using the theoretical
+maximum stable learning rate for gradient descent, to see how closely SGD's solution and iteration
+count match those of full-batch gradient descent.
+
+Train and test MSE are compared across the four resulting solutions (OLS and Ridge, each via GD and
+SGD) to study generalisation.
+
+The gradients were found using the gradient function, and gradient descent using the gradient_descent
+function, both from gradient_descent_methods.py. The closed form solution is found using the
+closed_form function, also from gradient_descent_methods.py. Minibatch stochastic gradient descent
+is implemented in the sgd function, from sgd_methods.py.
+"""
+
 from sgd_methods import *
 from general_functions import *
 from gradient_descent_methods import *
 from lasso_methods import * 
+from colors import *
 
 import matplotlib.pyplot as plt
 
