@@ -73,8 +73,8 @@ dist_OLS = np.linalg.norm(history_OLS - theta_cf_OLS, axis = 1)
 dist_Ridge = np.linalg.norm(history_Ridge - theta_cf_Ridge, axis = 1)
 
 """Plot of difference between analytical and closed form"""
-plt.plot(dist_OLS, label = "OLS", color = "#F433DA")
-plt.plot(dist_Ridge, label = "Ridge", color = "#7326E6")
+plt.plot(dist_OLS, label="OLS", color=OLS)
+plt.plot(dist_Ridge, label="Ridge", color=RIDGE)
 plt.xlabel("Iteration")
 plt.ylabel(r"$\|\boldsymbol{\theta}_{gd}-\hat{\boldsymbol{\theta}}_{cf}\|_2$")
 plt.title("Convergense of gradient descent against closed form")
@@ -82,8 +82,9 @@ plt.legend()
 plt.yscale("log")
 plt.xscale("log")
 plt.grid()
-plt.savefig(FIG_DIR / "Part_e_convergence_gd_cf.png")
+#plt.savefig(FIG_DIR / "Part_e_convergence_gd_cf.png")
 plt.show()
+
 
 
 """Study of different learning rates"""
@@ -107,33 +108,33 @@ n_min_Ridge = np.argmin(n_ridge)
 best_gamma_OLS = gamma_list[n_min_OLS]
 best_gamma_Ridge = gamma_list[n_min_Ridge]
 
-plt.plot(gamma_list, diffs_ols, label='OLS', color = "#F433DA")
-plt.plot(gamma_list, diffs_ridge, label='Ridge', color = "#7326E6")
-plt.axvline(gamma_max_OLS, color = "#F433DA", linestyle = "--", alpha = 0.5, label = f'OLS limit $\\gamma$ = {gamma_max_OLS:.3f}')
-plt.axvline(gamma_max_Ridge, color = "#7326E6", linestyle = "--", alpha = 0.5, label = f'Ridge limit $\\gamma$ = {gamma_max_Ridge:.3f}')
+plt.plot(gamma_list, diffs_ols, label='OLS', color=OLS)
+plt.plot(gamma_list, diffs_ridge, label='Ridge', color=RIDGE)
+plt.axvline(gamma_max_OLS, color=OLS, linestyle="--", alpha=0.5, label=f'OLS limit $\\gamma$ = {gamma_max_OLS:.3f}')
+plt.axvline(gamma_max_Ridge, color=RIDGE, linestyle="--", alpha=0.5, label=f'Ridge limit $\\gamma$ = {gamma_max_Ridge:.3f}')
 plt.xlabel('Learning rate (γ)')
 plt.ylabel(r'$\|\theta_{gd} - \theta_{cf}\|$')
-plt.yscale('log')  
+plt.yscale('log')
 plt.title('Final parameter error vs. learning rate')
 plt.legend()
 plt.grid(True, which='both', alpha=0.3)
-plt.savefig(FIG_DIR / "Part_e_error_learningrate.png")
+#plt.savefig(FIG_DIR / "Part_e_error_learningrate.png")
 plt.show()
 
 
-plt.plot(gamma_list, n_ols, label='OLS', color = "#F433DA")
-plt.plot(gamma_list, n_ridge, label='Ridge', color = "#7326E6")
-plt.axvline(gamma_max_OLS, color = "#F433DA", linestyle = "--", alpha = 0.5, label = f'OLS limit $\\gamma$ = {gamma_max_OLS:.3f}')
-plt.axvline(gamma_max_Ridge, color = "#7326E6", linestyle = "--", alpha = 0.5, label = f'Ridge limit $\\gamma$ = {gamma_max_Ridge:.3f}')
-plt.axvline(best_gamma_OLS, color = 'grey', linestyle = "--", alpha = 0.7, label = f'OLS min iteration $\\gamma$ = {best_gamma_OLS:.3f}')
-plt.axvline(best_gamma_Ridge, color = 'grey', linestyle = "--", alpha = 0.7, label = f'Ridge min iterations $\\gamma$ = {best_gamma_Ridge:.3f}')
+plt.plot(gamma_list, n_ols, label='OLS', color=OLS)
+plt.plot(gamma_list, n_ridge, label='Ridge', color=RIDGE)
+plt.axvline(gamma_max_OLS, color=OLS, linestyle="--", alpha=0.5, label=f'OLS limit $\\gamma$ = {gamma_max_OLS:.3f}')
+plt.axvline(gamma_max_Ridge, color=RIDGE, linestyle="--", alpha=0.5, label=f'Ridge limit $\\gamma$ = {gamma_max_Ridge:.3f}')
+plt.axvline(best_gamma_OLS, color=BEST, linestyle="--", alpha=0.7, label=f'OLS min iteration $\\gamma$ = {best_gamma_OLS:.3f}')
+plt.axvline(best_gamma_Ridge, color=BEST, linestyle="--", alpha=0.7, label=f'Ridge min iterations $\\gamma$ = {best_gamma_Ridge:.3f}')
 plt.xlabel('Learning rate (γ)')
 plt.ylabel('Iterations')
-plt.yscale('log')  
+plt.yscale('log')
 plt.title('Iterations vs. learning rate')
 plt.legend()
 plt.grid(True, which='both', alpha=0.3)
-plt.savefig(FIG_DIR / "Part_e_iteration_learningrate.png")
+#plt.savefig(FIG_DIR / "Part_e_iteration_learningrate.png")
 plt.show()
 
 
@@ -151,18 +152,18 @@ print(f'OLS:    |analytical_best - closed form| = {np.max(np.abs(theta_OLS_best 
 print(f'Ridge:  |analytical_best - closed form| = {np.max(np.abs(theta_Ridge_best - theta_cf_Ridge)):.3e}, converges after {n_Ridge_best} iterations')
 
 """Plot of cost vs iteration"""
-plt.plot(cost_OLS_best, label = "OLS, $\\gamma_{best}$", color = "#F433DA")
-plt.plot(cost_Ridge_best, label = "Ridge, $\\gamma_{best}$", color = "#7326E6")
-plt.plot(cost_OLS, label = "OLS, $\\gamma_{max}$", color = "#F433DA", linestyle = "--")
-plt.plot(cost_Ridge, label = "Ridge, $\\gamma_{max}$", color = "#7326E6", linestyle = "--")
+plt.plot(cost_OLS_best, label="OLS, $\\gamma_{best}$", color=OLS)
+plt.plot(cost_Ridge_best, label="Ridge, $\\gamma_{best}$", color=RIDGE)
+plt.plot(cost_OLS, label="OLS, $\\gamma_{max}$", color=OLS, linestyle="--")
+plt.plot(cost_Ridge, label="Ridge, $\\gamma_{max}$", color=RIDGE, linestyle="--")
 plt.xlabel("Iteration")
 plt.ylabel("Cost")
 plt.title("Cost function of gradient descent with $\\gamma_{best}$ and $\\gamma_{max}$")
 plt.xscale("log")
-#plt.yscale("log")
+# plt.yscale("log")
 plt.grid()
 plt.legend()
-plt.savefig(FIG_DIR / "Part_e_costfunc_OLS_Ridge.png")
+#plt.savefig(FIG_DIR / "Part_e_costfunc_OLS_Ridge.png")
 plt.show()
 
 
@@ -170,43 +171,43 @@ plt.show()
 """OLS"""
 gammas_OLS = [0.1 * gamma_max_OLS, 0.5 * gamma_max_OLS, 1.001 * gamma_max_OLS, best_gamma_OLS]
 labels = [r"$0.1\, \gamma_{\max}$", r"$0.5\, \gamma_{\max}$", r"$1.001\, \gamma_{\max}$", r"$\gamma_{best}$"]
-colors = ["#F433DA", "#7326E6", "#26B3E6", "#E62663"]
-
-for gamma, label, color in zip(gammas_OLS, labels, colors):
+colors_OLS = [OLS, RIDGE, GAMMA_MAX, GAMMA_BEST]
+ 
+for gamma, label, color in zip(gammas_OLS, labels, colors_OLS):
     hist, n_ = gradient_descent(X, y, gamma)
-    dist_gam_OLS = np.linalg.norm(hist - theta_cf_OLS, axis = 1)
-
-    plt.plot(dist_gam_OLS, label = label, ls = "--" if gamma > gamma_max_OLS else "-", color = color)
-
+    dist_gam_OLS = np.linalg.norm(hist - theta_cf_OLS, axis=1)
+ 
+    plt.plot(dist_gam_OLS, label=label, ls="--" if gamma > gamma_max_OLS else "-", color=color)
+ 
 plt.ylabel(r"$\|\boldsymbol{\theta}_{gd}-\hat{\boldsymbol{\theta}}_{cf}\|_2$")
 plt.xlabel("Iterations")
 plt.title("Convergense of gradient descent: OLS")
 plt.ylim(1e-8, 1e4)
 plt.legend()
 plt.yscale("log")
-#plt.xscale("log")
+# plt.xscale("log")
 plt.grid()
-plt.savefig(FIG_DIR / "Part_e_convergence_learningrate_OLS.png")
+#plt.savefig(FIG_DIR / "Part_e_convergence_learningrate_OLS.png")
 plt.show()
 
 """Ridge"""
 gammas_Ridge = [0.1 * gamma_max_Ridge, 0.5 * gamma_max_Ridge, 1.001 * gamma_max_Ridge, best_gamma_Ridge]
-
-for gamma, label, color in zip(gammas_Ridge, labels, colors):
+ 
+for gamma, label, color in zip(gammas_Ridge, labels, colors_OLS):
     hist, n_ = gradient_descent(X, y, gamma, lam)
-    dist_gam_Ridge = np.linalg.norm(hist - theta_cf_Ridge, axis = 1)
-
-    plt.plot(dist_gam_Ridge, label = label, ls = "--" if gamma > gamma_max_Ridge else "-", color = color)
-
+    dist_gam_Ridge = np.linalg.norm(hist - theta_cf_Ridge, axis=1)
+ 
+    plt.plot(dist_gam_Ridge, label=label, ls="--" if gamma > gamma_max_Ridge else "-", color=color)
+ 
 plt.ylabel(r"$\|\boldsymbol{\theta}_{gd}-\hat{\boldsymbol{\theta}}_{cf}\|_2$")
 plt.xlabel("Iterations")
 plt.title("Convergense of gradient descent: Ridge")
 plt.ylim(1e-8, 1e4)
 plt.legend()
 plt.yscale("log")
-#plt.xscale("log")
+# plt.xscale("log")
 plt.grid()
-plt.savefig(FIG_DIR / "Part_e_convergence_learningrate_Ridge.png")
+#plt.savefig(FIG_DIR / "Part_e_convergence_learningrate_Ridge.png")
 plt.show()
 
 
@@ -225,14 +226,14 @@ labels = ["OLS", "Ridge"]
 x = np.arange(len(labels))
 width = 0.35
 
-plt.bar(x - width/2, train_vals, width, label="Train MSE", color = "#F433DA", alpha = 0.7)
-plt.bar(x + width/2, test_vals, width, label="Test MSE", color = "#7326E6", alpha = 0.7)
+plt.bar(x - width/2, train_vals, width, label="Train MSE", color=TRAIN_DATA, alpha=0.7)
+plt.bar(x + width/2, test_vals, width, label="Test MSE", color=TEST_DATA, alpha=0.7)
 plt.xticks(x, labels)
 plt.ylabel("MSE")
 plt.title("Train vs. test MSE: OLS vs Ridge")
 plt.legend()
 plt.grid(axis='y', alpha=0.3)
-plt.savefig(FIG_DIR / "Part_e_hist_testtrain.png")
+#plt.savefig(FIG_DIR / "Part_e_hist_testtrain.png")
 plt.show()
 
 print("Test-set evaluation-------------------------------")
@@ -253,8 +254,8 @@ for lm in lambdas:
     train_errs.append(cost(theta_lm, X, y, lmbda=lm))
     test_errs.append(cost(theta_lm, X_test, y_test, lmbda=lm))
 
-plt.plot(lambdas, train_errs, label="Train MSE", color = "#F433DA")
-plt.plot(lambdas, test_errs, label="Test MSE", color = "#7326E6")
+plt.plot(lambdas, train_errs, label="Train MSE", color=TRAIN_DATA)
+plt.plot(lambdas, test_errs, label="Test MSE", color=TEST_DATA)
 plt.xscale("log")
 plt.yscale("log")
 plt.xlabel(r"$\lambda$")
@@ -263,6 +264,6 @@ plt.title("Train vs test cost for Ridge")
 plt.legend()
 plt.tight_layout()
 plt.grid()
-plt.savefig(FIG_DIR / "Part_e_cost_lambda_testtrain.png")
+#plt.savefig(FIG_DIR / "Part_e_cost_lambda_testtrain.png")
 plt.show()
 
