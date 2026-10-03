@@ -18,6 +18,7 @@ with added Gaussian noise $\varepsilon \sim \mathcal{N}(0, \sigma^2)$, and study
 The project is structured as:
 
 ---
+```
 Project_1/
 ├── Code/
 │   ├── _Part_a.py                  # OLS regression analysis
@@ -43,7 +44,7 @@ Project_1/
 ├── report/                         # Finalized Report (PDF)
 ├── requirements.txt                # Requirements to run this program
 └── README.md
-
+```
 ---
 
 #### Installation
@@ -56,8 +57,10 @@ pip install -r requirements.txt
 #### Running the code
 All scripts import functions, variables etc from the same folder, so run them from inside Code by
 
+```bash
 cd Code
 python _Part_x.py
+```
 
 Each _Part_x-py file corresponds to the matching part of the project description and can be run independantly.
 
