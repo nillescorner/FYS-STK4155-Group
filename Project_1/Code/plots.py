@@ -9,7 +9,8 @@ from matplotlib.colors import LogNorm
 
 
 def plot_heatmap_grid(data, xvals, yvals, title, cbar_label, xlabel='Number of data points n',
-                      ylabel=r'Noise $\sigma$', ylog=False, log=False, cmap='plasma', ax=None):
+                      ylabel=r'Noise $\sigma$', ylog=False, log=False, cmap='plasma', ax=None,
+                      annotate=False, fmt='.2g', fontsize=7, best=None):
     """
     LLM Assisted. 
 
@@ -28,7 +29,11 @@ def plot_heatmap_grid(data, xvals, yvals, title, cbar_label, xlabel='Number of d
         cbar_label (str): title for the colorbar
         log (bool): linear og logarithmic axis
         cmap (str): choose color map
-
+        annotate (bool): write the value of each cell inside the cell (best for small grids)
+        fmt (str): number format for the annotations, e.g. '.2g', '.3f'
+        fontsize (int): font size of the annotations
+        best (str or None): 'min' marks the lowest value (MSE), 'max' marks the highest (R2),
+                            None marks nothing
     """
     if ax is None:
         fig, ax = plt.subplots(figsize=(7, 5))
@@ -37,13 +42,49 @@ def plot_heatmap_grid(data, xvals, yvals, title, cbar_label, xlabel='Number of d
         
     norm = LogNorm() if log else None
     im = ax.pcolormesh(xvals, yvals, data, cmap=cmap, norm=norm, shading='nearest')
+    im.autoscale_None()     #make sure the colour limits are set before we look up cell colours
     if ylog:
         ax.set_yscale('log')
+
+    #Write the value in each cell, black text on light cells and white text on dark cells
+    if annotate:
+        for i, yv in enumerate(yvals):
+            for j, xv in enumerate(xvals):
+                val = data[i, j]
+                if np.isnan(val):
+                    continue
+                r, g, b, _ = im.cmap(im.norm(val))
+                luminance = 0.299 * r + 0.587 * g + 0.114 * b
+                ax.text(xv, yv, format(val, fmt), ha='center', va='center',
+                        fontsize=fontsize, color='black' if luminance > 0.5 else 'white')
+
+    #Mark the best cell: outline the cell if values are written in it, otherwise a star
+    if best is not None:
+        flat_index = np.nanargmin(data) if best == 'min' else np.nanargmax(data)
+        i, j = np.unravel_index(flat_index, data.shape)
+        label = f'Best = {format(data[i, j], fmt)}'
+
+        if annotate:
+            #cell size taken from the spacing to neighbouring grid points
+            w = np.gradient(np.asarray(xvals, dtype=float))[j]
+            h = np.gradient(np.asarray(yvals, dtype=float))[i]
+            rect = plt.Rectangle((xvals[j] - w / 2, yvals[i] - h / 2), w, h, fill=False,
+                                 edgecolor='white', linewidth=2.5, label=label)
+            ax.add_patch(rect)
+        else:
+            ax.plot(xvals[j], yvals[i], marker='*', markersize=15, color='white',
+                    markeredgecolor='black', linestyle='none', label=label)
+
+        #legend placed above the plot, to the right of the title, so it covers no cells
+        ax.legend(loc='lower right', bbox_to_anchor=(1.0, 1.0), fontsize=8,
+                  frameon=False, borderaxespad=0.2)
+
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
     ax.set_title(title)
     fig.colorbar(im, ax=ax, label=cbar_label)
     return ax
+ 
 
 def plot_theta(thetas, x_values, xlabel='Polynomial Degree',
                title='Coefficients', max_coeffs=None, intercept=True,
