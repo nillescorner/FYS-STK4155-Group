@@ -5,7 +5,9 @@ gradient descent for both methods.
 
 The effect of learning rate and minibatch size on SGD's convergence is first studied separately,
 sweeping over several learning rates (at a fixed batch size) and several batch sizes (at a fixed
-learning rate), and plotting the resulting cost curves.
+learning rate), and plotting the resulting cost curves. These two sweeps are then repeated over a
+much finer grid of values and shown as heatmaps of cost vs. epoch, which makes the trend across
+many hyperparameter values visible at once instead of only the 3 discrete lines plotted earlier.
 
 Plain gradient descent and SGD are then compared directly for OLS and Ridge, using the theoretical
 maximum stable learning rate for gradient descent, to see how closely SGD's solution and iteration
@@ -23,10 +25,14 @@ is implemented in the sgd function, from sgd_methods.py.
 from sgd_methods import *
 from general_functions import *
 from gradient_descent_methods import *
-from lasso_methods import * 
+from lasso_methods import *
 from colors import *
+from plots import *
 
+
+import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.colors import LogNorm
 
 degree = 5
 lam = 1e-2
@@ -44,12 +50,37 @@ theta_cf = closed_form(X, y, lmbda = lam)
 H_OLS = 2.0 / len(y) * X.T @ X
 H_Ridge = 2.0 / len(y) * X.T @ X + 2 * lam * np.eye(X.shape[1])
 
+theta_cf_OLS = closed_form(X, y)
+theta_cf_Ridge = closed_form(X, y, lmbda = lam)
+gamma_list = np.linspace(0.001, 0.4, 40)
+
+"""the best gamma_values"""
+diffs_ols, diffs_ridge = [], []
+n_ols, n_ridge = [], []
+
+for gam in gamma_list:
+    hist_ols, n_steps_ols = gradient_descent(X, y, gam)
+    hist_Ridge, n_steps_Ridge = gradient_descent(X, y, gam, lam)
+
+    diffs_ols.append(np.linalg.norm(hist_ols[-1] - theta_cf_OLS))
+    diffs_ridge.append(np.linalg.norm(hist_Ridge[-1] - theta_cf_Ridge))
+    n_ols.append(n_steps_ols)
+    n_ridge.append(n_steps_Ridge)
+
+n_min_OLS = np.argmin(n_ols)
+n_min_Ridge = np.argmin(n_ridge)
+
+best_gamma_OLS = gamma_list[n_min_OLS]
+best_gamma_Ridge = gamma_list[n_min_Ridge]
+
 
 """Studying varying learning rate"""
 gamma_max_OLS = 2.0 / np.linalg.eigvalsh(H_OLS).max()
 gammas_OLS = [0.01 * gamma_max_OLS, 0.1 * gamma_max_OLS, 0.5 * gamma_max_OLS]
 labels_gamma = [r"$0.01\, \gamma_{\max}$", r"$0.1\, \gamma_{\max}$", r"$0.5\, \gamma_{\max}$"]
 colors_gamma = [LR_LOW, LR_MID, LR_HIGH]
+
+
 
 for gamma, label, color in zip(gammas_OLS, labels_gamma, colors_gamma):
     hist, n_gamma = sgd(X, y, n_epochs=100, batch_size=5, gamma=gamma, lmbda = lam)
@@ -78,9 +109,9 @@ colors_batch = [BATCH_SMALL, BATCH_MED, BATCH_LARGE]
 for M, label, color in zip(batches, labels_M, colors_batch):
     hist, n_M = sgd(X, y, n_epochs=100, batch_size=M, gamma=gamma_max_OLS)
     cost_M = cost_history(hist, X, y, penalty = "None")
-    
+
     plt.plot(cost_M, label = label, color = color)
-    
+
 """Plot of cost as for different batch sizes"""
 plt.title("Cost function for different batch sizes")
 plt.ylabel("Cost")
@@ -94,6 +125,29 @@ plt.tight_layout()
 plt.show()
 
 
+
+"""Heatmap: varying learning rate (fixed batch_size = 5), fine log-spaced sweep.
+Capped at 0.95*gamma_max_OLS rather than the exact boundary: gamma_max_OLS is the
+theoretical limit for *full-batch* GD, and SGD's extra gradient noise on top of
+that can tip rates right at or above the boundary into outright divergence
+(see the gamma_max discussion in Part e) -- those show as inf/nan cost."""
+
+gamma_grid = np.linspace(0.01 * gamma_max_OLS, 0.99 * gamma_max_OLS, 40)
+cost_grid_gamma = cost_grid_over_param(X, y, param_name="gamma", param_values=gamma_grid,n_epochs=100, batch_size=5, lmbda=lam,)
+plot_cost_heatmap(cost_grid_gamma, gamma_grid, r"Learning rate $\gamma$","Cost vs. epoch for varying learning rate (OLS, M = 5)", 
+                  #fname=FIG_DIR/"Part_h_heatmap_learningrate.png",
+                  relative_to=gamma_max_OLS)
+plt.show()
+
+"""Heatmap: varying batch size (fixed gamma = gamma_max_OLS), fine linear sweep"""
+batch_grid = np.linspace(1, 100, 40).astype(int)
+cost_grid_batch = cost_grid_over_param( X, y, param_name="batch_size", param_values=batch_grid, n_epochs=100, gamma=best_gamma_OLS,)
+plot_cost_heatmap(cost_grid_batch, batch_grid, "Batch size $M$", r"Cost vs. epoch for varying batch size (OLS, $\gamma = \gamma_{best}$)",   
+                  #fname=FIG_DIR/"Part_h_heatmap_batchsize.png", 
+                  y_tick_fmt="{:.0f}",)
+plt.show()
+
+
 """Gradient descent for OLS and Ridge"""
 #the largest safe learning rate for plain gradient descent: gamma < 2 / lambda_max(hessian)
 H_OLS = hessian_eigs(X)
@@ -102,8 +156,8 @@ H_Ridge = hessian_eigs(X, lmbda= lam)
 gamma_max_OLS = 2.0 / H_OLS.max()
 gamma_max_Ridge = 2.0 / H_Ridge.max()
 
-history_OLS, n_OLS = gradient_descent(X, y, gamma = gamma_max_OLS)
-history_Ridge, n_Ridge = gradient_descent(X, y, lmbda = lam, gamma = gamma_max_Ridge)
+history_OLS, n_OLS = gradient_descent(X, y, gamma = best_gamma_OLS)
+history_Ridge, n_Ridge = gradient_descent(X, y, lmbda = lam, gamma = best_gamma_Ridge)
 cost_OLS = cost_history(history_OLS, X, y, penalty="None")
 cost_Ridge = cost_history(history_Ridge, X, y, lmbda=lam, penalty="L2")
 
