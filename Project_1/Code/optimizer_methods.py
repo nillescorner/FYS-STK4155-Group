@@ -78,7 +78,17 @@ def optimiser_step(optimizer, theta, g, opt_state):
 
 
 def optimise(grad, optimizer, num_iters):
-    """JIT-compiled fixed-length Optax optimization."""
+    """
+    JIT-compiled fixed-length Optax optimization routine.
+
+        Params:
+            grad (callable): gradient function of the objective to be minimized.
+            optimizer (optax optimizer): optimizer state and update rule.
+            num_iters (int): number of optimization steps to perform.
+
+        Returns:
+            theta (array-like): optimized parameter vector after the specified number of iterations.
+    """
 
     @jax.jit # very fast! me like!
     def run(theta0):
@@ -105,7 +115,20 @@ def optimise(grad, optimizer, num_iters):
 
 
 def funct_comparison(X, y, FUNCT_RUNS, num_iters=1000, lmbda=0.0):
-    """Compare optimizers using excess cost."""
+    """
+    Compare optimizer performance using excess cost based on a linear regression objective.
+
+        Params:
+            X (array-like): design matrix containing the input features.
+            y (array-like): target values for the regression problem.
+            FUNCT_RUNS (int): number of optimizer runs used for comparison.
+            num_iters (int): maximum number of iterations for each optimization routine.
+            lmbda (float): regularization parameter used in the cost function.
+
+        Returns:
+            comparison (dict): dictionary containing the optimizer comparison results,
+                including excess cost values, convergence traces, and final parameter estimates.
+    """
 
     Xj = jnp.array(X)
     yj = jnp.array(y)

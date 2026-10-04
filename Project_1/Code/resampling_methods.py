@@ -432,7 +432,3 @@ def mse_decomposer(x, y, results, model_shorthands, resamples = 100,  method ='k
     if return_std:
         return mse_decomposition, std_decomposition
     return mse_decomposition
-
-# print(f"Best parameters: {search.best_params_}")
-# print(f"Best cross-validation score (MSE): {search.best_score_:.4f}")
-# print(f"Test set score: {search.score(X_test, y_test):.4f}")
