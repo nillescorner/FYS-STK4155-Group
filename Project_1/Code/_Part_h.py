@@ -123,9 +123,65 @@ plt.tight_layout()
 plt.show()
 
 
+"""Studying a decaying learning rate schedule: gamma_t = t0 / (t + t1) (Eq. 4.40)"""
+# t1 controls how many steps pass before the schedule decays appreciably; t0 is chosen
+# so the *initial* step gamma_1 = t0 / (1 + t1) matches each of the three constant
+# learning rates used in "Studying varying learning rate" above, so this plot is
+# directly comparable to that one - the only thing changing is letting gamma decay
+# over training instead of holding it fixed.
+t1_schedule = 50
+schedules_OLS = [(gamma * (1 + t1_schedule), t1_schedule) for gamma in gammas_OLS]
+ 
+for (t0, t1), label, color in zip(schedules_OLS, labels_gamma, colors_gamma):
+    hist, n_sched = sgd(X, y, n_epochs=100, batch_size=5, schedule=(t0, t1), lmbda=lam)
+    cost_sched = cost_history(hist, X, y, penalty="None")
+ 
+    plt.plot(cost_sched, label=label, color=color)
+ 
+"""Plot of cost for the decaying learning rate schedule"""
+plt.title(r"Cost function for a decaying learning rate schedule $\gamma_t = t_0/(t+t_1)$")
+plt.ylabel("Cost")
+plt.xlabel("Iterations")
+plt.xscale("log")
+plt.yscale("log")
+plt.legend()
+plt.grid()
+plt.tight_layout()
+#plt.savefig(FIG_DIR/"Part_h_cost_schedule.png")
+plt.show()
+ 
+ 
+"""Constant learning rate vs. decaying schedule, same initial step"""
+gamma_const = gammas_OLS[1]  # the "0.1 gamma_max" rate used above
+t0_match, t1_match = schedules_OLS[1]
+ 
+hist_const, n_const = sgd(X, y, n_epochs=100, batch_size=5, gamma=gamma_const, lmbda=lam)
+hist_sched, n_sched_match = sgd(X, y, n_epochs=100, batch_size=5, schedule=(t0_match, t1_match), lmbda=lam)
+cost_const = cost_history(hist_const, X, y, penalty="None")
+cost_sched_match = cost_history(hist_sched, X, y, penalty="None")
+ 
+print("Constant gamma vs. decaying schedule (same initial step)----------------")
+print(f"iterations to converge: constant = {n_const}  schedule = {n_sched_match}")
+print(f"theta: |schedule - constant| = {np.max(np.abs(hist_sched[-1] - hist_const[-1])):.2e}")
+ 
+plt.plot(cost_const, label=r"Constant $\gamma$", color=LR_MID)
+plt.plot(cost_sched_match, label=r"Schedule $\gamma_t = t_0/(t+t_1)$", color=LR_MID, linestyle="--")
+plt.xlabel("Iteration")
+plt.ylabel("Cost")
+plt.title("Constant learning rate vs. decaying schedule (same initial step)")
+plt.xscale("log")
+plt.yscale("log")
+plt.grid()
+plt.legend()
+plt.tight_layout()
+#plt.savefig(FIG_DIR/"Part_h_schedule_vs_constant.png")
+plt.show()
+
+
+
 
 """Heatmap: varying learning rate (fixed batch_size = 5), fine log-spaced sweep.
-Capped at 0.95*gamma_max_OLS rather than the exact boundary: gamma_max_OLS is the
+Capped at 0.99*gamma_max_OLS rather than the exact boundary: gamma_max_OLS is the
 theoretical limit for *full-batch* GD, and SGD's extra gradient noise on top of
 that can tip rates right at or above the boundary into outright divergence
 (see the gamma_max discussion in Part e) -- those show as inf/nan cost."""
@@ -200,11 +256,28 @@ for method in opt_methods:
     hist_Ridge_m, n_Ridge_m = sgd(X, y, method=method, lmbda=lam, gamma = gamma_m)
     histories_OLS_opt[method], n_OLS_opt[method] = hist_OLS_m, n_OLS_m
     histories_Ridge_opt[method], n_Ridge_opt[method] = hist_Ridge_m, n_Ridge_m
+
+theta_cf_OLS = closed_form(X, y)
+iters_per_epoch_sgd = int(np.ceil(X.shape[0] / 5))  # default batch_size = 5
+tol = 1e-2  # within 1% of the closed-form cost counts as "converged"
  
-print("Optimiser comparison: iterations to converge------------------------------")
+def iters_to_tolerance(history, cost_target, iters_per_epoch, tol=tol, **cost_kwargs):
+    c = cost_history(history, X, y, **cost_kwargs)
+    reached = np.flatnonzero(np.isfinite(c) & (c <= (1.0 + tol) * cost_target))
+    return int(reached[0]) * iters_per_epoch if reached.size else None
+ 
+cost_target_OLS = cost(theta_cf_OLS, X, y)
+cost_target_Ridge = cost(theta_cf, X, y, lmbda=lam)
+
+print(f"Optimiser comparison: iterations to reach within {tol:.0%} of the closed-form cost---")
 for method in ["plain", *opt_methods]:
+    it_OLS = iters_to_tolerance(histories_OLS_opt[method], cost_target_OLS, iters_per_epoch_sgd, penalty="None")
+    it_Ridge = iters_to_tolerance(histories_Ridge_opt[method], cost_target_Ridge, iters_per_epoch_sgd, lmbda=lam, penalty="L2")
+    it_OLS_str = f"{it_OLS:6d}" if it_OLS is not None else "   n/a"
+    it_Ridge_str = f"{it_Ridge:6d}" if it_Ridge is not None else "   n/a"
     print(f"{opt_labels[method]:12s}: gamma = {opt_gammas.get(method, 0.1):<5} "
-          f"OLS = {n_OLS_opt[method]:6d}   Ridge = {n_Ridge_opt[method]:6d}")
+          f"OLS = {it_OLS_str}   Ridge = {it_Ridge_str}   "
+          f"(out of {n_OLS_opt[method] - 1} total updates run)")
 
 def _clipped_cost(history, *cost_args, cap_multiple=1e3, **cost_kwargs):
     c = cost_history(history, *cost_args, **cost_kwargs)
@@ -237,10 +310,14 @@ plt.show()
 
 
 """Plot of cost vs iteration"""
+iters_per_epoch_sgd = int(np.ceil(X.shape[0] / 5))
+x_OLS_sgd = np.arange(len(cost_OLS_sgd)) * iters_per_epoch_sgd
+x_Ridge_sgd = np.arange(len(cost_Ridge_sgd)) * iters_per_epoch_sgd
+
 plt.plot(cost_OLS, label = "OLS GD", color = OLS)
-plt.plot(cost_OLS_sgd, label = "OLS SGD", color = OLS, linestyle = "--", alpha = 0.4)
+plt.plot(x_OLS_sgd, cost_OLS_sgd, label = "OLS SGD", color = OLS, linestyle = "--", alpha = 0.4)
 plt.plot(cost_Ridge, label = "Ridge GD", color = RIDGE)
-plt.plot(cost_Ridge_sgd, label = "Ridge SGD", color = RIDGE, linestyle = "--", alpha = 0.4)
+plt.plot(x_Ridge_sgd, cost_Ridge_sgd, label = "Ridge SGD", color = RIDGE, linestyle = "--", alpha = 0.4)
 plt.xlabel("Iteration")
 plt.ylabel("Cost")
 plt.title("Cost function of stochastic gradient descent")
@@ -253,7 +330,7 @@ plt.legend()
 plt.show()
 
 
-"""Comparing train and test MSE across OLS, Ridge, and Lasso"""
+"""Comparing train and test MSE across OLS and Ridge"""
 n_train = X.shape[0]
 n_test = X_test.shape[0]
 
