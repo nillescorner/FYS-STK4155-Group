@@ -49,9 +49,9 @@ H_Ridge = 2.0 / len(y) * X.T @ X + 2 * lam * np.eye(X.shape[1])
 gamma_max_OLS = 2.0 / np.linalg.eigvalsh(H_OLS).max()
 gammas_OLS = [0.01 * gamma_max_OLS, 0.1 * gamma_max_OLS, 0.5 * gamma_max_OLS]
 labels_gamma = [r"$0.01\, \gamma_{\max}$", r"$0.1\, \gamma_{\max}$", r"$0.5\, \gamma_{\max}$"]
-colors = ["#F433DA", "#7326E6", "#84BCED"]
+colors_gamma = [LR_LOW, LR_MID, LR_HIGH]
 
-for gamma, label, color in zip(gammas_OLS, labels_gamma, colors):
+for gamma, label, color in zip(gammas_OLS, labels_gamma, colors_gamma):
     hist, n_gamma = sgd(X, y, n_epochs=100, batch_size=5, gamma=gamma, lmbda = lam)
     cost_gamma = cost_history(hist, X, y, penalty = "None")
 
@@ -66,15 +66,16 @@ plt.yscale("log")
 plt.legend()
 plt.grid()
 plt.tight_layout()
-plt.savefig(FIG_DIR/"Part_h_cost_learningrates.png")
+#plt.savefig(FIG_DIR/"Part_h_cost_learningrates.png")
 plt.show()
 
 
 """Studying varying batch sizes"""
 batches = [10, 20, 30]
 labels_M = [f"$M = {batches[0]}$", f"$M = {batches[1]}$", f"$M = {batches[2]}$"]
+colors_batch = [BATCH_SMALL, BATCH_MED, BATCH_LARGE]
 
-for M, label, color in zip(batches, labels_M, colors):
+for M, label, color in zip(batches, labels_M, colors_batch):
     hist, n_M = sgd(X, y, n_epochs=100, batch_size=M, gamma=gamma_max_OLS)
     cost_M = cost_history(hist, X, y, penalty = "None")
     
@@ -89,7 +90,7 @@ plt.yscale("log")
 plt.legend()
 plt.grid()
 plt.tight_layout()
-plt.savefig(FIG_DIR/"Part_h_cost_batchsize.png")
+#plt.savefig(FIG_DIR/"Part_h_cost_batchsize.png")
 plt.show()
 
 
@@ -126,10 +127,10 @@ print(f"theta: |sgd - gd| = {np.max(np.abs(history_Ridge[-1] - history_Ridge_sgd
 
 
 """Plot of cost vs iteration"""
-plt.plot(cost_OLS, label = "OLS GD", color = "#F433DA")
-plt.plot(cost_OLS_sgd, label = "OLS SGD", color = "#F433DA", linestyle = "--", alpha = 0.4)
-plt.plot(cost_Ridge, label = "Ridge GD", color = "#7326E6")
-plt.plot(cost_Ridge_sgd, label = "Ridge SGD", color = "#7326E6", linestyle = "--", alpha = 0.4)
+plt.plot(cost_OLS, label = "OLS GD", color = OLS)
+plt.plot(cost_OLS_sgd, label = "OLS SGD", color = OLS, linestyle = "--", alpha = 0.4)
+plt.plot(cost_Ridge, label = "Ridge GD", color = RIDGE)
+plt.plot(cost_Ridge_sgd, label = "Ridge SGD", color = RIDGE, linestyle = "--", alpha = 0.4)
 plt.xlabel("Iteration")
 plt.ylabel("Cost")
 plt.title("Cost function of stochastic gradient descent")
@@ -138,7 +139,7 @@ plt.yscale("log")
 plt.grid()
 plt.tight_layout()
 plt.legend()
-plt.savefig(FIG_DIR/"Part_h_sgd_OLS_Ridge.png")
+#plt.savefig(FIG_DIR/"Part_h_sgd_OLS_Ridge.png")
 plt.show()
 
 
@@ -171,13 +172,13 @@ x = np.arange(len(labels))
 width = 0.35
 
 plt.figure(figsize=(8, 5))
-plt.bar(x - width/2, train_vals, width, label="Train MSE", color="#F433DA", alpha = 0.7)
-plt.bar(x + width/2, test_vals, width, label="Test MSE", color="#7326E6", alpha = 0.7)
+plt.bar(x - width/2, train_vals, width, label="Train MSE", color=TRAIN_DATA, alpha = 0.7)
+plt.bar(x + width/2, test_vals, width, label="Test MSE", color=TEST_DATA, alpha = 0.7)
 plt.xticks(x, labels, rotation=15)
 plt.ylabel("MSE")
 plt.title("Train vs. test MSE: OLS, Ridge, Lasso")
 plt.legend()
 plt.grid(axis='y', alpha=0.3)
 plt.tight_layout()
-plt.savefig(FIG_DIR/"Part_h_hist_testtrain_sgd.png")
+#plt.savefig(FIG_DIR/"Part_h_hist_testtrain_sgd.png")
 plt.show()

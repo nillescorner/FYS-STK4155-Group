@@ -30,22 +30,24 @@ GAMMA_BEST = '#26B3E6'	#sky blue / cyan
 LASSO_GD = '#5DA0B6'			#muted teal / steel blue
 LASSE_COORDINATE_DESCENT = '#65AF60'	#muted green /sage
 
+THETA_COLORS = [
+    '#E8546B',  #coral red
+    '#4C9F70',  #emerald green
+    '#5B7FDE',  #periwinkle blue
+    '#E8A33D',  #gold
+    '#9B59B6',  #purple
+    '#2FB8AF',  #teal
+    '#E67E22',  #burnt orange
+    '#34495E',  #slate
+]
+
 #OPPGAVE H
+"""Studying varying learning rate (light -> dark = increasing gamma)"""
+LR_LOW  = '#AFC6F0'   # pale periwinkle
+LR_MID  = '#5C85D6'   # medium blue
+LR_HIGH = '#1B3B80'   # deep navy-blue
 
-#Disse 2 bruker samme farger, tror ikke det er super viktig men bare noterer det ned:
-
-"""Studying varying learning rate"""
-labels_gamma = [r"$0.01\, \gamma_{\max}$", r"$0.1\, \gamma_{\max}$", r"$0.5\, \gamma_{\max}$"]
-colors = ["#F433DA", "#7326E6", "#84BCED"]
-
-"""Studying varying batch sizes"""
-labels_M = lambda batches: [f"$M = {batches[0]}$", f"$M = {batches[1]}$", f"$M = {batches[2]}$"]
-colors = ["#F433DA", "#7326E6", "#84BCED"]
-
-
-"""
-"#F433DA", magenta 
-"#7326E6", violet
-"#84BCED" light blue/pale sky blue
-
-"""
+"""Studying varying batch sizes (light -> dark = increasing M)"""
+BATCH_SMALL = '#F2B6C0'   # pale rose
+BATCH_MED   = '#D9607A'   # medium rose/coral
+BATCH_LARGE = '#8A1F3D'   # deep wine
