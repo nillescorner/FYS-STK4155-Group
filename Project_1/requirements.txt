@@ -1,0 +1,8 @@
+# Python >= 3.10 recommended
+# Install with: pip install -r requirements.txt
+ 
+numpy>=1.24
+matplotlib>=3.7
+scikit-learn>=1.3      # pulls in scipy automatically
+jax>=0.4.20            # installs jaxlib as a dependency (CPU build)
+optax>=0.1.7           # optimisers for part f)

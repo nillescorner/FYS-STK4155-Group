@@ -1,4 +1,4 @@
-""""
+"""
 This python file contains the code used to derive the figure that shows MSE for OLS analysis
 from parts a and c as a function of polynomial degree against the MSE from cross-validation for k = 5 and k = 10.
 It also derives the plot for Ridge regression that shows different polynomial degrees are affected by penalty parameter lambda 
@@ -74,8 +74,8 @@ for j, lmb in enumerate(lambdas):
 #LLM Assisted FROM HERE
 for index_degree, deg in enumerate(degrees):
     best = np.argmin(mse_polynomials_5[:, index_degree])
-    print(f"  degree = {deg:2d}:  best_lambda = {lambdas[best]:8.4g}"
-          f"   CV-MSE = {mse_polynomials_5[best, index_degree]:.4f}")
+    print(f"  Degree = {deg:2d}:  Best lambda = {lambdas[best]:8.4g}"
+          f"  CV-MSE = {mse_polynomials_5[best, index_degree]:.3e}")
 #LLM Assisted UNTIL HERE
 
 mse_polynomials_10 = np.zeros((len(lambdas), len(degrees)))
@@ -89,9 +89,11 @@ for j, lmb in enumerate(lambdas):
 #Reused LLM Assisted code for k = 10
 for index_degree, deg in enumerate(degrees):
     best = np.argmin(mse_polynomials_10[:, index_degree])
-    print(f"  degree = {deg:2d}:  best_lambda = {lambdas[best]:8.4g}"
-          f"   CV-MSE = {mse_polynomials_10[best, index_degree]:.4f}")
+    print(f"  Degree = {deg:2d}:  Best_lambda = {lambdas[best]:8.4g}"
+          f"  CV-MSE = {mse_polynomials_10[best, index_degree]:.3e}")
 
+
+"""Ploting Ridge CV-MSE over lambda for chose degrees """
 plotting_degrees = [4,8,12,15]
 colors= ['#0FFFFF', "#FF4726", "#00AB1C", "#4000A1"]
 

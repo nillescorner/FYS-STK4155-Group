@@ -1,10 +1,55 @@
+"""
+The file contains the code used to derive the plots of the cost functions for OLS, Ridge and Lasso
+regression, and compares the gradient descent solutions to the closed-form solutions for OLS and
+Ridge, and to SciKit-learn's solution for SKLearn for Lasso (as it doesnt have a closed form solution). 
+For Lasso regression, both gradient and coordinate descent have been implemented, and then compared to
+each other and to SKLearn values.
+
+The best learning rate for OLS and Ridge gradient descent is found by sweeping over a range of learning 
+rates and selecting the one requiring the fewest iterations to converge to the closed-form solution. 
+This best learning rate is then used for the main comparisons.
+
+Train and test MSE are compared across OLS, Ridge and Lasso to study generalisation, and a sweep
+over regularisation strength lambda is used to study the bias-variance trade-off for Ridge and
+Lasso, including how the individual coefficients shrink as lambda increases.
+
+The gradients were found using the gradient function, and gradient descent using the gradient_descent
+function, both from gradient_descent_methods.py. The closed form solution is found using the
+closed_form function, also from gradient_descent_methods.py. The Lasso-specific functions lasso_gd
+and lasso_coordinate_descent are from lasso_methods.py.
+"""
+
 from lasso_methods import *
 from general_functions import *
 from gradient_descent_methods import *
+from colors import *
 
 import matplotlib.pyplot as plt
 from sklearn.linear_model import Lasso
 from plots import plot_theta
+
+import jax.numpy as jnp
+
+"""Why lasso_gd uses an explicit subgradient instead of automatic differentiation"""
+
+"""
+The L1 penalty |theta| is not differentiable at theta = 0, so its gradient there is only
+defined as a subgradient: any value in [-1, 1]. Naively handing the L1 cost to an automatic
+differentiation (AD) tool such as JAX does not recover this whole interval - AD must pick a
+single number, and the choice it makes at exactly 0 is just an implementation detail of how
+jnp.abs happens to be built from its primitives, not a statement about the true subgradient
+set. This is demonstrated below and is why lasso_gd instead uses an explicit, principled
+subgradient rule (e.g. sign(theta), with sign(0) := 0) rather than jax.grad on |theta|.
+"""
+ 
+grad_abs = jax.grad(jnp.abs)
+test_points = [-1e-3, -1e-9, 0.0, 1e-9, 1e-3]
+ 
+print("AD (JAX) derivative of |theta| at theta = 0 and nearby points----------")
+for t in test_points:
+    print(f"theta = {t:>10.1e}   d|theta|/dtheta (JAX AD) = {float(grad_abs(t)):+.1f}")
+
+
 
 degree = 5
 lam = 1e-2
@@ -81,10 +126,10 @@ print(f"theta: |skl - cd| = {np.max(np.abs(theta_skl_lasso - history_lasso_cd[-1
 
 
 """Plot of cost vs iteration"""
-plt.plot(cost_Lasso_gd, label = "Lasso gradient descent", color = "#5DA0B6")
-plt.plot(cost_Lasso_cd, label = "Lasso coordinate descent", color = "#65AF60")
-plt.plot(cost_OLS, label = "OLS", color = "#F433DA")
-plt.plot(cost_Ridge, label = "Ridge", color = "#7326E6")
+plt.plot(cost_Lasso_gd, label = "Lasso gradient descent", color = LASSO_GD)
+plt.plot(cost_Lasso_cd, label = "Lasso coordinate descent", color = LASSE_COORDINATE_DESCENT)
+plt.plot(cost_OLS, label = "OLS", color = OLS)
+plt.plot(cost_Ridge, label = "Ridge", color = RIDGE)
 plt.xlabel("Iteration")
 plt.ylabel("Cost")
 plt.title("Cost function of gradient descent")
@@ -92,7 +137,7 @@ plt.xscale("log")
 #plt.yscale("log")
 plt.grid()
 plt.legend()
-plt.savefig(FIG_DIR/"Part_g_convergence_Lasso.png")
+#plt.savefig(FIG_DIR/"Part_g_convergence_Lasso.png")
 plt.show()
 
 
@@ -122,15 +167,15 @@ x = np.arange(len(labels))
 width = 0.35
 
 plt.figure(figsize=(8, 5))
-plt.bar(x - width/2, train_vals, width, label="Train MSE", color="#F433DA", alpha = 0.7)
-plt.bar(x + width/2, test_vals, width, label="Test MSE", color="#7326E6", alpha = 0.7)
+plt.bar(x - width/2, train_vals, width, label="Train MSE", color=TRAIN_DATA, alpha = 0.7)
+plt.bar(x + width/2, test_vals, width, label="Test MSE", color=TEST_DATA, alpha = 0.7)
 plt.xticks(x, labels, rotation=15)
 plt.ylabel("MSE")
 plt.title("Train vs. test MSE: OLS, Ridge, Lasso")
 plt.legend()
 plt.grid(axis='y', alpha=0.3)
 plt.tight_layout()
-plt.savefig(FIG_DIR/"Part_g_hist_testtrain_lasso.png")
+#plt.savefig(FIG_DIR/"Part_g_hist_testtrain_lasso.png")
 plt.show()
 
 """For different lambda values, comparing test and train"""
@@ -158,10 +203,10 @@ for lm in lambdas:
     thetas_Ridge.append(theta_lm_Ridge)     
     thetas_Lasso.append(theta_lm_Lasso)     
 
-plt.plot(lambdas, train_errs_Ridge, label="Train Ridge", color = "#F433DA")
-plt.plot(lambdas, test_errs_Ridge, label="Test Ridge", color = "#F433DA", linestyle = "--")
-plt.plot(lambdas, train_errs_Lasso, label="Train Lasso", color = "#7326E6")
-plt.plot(lambdas, test_errs_Lasso, label="Test Lasso", color = "#7326E6", linestyle = "--")
+plt.plot(lambdas, train_errs_Ridge, label="Train Ridge", color = RIDGE)
+plt.plot(lambdas, test_errs_Ridge, label="Test Ridge", color = RIDGE, linestyle = "--")
+plt.plot(lambdas, train_errs_Lasso, label="Train Lasso", color = LASSO)
+plt.plot(lambdas, test_errs_Lasso, label="Test Lasso", color = LASSO, linestyle = "--")
 plt.xscale("log")
 plt.yscale("log")
 plt.xlabel(r"$\lambda$")
@@ -170,12 +215,12 @@ plt.title("Train vs test error across regularization strength")
 plt.legend()
 plt.tight_layout()
 plt.grid()
-plt.savefig(FIG_DIR/"Part_g_cost_lambda_testtrain.png")
+#plt.savefig(FIG_DIR/"Part_g_cost_lambda_testtrain.png")
 plt.show()
 
 fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(7, 7), sharey=True)
 
 plot_theta(thetas_Ridge, lambdas, xlabel=r'$\lambda$', title='Ridge coefficients', intercept=False, xlog=True, ax=ax1)
 plot_theta(thetas_Lasso, lambdas, xlabel=r'$\lambda$', title='Lasso coefficients', intercept=False, xlog=True, ax=ax2)
-plt.savefig(FIG_DIR/"Part_g_theta_lambda.png")
+#plt.savefig(FIG_DIR/"Part_g_theta_lambda.png")
 plt.show()
