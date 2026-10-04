@@ -6,6 +6,7 @@ This python file contains the function(s?) used throughout this project to plot 
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.colors import LogNorm
+from colors import *
 
 
 def plot_heatmap_grid(data, xvals, yvals, title, cbar_label, xlabel='Number of data points n',
@@ -118,7 +119,13 @@ def plot_theta(thetas, x_values, xlabel='Polynomial Degree',
     else:
         fig = ax.figure
 
-    colors = plt.cm.viridis(np.linspace(0, 1, n_plot))   # one distinct color per coefficient
+
+    if n_plot <= len(THETA_COLORS):
+        colors = THETA_COLORS[:n_plot]
+    else:
+        colors = plt.cm.viridis(np.linspace(0, 1, n_plot))
+
+    #colors = plt.cm.viridis(np.linspace(0, 1, n_plot))   #one distinct color per coefficient
     for j in range(n_plot):
         ax.plot(x_values, theta_matrix[:, j], color=colors[j], label=rf'$\theta_{{{j + start}}}$')
 
@@ -133,4 +140,64 @@ def plot_theta(thetas, x_values, xlabel='Polynomial Degree',
         ax.set_yscale('symlog', linthresh=linthresh)
     ax.legend(ncol=2, fontsize=8, bbox_to_anchor=(1.02, 1), loc='upper left')
     fig.tight_layout()
+    return fig, ax
+
+def plot_cost_heatmap(cost_grid, param_values, param_label, title, fname=None,
+                       cmap='plasma', y_tick_fmt="{:.3g}", relative_to=None,
+                       relative_fmt=r"{:.2f}$\,\gamma_{{\max}}$"):
+    """Draws a (parameter value) x (epoch) heatmap of cost, log-colored since cost
+    typically spans several orders of magnitude as it decays.
+ 
+    Some hyperparameter values (e.g. a learning rate right at or above the
+    theoretical stability limit) can make SGD diverge. This shows up either as
+    inf/nan cost, or as a finite but astronomically large cost (e.g. 1e250)
+    just before it overflows -- both break LogNorm/its tick locator if used
+    directly as vmax. So the color range is instead capped at a fixed multiple
+    of the cost at epoch 0 (same for every row, since all runs start from
+    theta=0): anything at or below that is "still in the game", anything above
+    it (finite or not) is "diverged" and gets clipped to the cap for display.
+    """
+    n_epochs = cost_grid.shape[1] - 1
+ 
+    baseline = np.nanmax(cost_grid[:, 0])  # cost at epoch 0, before any update
+    cap = 100.0 * baseline                  # anything past this counts as diverged
+    cost_grid_plot = np.where(np.isfinite(cost_grid), cost_grid, cap)
+    cost_grid_plot = np.clip(cost_grid_plot, None, cap)
+ 
+    finite_plot = np.isfinite(cost_grid_plot)
+    vmin = max(cost_grid_plot[finite_plot].min(), 1e-12)
+    vmax = cap
+ 
+    fig, ax = plt.subplots(figsize=(8, 5))
+    im = ax.imshow(
+        cost_grid_plot,
+        aspect='auto',
+        origin='lower',
+        extent=[0, n_epochs, 0, len(param_values)],
+        norm=LogNorm(vmin=vmin, vmax=vmax),
+        cmap=cmap,
+    )
+ 
+    # Label a readable subset of rows with their actual parameter value -- or,
+    # when relative_to is given (e.g. gamma_max_OLS), as a fraction of that
+    # reference value instead of the raw number, since "0.24 gamma_max" is more
+    # meaningful here than the raw learning rate on its own.
+    n_ticks = min(10, len(param_values))
+    tick_idx = np.linspace(0, len(param_values) - 1, n_ticks).astype(int)
+    ax.set_yticks(tick_idx + 0.5)
+    if relative_to is not None:
+        ax.set_yticklabels([relative_fmt.format(param_values[i] / relative_to) for i in tick_idx])
+    else:
+        ax.set_yticklabels([y_tick_fmt.format(param_values[i]) for i in tick_idx])
+ 
+    ax.set_xlabel("Epoch")
+    ax.set_ylabel(param_label)
+    ax.set_title(title)
+ 
+    cbar = fig.colorbar(im, ax=ax)
+    cbar.set_label("Cost (log scale)")
+ 
+    fig.tight_layout()
+    if fname is not None:
+        fig.savefig(fname)
     return fig, ax
