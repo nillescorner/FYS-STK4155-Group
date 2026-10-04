@@ -6,6 +6,7 @@ This python file contains the function(s?) used throughout this project to plot 
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.colors import LogNorm
+from colors import *
 
 
 def plot_heatmap_grid(data, xvals, yvals, title, cbar_label, xlabel='Number of data points n',
@@ -77,7 +78,13 @@ def plot_theta(thetas, x_values, xlabel='Polynomial Degree',
     else:
         fig = ax.figure
 
-    colors = plt.cm.viridis(np.linspace(0, 1, n_plot))   # one distinct color per coefficient
+
+    if n_plot <= len(THETA_COLORS):
+        colors = THETA_COLORS[:n_plot]
+    else:
+        colors = plt.cm.viridis(np.linspace(0, 1, n_plot))
+
+    #colors = plt.cm.viridis(np.linspace(0, 1, n_plot))   #one distinct color per coefficient
     for j in range(n_plot):
         ax.plot(x_values, theta_matrix[:, j], color=colors[j], label=rf'$\theta_{{{j + start}}}$')
 
