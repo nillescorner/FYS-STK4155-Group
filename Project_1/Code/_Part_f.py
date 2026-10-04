@@ -3,6 +3,7 @@ from optimizer_methods import *
 from general_functions import *
 import numpy as np
 import matplotlib.pyplot as plt
+import colors as c
 
 gammas = np.logspace(-3, 0, 15)
 
@@ -39,7 +40,7 @@ for method, gammas_, color in FUNCT_RUNS:
 
 #plotting iterations agains gammas for all methods on log axes
 
-fig, axs = plt.subplots(1, len(tolerances),  figsize=(6.4*len(tolerances), 4.0))
+fig, axs = plt.subplots( len(tolerances), 1,  figsize=(6.4, 4.0*len(tolerances)))
 # fig, axs = plt.subplots(len(tolerances),1,  figsize=(6.4, 4.0*len(tolerances)))
 for ax, tolerance in zip(axs,tolerances):
     for method, gammas_, col, in FUNCT_RUNS:
@@ -58,4 +59,4 @@ for ax, tolerance in zip(axs,tolerances):
 axs[-1].set_xlabel(r"learning rate $\gamma$"); 
 fig.suptitle("Needed iterations for convergence of different machine learning methods based on learning rates")
 ax.legend(fontsize=8); fig.tight_layout()
-plt.savefig(FIG_DIR / "Part_f_MethodsComparison_withLearningRate.png")
+plt.savefig(FIG_DIR / "Part_f_MethodsComparison_withLearningRate.pdf")

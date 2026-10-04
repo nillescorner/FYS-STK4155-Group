@@ -25,7 +25,7 @@ def bootstrap_resampling(x,y, mindegree=1, maxdegree=21, n_bootstraps=100, seed=
             n_bootstraps (int): number of iterations for bootstrap
             seed (int): randomizer seed
             best_estimator(scikit learn estimator) : predefined estimator
-            test_wholedataset (bool): if True, resampling uses the whole dataset
+            test_wholedataset (bool): if True, resampling uses the whole dataset. Intended use is to decompose fitted estimator
             return_std (bool): if True, also returns the standard deviations
                 across data-point contributions for each metric. DO NOT USE. DOES NOT WORK
 
@@ -96,7 +96,7 @@ def kfold_resampling(x,y,k, best_est, mindegree=1, maxdegree=21, n_resamples=100
             maxdegree (int): maximum degree
             n_resamples (int): number of iterations for resamples
             seed (int): randomizer seed
-            test_wholedataset (bool): if True, resampling uses the whole dataset
+            test_wholedataset (bool): if True, resampling uses the whole dataset. Intended use is to decompose fitted estimator
             return_std (bool): if True, also returns the standard deviations
                 across data-point contributions for each metric. DO NOT USE. DOES NOT WORK
 
@@ -167,6 +167,7 @@ def cross_validation(x, y, model='OLS', lamba=0.0, mindegree=1, maxdegree=21, k=
 
         Returns:
             mse (list): mean squared error per polynomial degree
+            std (list): std of mean squared error per polynomial degree
     
 
     """
@@ -343,14 +344,15 @@ def train_through_gridsearchCV(x,y, models = ['ridge'], Ks=[5,10],   mindegree=1
         
     return results, model_shorthands
 
-def mse_decomposer(x, y, results, model_shorthands, resamples = 100,  method ='kfold_resampling', mindegree=1, maxdegree=21, return_std=False):
+def mse_decomposer(x, y, results, model_shorthands, resamples = 100,  method ='kfold_resampling',
+                   mindegree=1, maxdegree=21, return_std=False, test_wholedataset = False):
     """
     Estimates prediction error, squared bias, and variance for each model and
     polynomial degree using resampling.
 
     Params:
-        x (array): Input values to evaluate.
-        y (array): Target values corresponding to x.
+        x (array): Input values to evaluate. Unspilt
+        y (array): Target values corresponding to x. Unspilt
         results (dict): Results returned by train_through_gridsearchCV.
         model_shorthands (list): Model and fold-count keys from results.
         resamples (int): Number of resampling runs.
@@ -400,13 +402,13 @@ def mse_decomposer(x, y, results, model_shorthands, resamples = 100,  method ='k
             if method == 'kfold_resampling':
                 output = kfold_resampling(
                     x, y, k, best_estimator, deg, deg+1,
-                    n_resamples=resamples, test_wholedataset=True,
+                    n_resamples=resamples, test_wholedataset=test_wholedataset,
                     return_std=return_std,
                 )
             elif method =='bootstrap_resampling':
                 output = bootstrap_resampling(
                     x, y, deg, deg+1, best_estimator=best_estimator,
-                    n_bootstraps=resamples, test_wholedataset=True,
+                    n_bootstraps=resamples, test_wholedataset=test_wholedataset,
                     return_std=return_std,
                 )
 

@@ -4,8 +4,11 @@ FARGEKODER:
 #OVER HELE PROSJEKTET/FLERE OPG
 
 OLS = '#F433DA'	#magenta/hotpink
+OLS2 = "#801772"
 RIDGE = '#7326E6'	#violet/purple
-LASSO = "#8D1336"
+RIDGE2 = "#361369"	
+LASSO ="#EB3568"
+LASSO2 = "#8D1336"
 
 TRAIN_DATA = '#8C564B'  #brown 
 TEST_DATA = '#0AC23E'	#bright green	
@@ -49,3 +52,6 @@ colors = ["#F433DA", "#7326E6", "#84BCED"]
 "#84BCED" light blue/pale sky blue
 
 """
+
+broad_range = ["#CA2626", "#CA6826", "#DFCA13", "#87DF13", "#0DB832",
+          "#1696D1", "#3216D1", "#8C16D1", "#D11699"]
