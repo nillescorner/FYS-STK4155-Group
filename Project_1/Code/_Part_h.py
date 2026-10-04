@@ -80,8 +80,6 @@ gammas_OLS = [0.01 * gamma_max_OLS, 0.1 * gamma_max_OLS, 0.5 * gamma_max_OLS]
 labels_gamma = [r"$0.01\, \gamma_{\max}$", r"$0.1\, \gamma_{\max}$", r"$0.5\, \gamma_{\max}$"]
 colors_gamma = [LR_LOW, LR_MID, LR_HIGH]
 
-
-
 for gamma, label, color in zip(gammas_OLS, labels_gamma, colors_gamma):
     hist, n_gamma = sgd(X, y, n_epochs=100, batch_size=5, gamma=gamma, lmbda = lam)
     cost_gamma = cost_history(hist, X, y, penalty = "None")
@@ -178,6 +176,64 @@ print(f'iterations to converge: GD: {n_Ridge} SGD: {n_Ridge_sgd}')
 print(f'DG: theta = {history_Ridge[-1]}')
 print(f'SDG: theta = {history_Ridge_sgd[-1]}')
 print(f"theta: |sgd - gd| = {np.max(np.abs(history_Ridge[-1] - history_Ridge_sgd[-1])):.2e} ")
+
+
+"""Comparing SGD optimisers: plain, momentum, Adagrad, RMSprop and Adam"""
+beta_momentum = 0.9
+opt_gammas = {"momentum": 0.1 * (1.0 - beta_momentum)} 
+
+opt_methods = ["momentum", "adagrad", "rmsprop", "adam"]
+opt_labels = {"plain": "Plain SGD", "momentum": "Momentum", "adagrad": "Adagrad",
+              "rmsprop": "RMSprop", "adam": "Adam"}
+
+opt_colors = {"plain": PLAIN, "momentum": MOMENTUM , "adagrad": ADAGRAD,
+              "rmsprop": RMSPROP, "adam": ADAM}
+ 
+histories_OLS_opt = {"plain": history_OLS_sgd}
+histories_Ridge_opt = {"plain": history_Ridge_sgd}
+n_OLS_opt = {"plain": n_OLS_sgd}
+n_Ridge_opt = {"plain": n_Ridge_sgd}
+ 
+for method in opt_methods:
+    gamma_m = opt_gammas.get(method, 0.1)
+    hist_OLS_m, n_OLS_m = sgd(X, y, method=method, gamma = gamma_m)
+    hist_Ridge_m, n_Ridge_m = sgd(X, y, method=method, lmbda=lam, gamma = gamma_m)
+    histories_OLS_opt[method], n_OLS_opt[method] = hist_OLS_m, n_OLS_m
+    histories_Ridge_opt[method], n_Ridge_opt[method] = hist_Ridge_m, n_Ridge_m
+ 
+print("Optimiser comparison: iterations to converge------------------------------")
+for method in ["plain", *opt_methods]:
+    print(f"{opt_labels[method]:12s}: gamma = {opt_gammas.get(method, 0.1):<5} "
+          f"OLS = {n_OLS_opt[method]:6d}   Ridge = {n_Ridge_opt[method]:6d}")
+
+def _clipped_cost(history, *cost_args, cap_multiple=1e3, **cost_kwargs):
+    c = cost_history(history, *cost_args, **cost_kwargs)
+    baseline = c[0] if np.isfinite(c[0]) else np.nanmax(c[np.isfinite(c)])
+    cap = cap_multiple * baseline
+    return np.clip(np.where(np.isfinite(c), c, cap), None, cap)
+
+ 
+fig, axes = plt.subplots(1, 2, figsize=(11, 5), sharey=True)
+for method in ["plain", *opt_methods]:
+    cost_OLS_m = _clipped_cost(histories_OLS_opt[method], X, y, penalty="None")
+    cost_Ridge_m = _clipped_cost(histories_Ridge_opt[method], X, y, lmbda=lam, penalty="L2")
+    axes[0].plot(cost_OLS_m, label=opt_labels[method], color=opt_colors[method])
+    axes[1].plot(cost_Ridge_m, label=opt_labels[method], color=opt_colors[method])
+ 
+axes[0].set_title("OLS")
+axes[1].set_title("Ridge")
+for ax in axes:
+    ax.set_xlabel("Iteration")
+    ax.set_xscale("log")
+    ax.set_yscale("log")
+    ax.grid()
+axes[0].set_ylabel("Cost")
+axes[0].legend()
+fig.suptitle("Cost function for different SGD optimisers")
+fig.tight_layout()
+#fig.savefig(FIG_DIR/"Part_h_optimizer_comparison.png")
+plt.show()
+
 
 
 """Plot of cost vs iteration"""

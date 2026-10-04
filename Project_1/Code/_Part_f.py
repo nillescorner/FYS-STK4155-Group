@@ -1,6 +1,7 @@
 
 from optimizer_methods import *
 from general_functions import *
+from colors import *
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -16,11 +17,11 @@ X_raw = design_matrix(x_raw, degree, intercept = False)
 #centering data
 X, y = scaling(X_raw, y_raw, split_data = False)
 
-FUNCT_RUNS = (('plain', gammas, '#777777'),
-            ('momentum', gammas, '#004488'),
-            ('adagrad', gammas, '#DDAA33'),
-            ('rmsprop', gammas, '#228833'),
-            ('adam', gammas, '#BB5566'))
+FUNCT_RUNS = (('plain', gammas, PLAIN ),
+            ('momentum', gammas, MOMENTUM),
+            ('adagrad', gammas, ADAGRAD),
+            ('rmsprop', gammas, RMSPROP),
+            ('adam', gammas, ADAM))
 
 num_iters=30000
 excess5, eigs5, gamma5 = funct_comparison(X = X,y = y, FUNCT_RUNS=FUNCT_RUNS, num_iters=num_iters)

@@ -25,6 +25,13 @@ CROSS_VAL_K10 = '#FB7100'	#bright orange (close to variance amber but not in sam
 GAMMA_MAX = '#E62663'	#raspberry / crimson
 GAMMA_BEST = '#26B3E6'	#sky blue / cyan
 
+#OPPGAVE F OG H
+PLAIN    = "#777777"
+MOMENTUM = "#004488"
+ADAGRAD  = "#DDAA33"
+RMSPROP  = "#228833"
+ADAM     = "#BB5566"
+
 #OPPGAVE G
 #Disse er kanskje for like??
 LASSO_GD = '#5DA0B6'			#muted teal / steel blue

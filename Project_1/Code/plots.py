@@ -1,4 +1,4 @@
-""""
+"""
 This python file contains the function(s?) used throughout this project to plot relevant data.
 
 """
