@@ -28,6 +28,29 @@ import matplotlib.pyplot as plt
 from sklearn.linear_model import Lasso
 from plots import plot_theta
 
+import jax.numpy as jnp
+
+"""Why lasso_gd uses an explicit subgradient instead of automatic differentiation"""
+
+"""
+The L1 penalty |theta| is not differentiable at theta = 0, so its gradient there is only
+defined as a subgradient: any value in [-1, 1]. Naively handing the L1 cost to an automatic
+differentiation (AD) tool such as JAX does not recover this whole interval - AD must pick a
+single number, and the choice it makes at exactly 0 is just an implementation detail of how
+jnp.abs happens to be built from its primitives, not a statement about the true subgradient
+set. This is demonstrated below and is why lasso_gd instead uses an explicit, principled
+subgradient rule (e.g. sign(theta), with sign(0) := 0) rather than jax.grad on |theta|.
+"""
+ 
+grad_abs = jax.grad(jnp.abs)
+test_points = [-1e-3, -1e-9, 0.0, 1e-9, 1e-3]
+ 
+print("AD (JAX) derivative of |theta| at theta = 0 and nearby points----------")
+for t in test_points:
+    print(f"theta = {t:>10.1e}   d|theta|/dtheta (JAX AD) = {float(grad_abs(t)):+.1f}")
+
+
+
 degree = 5
 lam = 1e-2
 n = 1000
