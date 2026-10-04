@@ -124,12 +124,8 @@ plt.show()
 
 
 """Studying a decaying learning rate schedule: gamma_t = t0 / (t + t1) (Eq. 4.40)"""
-# t1 controls how many steps pass before the schedule decays appreciably; t0 is chosen
-# so the *initial* step gamma_1 = t0 / (1 + t1) matches each of the three constant
-# learning rates used in "Studying varying learning rate" above, so this plot is
-# directly comparable to that one - the only thing changing is letting gamma decay
-# over training instead of holding it fixed.
-t1_schedule = 50
+iters_per_epoch_schedule_setup = int(np.ceil(X.shape[0] / 5))  #batch_size = 5 below
+t1_schedule = 100 * iters_per_epoch_schedule_setup  # = n_epochs * iters_per_epoch
 schedules_OLS = [(gamma * (1 + t1_schedule), t1_schedule) for gamma in gammas_OLS]
  
 for (t0, t1), label, color in zip(schedules_OLS, labels_gamma, colors_gamma):
@@ -137,7 +133,7 @@ for (t0, t1), label, color in zip(schedules_OLS, labels_gamma, colors_gamma):
     cost_sched = cost_history(hist, X, y, penalty="None")
  
     plt.plot(cost_sched, label=label, color=color)
- 
+
 """Plot of cost for the decaying learning rate schedule"""
 plt.title(r"Cost function for a decaying learning rate schedule $\gamma_t = t_0/(t+t_1)$")
 plt.ylabel("Cost")
@@ -152,7 +148,7 @@ plt.show()
  
  
 """Constant learning rate vs. decaying schedule, same initial step"""
-gamma_const = gammas_OLS[1]  # the "0.1 gamma_max" rate used above
+gamma_const = gammas_OLS[1]  
 t0_match, t1_match = schedules_OLS[1]
  
 hist_const, n_const = sgd(X, y, n_epochs=100, batch_size=5, gamma=gamma_const, lmbda=lam)
@@ -179,20 +175,42 @@ print(f"iterations to reach within {tol_schedule:.0%} of closed-form cost: "
       f"(out of {n_const - 1} total updates run)")
 print(f"theta: |schedule - constant| = {np.max(np.abs(hist_sched[-1] - hist_const[-1])):.2e}")
  
-plt.plot(cost_const, label=r"Constant $\gamma$", color=LR_MID)
-plt.plot(cost_sched_match, label=r"Schedule $\gamma_t = t_0/(t+t_1)$", color=LR_MID, linestyle="--")
-plt.xlabel("Iteration")
-plt.ylabel("Cost")
-plt.title("Constant learning rate vs. decaying schedule (same initial step)")
-plt.xscale("log")
-plt.yscale("log")
-plt.grid()
-plt.legend()
-plt.tight_layout()
-#plt.savefig(FIG_DIR/"Part_h_schedule_vs_constant.png")
+fig, axes = plt.subplots(1, 3, figsize=(15, 5))
+ 
+axes[0].plot(cost_const, label=r"Constant $\gamma$", color=LR_MID)
+axes[0].plot(cost_sched_match, label=r"Schedule $\gamma_t = t_0/(t+t_1)$", color=LR_MID, linestyle="--")
+axes[0].set_xlabel("Iteration")
+axes[0].set_ylabel("Cost")
+axes[0].set_title("Cost")
+axes[0].set_xscale("log")
+axes[0].set_yscale("log")
+axes[0].grid()
+axes[0].legend()
+ 
+cost_diff = np.abs(cost_sched_match - cost_const)
+axes[1].plot(cost_diff, color=LR_HIGH)
+axes[1].set_xlabel("Iteration")
+axes[1].set_ylabel(r"$|{\rm cost}_{\rm schedule} - {\rm cost}_{\rm constant}|$")
+axes[1].set_title("Absolute cost difference")
+axes[1].set_xscale("log")
+axes[1].set_yscale("log")
+axes[1].grid()
+ 
+iters_plot = np.arange(1, len(hist_sched)) * iters_per_epoch_schedule  # epoch 0 has no gamma yet
+gamma_t_per_epoch = t0_match / (iters_plot + t1_match)
+axes[2].plot(iters_plot, gamma_t_per_epoch, label=r"Schedule $\gamma_t$", color=LR_MID, linestyle="--")
+axes[2].axhline(gamma_const, label=r"Constant $\gamma$", color=LR_MID)
+axes[2].set_xlabel("Iteration")
+axes[2].set_ylabel(r"Learning rate $\gamma$")
+axes[2].set_title("Learning rate actually used")
+axes[2].set_xscale("log")
+axes[2].grid()
+axes[2].legend()
+ 
+fig.suptitle("Constant learning rate vs. decaying schedule (same initial step)")
+fig.tight_layout()
+#fig.savefig(FIG_DIR/"Part_h_schedule_vs_constant.png")
 plt.show()
-
-
 
 
 """Heatmap: varying learning rate (fixed batch_size = 5), fine log-spaced sweep.
