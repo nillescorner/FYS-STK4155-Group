@@ -161,7 +161,22 @@ cost_const = cost_history(hist_const, X, y, penalty="None")
 cost_sched_match = cost_history(hist_sched, X, y, penalty="None")
  
 print("Constant gamma vs. decaying schedule (same initial step)----------------")
-print(f"iterations to converge: constant = {n_const}  schedule = {n_sched_match}")
+tol_schedule = 1e-2
+iters_per_epoch_schedule = int(np.ceil(X.shape[0] / 5))
+cost_target_schedule = cost(theta_cf, X, y, lmbda=lam)
+ 
+ 
+def _iters_to_tol(cost_arr, cost_target, iters_per_epoch, tol=tol_schedule):
+    reached = np.flatnonzero(np.isfinite(cost_arr) & (cost_arr <= (1.0 + tol) * cost_target))
+    return int(reached[0]) * iters_per_epoch if reached.size else None
+ 
+ 
+it_const = _iters_to_tol(cost_const, cost_target_schedule, iters_per_epoch_schedule)
+it_sched = _iters_to_tol(cost_sched_match, cost_target_schedule, iters_per_epoch_schedule)
+print(f"iterations to reach within {tol_schedule:.0%} of closed-form cost: "
+      f"constant = {it_const if it_const is not None else 'n/a'}  "
+      f"schedule = {it_sched if it_sched is not None else 'n/a'}  "
+      f"(out of {n_const - 1} total updates run)")
 print(f"theta: |schedule - constant| = {np.max(np.abs(hist_sched[-1] - hist_const[-1])):.2e}")
  
 plt.plot(cost_const, label=r"Constant $\gamma$", color=LR_MID)
@@ -279,6 +294,13 @@ for method in ["plain", *opt_methods]:
           f"OLS = {it_OLS_str}   Ridge = {it_Ridge_str}   "
           f"(out of {n_OLS_opt[method] - 1} total updates run)")
 
+print("Optimiser comparison: |theta_final - theta_closed_form|--------------------")
+for method in ["plain", *opt_methods]:
+    diff_OLS = np.max(np.abs(histories_OLS_opt[method][-1] - theta_cf_OLS))
+    diff_Ridge = np.max(np.abs(histories_Ridge_opt[method][-1] - theta_cf))
+    print(f"{opt_labels[method]:12s}: OLS = {diff_OLS:.2e}   Ridge = {diff_Ridge:.2e}")
+
+
 def _clipped_cost(history, *cost_args, cap_multiple=1e3, **cost_kwargs):
     c = cost_history(history, *cost_args, **cost_kwargs)
     baseline = c[0] if np.isfinite(c[0]) else np.nanmax(c[np.isfinite(c)])
@@ -363,7 +385,7 @@ plt.bar(x - width/2, train_vals, width, label="Train MSE", color=TRAIN_DATA, alp
 plt.bar(x + width/2, test_vals, width, label="Test MSE", color=TEST_DATA, alpha = 0.7)
 plt.xticks(x, labels, rotation=15)
 plt.ylabel("MSE")
-plt.title("Train vs. test MSE: OLS, Ridge, Lasso")
+plt.title("Train vs. test MSE: OLS and Ridge")
 plt.legend()
 plt.grid(axis='y', alpha=0.3)
 plt.tight_layout()
