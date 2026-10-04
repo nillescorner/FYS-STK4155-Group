@@ -8,38 +8,47 @@ Level 	Label 	      Meaning
 3 	    Skeleton 	    LLM generated the overall structure of a script/class; you filled in domain-specific logic
 4 	    Substantial 	LLM wrote the majority of a file; you adapted, tested, and commented it
 
+TEMP
+
+1. Debugging code
+2. Clarifying consepts to better understanding
+3. Plotting function for regression
+4. Understading the regulatization parameter lambda when comparing estimators (GPT-5.6 Terra)
+5. Improved reusability of calculated arrays with copilot GPT.6 Luna
+
 **Example**
 
-File / notebook           | LLM level | Description
---------------------------|-----------|----------------------------------------------
-train.py                  | 2         | LLM provided the shot/measurement setup;
-                          |           | tested and adapted for our NTK experiment
-qaoa.ipynb                | 3         | LLM generated class skeleton for QAOA;
-                          |           | Optimization architecture designed by us
-utils/ntk_compute.py      | 0         | Written independently
-results/plot_figures.py   | 1         | LLM debugged an indexing error in the
-                          |           | eigenvalue sorting routine
-                          |           | 
+| File / notebook         | LLM level                                 | Description                              |
+| ----------------------- | ----------------------------------------- | ---------------------------------------- |
+| train.py                | 2                                         | LLM provided the shot/measurement setup; |
+|                         | tested and adapted for our NTK experiment |                                          |
+| qaoa.ipynb              | 3                                         | LLM generated class skeleton for QAOA;   |
+|                         | Optimization architecture designed by us  |                                          |
+| utils/ntk_compute.py    | 0                                         | Written independently                    |
+| results/plot_figures.py | 1                                         | LLM debugged an indexing error in the    |
+|                         | eigenvalue sorting routine                |                                          |
+|                         |                                           |                                          |
 
 **Ours**
-File / notebook             | LLM level | Description
-----------------------------|-----------|----------------------------------------------
-_Part_a.py                  |           | 
-_Part_b.py                  |           | 
-_Part_c.py                  |           | 
-_Part_d.py                  |           | 
-_Part_e.py                  |           | 
-_Part_f.py                  |           | 
-_Part_g.py                  |           | 
-_Part_h.py                  |           | 
-_Part_i.py                  |           | 
-general_functions.py        |           | 
-gradient_descent_methods.py |           | 
-lasso_methods.py            |           | 
-optimizer_methods.py        |           | 
-plots.py                    |           | 
-regression_methods.py       |           | 
-resampling_methods.py       |           | 
-sgd_methods.py              |           | 
-                            |           | 
-                            |           | 
+
+| File / notebook             | LLM level | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| --------------------------- | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| _Part_a.py                  |           |                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| _Part_b.py                  |           |                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| _Part_c.py                  |           |                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| _Part_d.py                  |           |                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| _Part_e.py                  |           |                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| _Part_f.py                  |           |                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| _Part_g.py                  |           |                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| _Part_h.py                  |           |                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| _Part_i.py                  | 2         | Writing plotting function`plot_best_model_fits`                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| general_functions.py        |           |                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| gradient_descent_methods.py |           |                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| lasso_methods.py            |           |                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| optimizer_methods.py        | 2         | Assistance with jitting jax code<br />Writing doc-string                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| plots.py                    |           |                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| regression_methods.py       | 2-3       | K-fold resampling algorithm mostly LLM made<br />Implemented test_wholedataset function in bootstrap_resampling based on selfmade version in kfold_resampling<br />Ran through for glaring bugs<br />Assisted with doc strings for train_through_gridsearchCV, mse_decomposer and grid_search<br />impementation of std calculations in other methods than cross_validation, to mirror usage already defined there . Ended up being useless in both resampling methods though |
+| resampling_methods.py       |           |                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| sgd_methods.py              |           |                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| __init__.py           | 1         | How to access modules from other files                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| main_test.py                | 2         | How to access modules from other files<br />Cleaning up visualisation of how n resamples using kfold resampling affects the bias variance decomposition                                                                                                                                                                                                                                                                                                                       |

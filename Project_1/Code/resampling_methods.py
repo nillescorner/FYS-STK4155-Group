@@ -9,50 +9,147 @@ from sklearn.preprocessing import PolynomialFeatures, StandardScaler
 from sklearn.model_selection import train_test_split, KFold, cross_val_score, cross_val_predict, GridSearchCV
 from sklearn.pipeline import make_pipeline
 from sklearn.utils import resample
+from sklearn.base import clone
 
 
-def bootstrap_resampling(x,y, mindegree=1, maxdegree=21, n_bootstraps=100, seed=2026):
+def bootstrap_resampling(x,y, mindegree=1, maxdegree=21, n_bootstraps=100, seed=2026, best_estimator = None, test_wholedataset=False, return_std=False):
     """
 
-    Bootstrap resampling function for simpler ordinary least squares based on code from p.65
+    Bootstrap resampling function for simpler ordinary least squares based on code from p.65, or predefined estimator given in 'estimator'
 
         Params:
-            x (any): input values
-            y (any): input values
+            x (any): input values.
+            y (any): input values. 
             mindegree (int): minimum degree
             maxdegree (int): maximum degree
             n_bootstraps (int): number of iterations for bootstrap
             seed (int): randomizer seed
-        
+            best_estimator(scikit learn estimator) : predefined estimator
+            test_wholedataset (bool): if True, resampling uses the whole dataset. Intended use is to decompose fitted estimator
+            return_std (bool): if True, also returns the standard deviations
+                across data-point contributions for each metric. DO NOT USE. DOES NOT WORK
+
         Returns:
             error (list): test error for each polynomial degree
             bias (list): bias for each polynomial degree
             variance (list): variance for each polynomial degree
-    """                                
+            std (tuple): standard deviations for error, bias, and variance,
+                returned only when return_std is True.
+    """      
+                       
     x = x.reshape(-1,1)
-    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=seed)
 
-    error, bias, variance, = [], [], []
+    if test_wholedataset:
+        x_train, x_test, y_train, y_test = x, x, y, y
+    else:
+        x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=seed)
+
+    error, bias, variance = [], [], []
+    error_std, bias_std, variance_std = [], [], []
 
     for deg in range(mindegree,maxdegree):
-        #StandardScaler does X_norm, LinearRegression 
-        model = make_pipeline(PolynomialFeatures(degree=deg),
-                              StandardScaler(),
-                              LinearRegression())
+        if best_estimator == None:
+            #StandardScaler does X_norm, applies linear regression 
+            model = make_pipeline(PolynomialFeatures(degree=deg),
+                                StandardScaler(),
+                                LinearRegression())
+        else:
+            model = estimator = make_pipeline(
+                                PolynomialFeatures(degree=deg),
+                                clone(best_estimator),
+                            )
+        
+        
 
         y_pred = np.empty((y_test.shape[0], n_bootstraps))
         for i in range(n_bootstraps):
             x_, y_ = resample(x_train, y_train, random_state= i+1)
             y_pred[:, i] = model.fit(x_, y_).predict(x_test).ravel()
 
-        error.append(np.mean(np.mean((y_test[:, None] - y_pred)**2, axis=1)))
-        bias.append(np.mean((y_test[:, None] - np.mean(y_pred, axis=1, keepdims=True))**2))
-        variance.append(np.mean(np.var(y_pred, axis=1)))
+        error_contributions = np.mean((y_test[:, None] - y_pred)**2, axis=1)
+        bias_contributions = (y_test - np.mean(y_pred, axis=1))**2
+        variance_contributions = np.var(y_pred, axis=1)
 
-    return error, bias, variance
+        error.append(np.mean(error_contributions))
+        bias.append(np.mean(bias_contributions))
+        variance.append(np.mean(variance_contributions))
+        error_std.append(np.std(error_contributions))
+        bias_std.append(np.std(bias_contributions))
+        variance_std.append(np.std(variance_contributions))
+
+    output = (error, bias, variance)
+    if return_std:
+        return (*output, (error_std, bias_std, variance_std))
+    return output
 
 
-def cross_validation(x, y, model='ols', lamba=0.0, mindegree=1, maxdegree=21, k=5, max_iter=10000, seed=2026, ypred = False, return_std=False):
+def kfold_resampling(x,y,k, best_est, mindegree=1, maxdegree=21, n_resamples=100, seed=2026, test_wholedataset = False, return_std=False):
+    """
+
+    kfold resampling function for simpler ordinary least squares based on code from p.65, or predefined estimator given in 'estimator'
+
+        Params:
+            x (any): input values.
+            y (any): input values. 
+            k (int) : k-folds
+            mindegree (int): minimum degree
+            maxdegree (int): maximum degree
+            n_resamples (int): number of iterations for resamples
+            seed (int): randomizer seed
+            test_wholedataset (bool): if True, resampling uses the whole dataset. Intended use is to decompose fitted estimator
+            return_std (bool): if True, also returns the standard deviations
+                across data-point contributions for each metric. DO NOT USE. DOES NOT WORK
+
+        Returns:
+            error (list): test error for each polynomial degree
+            bias (list): bias for each polynomial degree
+            variance (list): variance for each polynomial degree
+            std (tuple): standard deviations for error, bias, and variance,
+                returned only when return_std is True.
+    """      
+
+    if test_wholedataset:
+        pass
+    else:                    
+        x = x.reshape(-1,1)
+
+        x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=seed)
+        x = x_train
+        y = y_train
+
+
+    error, bias, variance = [], [], []
+    error_std, bias_std, variance_std = [], [], []
+
+    for deg in range(mindegree,maxdegree):
+        X = PolynomialFeatures(degree=deg).fit_transform(x.reshape(-1, 1))
+
+        y_pred = np.empty((y.shape[0], n_resamples))
+        for r in range(n_resamples):
+            kf = KFold(k, shuffle=True, random_state= seed + r)
+            for tr, va in kf.split(X):
+                model = clone(best_est).fit(X[tr], y[tr])   # fixed alpha, no re-tuning
+                y_pred[va,r] = model.predict(X[va])
+
+        error_contributions = np.mean((y[:, None] - y_pred)**2, axis=1)
+        bias_contributions = (y - np.mean(y_pred, axis=1))**2
+        variance_contributions = np.var(y_pred, axis=1)
+
+        error.append(np.mean(error_contributions))
+        bias.append(np.mean(bias_contributions))
+        variance.append(np.mean(variance_contributions))
+        error_std.append(np.std(error_contributions))
+        bias_std.append(np.std(bias_contributions))
+        variance_std.append(np.std(variance_contributions))
+
+    output = (error, bias, variance)
+    if return_std:
+        return (*output, (error_std, bias_std, variance_std))
+    return output
+
+
+
+def cross_validation(x, y, model='OLS', lamba=0.0, mindegree=1, maxdegree=21, k=5, max_iter=10000, seed=2026, return_std=False):
     """
     Cross-validation resampling technique. Works for OLS, Ridge, Lasso
 
@@ -70,14 +167,15 @@ def cross_validation(x, y, model='ols', lamba=0.0, mindegree=1, maxdegree=21, k=
 
         Returns:
             mse (list): mean squared error per polynomial degree
-            y_pred (dict): dictionary indexed by degrees containing predicted y-values for the model. might be unsuitable to compare scoring metrics based upon y_pred
+            std (list): std of mean squared error per polynomial degree
+    
 
     """
     kFold = KFold(n_splits=k, shuffle=True, random_state=seed)
     mse, std = [], []
 
     x = x.reshape(-1, 1)     #reshape x into a 2 dim column vector
-    y_pred = { }
+
     for deg in range(mindegree, maxdegree):
         if model == 'OLS':
             regression = LinearRegression()
@@ -95,13 +193,7 @@ def cross_validation(x, y, model='ols', lamba=0.0, mindegree=1, maxdegree=21, k=
         mse.append(np.mean(scores))
         std.append(np.std(scores))
 
-        if ypred:
-            #prediction of y, obtained by cross validation. use for visualisation purposes
-            y_pred[deg] = cross_val_predict(pipe, x, y, cv=kFold)
-
     output = [mse]
-    if ypred:
-        output.append(y_pred)
     if return_std:
         output.append(std)
     return output[0] if len(output) == 1 else tuple(output)
@@ -109,19 +201,44 @@ def cross_validation(x, y, model='ols', lamba=0.0, mindegree=1, maxdegree=21, k=
 def grid_search(x_train, x_test, y_train, k,  param_grid = {"ridge__alpha": np.logspace(-5, 3, 30)},
                   model='Ridge', lamba=0.0,
                   mindegree=1, maxdegree=21, max_iter=10000,  seed=2026,
-                  return_X = False):
+                  return_X = False, return_std=False):
 
     """
-    Grid search technique using cross validation. 
-    Repeats process for all given degrees and returns a dict indexed by degrees containing GridSearchCV objects.
+    Uses cross-validation to find the best regularization parameter for Ridge
+    or Lasso models at each polynomial degree.
 
-    Only includes Ridge and Lasso, as OLS doesn't have hyperparameters aside from amount of degrees
-    
+    Params:
+        x_train (array): Training input values.
+        x_test (array): Test input values, transformed for each polynomial degree.
+        y_train (array): Training target values.
+        k (int): Number of cross-validation folds.
+        param_grid (dict): Parameter values to test in GridSearchCV. The key
+            should match the selected model, e.g. "ridge__alpha" or "lasso__alpha".
+        model (str): Model to use; accepts "Ridge", "ridge", "Lasso", or "lasso".
+        lamba (float): Initial regularization parameter passed to the estimator.
+        mindegree (int): Minimum polynomial degree to evaluate.
+        maxdegree (int): Upper bound for polynomial degrees (not included).
+        max_iter (int): Maximum iterations for Lasso.
+        seed (int): Randomizer seed for cross-validation fold shuffling.
+        return_X (bool): If True, also returns fitted models and transformed
+            training and test inputs.
+        return_std (bool): If True, also returns the std of the fold scores
+            for each degree at that degree's best parameter setting. Is the std for the training MSE, never the test
+
+    Returns:
+        gridsearch (dict): GridSearchCV objects indexed by polynomial degree.
+            If return_X is True, returns a tuple containing gridsearch, fitted
+            models, and transformed training and test inputs.
+            If return_std is True, also returns a dict of per-degree standard
+            deviations; it is appended to the return tuple when return_X is
+            True, or returned with gridsearch otherwise.
     """
 
     gridsearch = {}
+    fit = {}
     X_train_dict = {}
     X_test_dict = {}
+    std_by_degree = {}
     for deg in range(mindegree, maxdegree):
         if model == 'Ridge' or model == 'ridge':
             regression = Ridge(alpha=lamba)
@@ -147,8 +264,171 @@ def grid_search(x_train, x_test, y_train, k,  param_grid = {"ridge__alpha": np.l
             return_train_score = True, #returns training score 
         )
 
-        gridsearch[deg].fit(X_train_dict[deg], y_train)
+        fit[deg] = gridsearch[deg].fit(X_train_dict[deg], y_train)
+        best_index = gridsearch[deg].best_index_
+        std_by_degree[deg] = gridsearch[deg].cv_results_["std_test_score"][best_index]
     if return_X:
-        return gridsearch, X_train_dict, X_test_dict
+        if return_std:
+            return gridsearch, fit, X_train_dict, X_test_dict, std_by_degree
+        return gridsearch, fit, X_train_dict, X_test_dict
+    if return_std:
+        return gridsearch, std_by_degree
     else:
         return gridsearch
+
+
+
+def train_through_gridsearchCV(x,y, models = ['ridge'], Ks=[5,10],   mindegree=1, maxdegree=21, lambas = np.logspace(-6,3,30), seed = 2026, return_std=False):
+    """
+    Splits the data into training and test sets, then runs Ridge (and Lasso)
+    grid searches for each fold count and polynomial degree.
+
+    Params:
+        x (array): Input values.
+        y (array): Target values.
+        models (list) : contains which models to gridsearch for. Either 'ridge' or 'lasso' or both
+        Ks (list): Numbers of cross-validation folds to evaluate.
+        mindegree (int): Minimum polynomial degree to evaluate.
+        maxdegree (int): Upper bound for polynomial degrees (not included).
+        lambas (array): Candidate regularization parameter values.
+        seed (int): Randomizer seed for the train-test split and cross-validation.
+        return_std (bool): If True, include the fold-score std at the selected
+            best parameter for each degree in the results. Is the std for the training mse, never the test 
+
+    Returns:
+        results (dict): Results indexed by model and fold count. Each entry
+            contains the grid searches and fitted models indexed by degree,
+            best regularization parameters, cross-validation MSE, and test MSE.
+        model_shorthands (list): Keys used to index results, such as
+            "ridge, folds = 5".
+    """
+    degs = np.arange(mindegree, maxdegree)
+    x_train, x_test, y_train, y_test = train_test_split(x,y, test_size=0.2, random_state=seed)
+
+    results = {} #for storing our results
+    model_shorthands = [] #easy way to retrieve model data without recalculating everyhting
+ 
+    for k in Ks:
+        for model in models:
+            param = {f"{model}__alpha" : lambas}    
+            search_output = grid_search(
+                x_train, x_test, y_train, k, model=model, param_grid=param,
+                return_X=True,
+                maxdegree=maxdegree, mindegree=mindegree,
+            )
+       
+            modelsearch, fit, X_train_dict, X_test_dict = search_output
+
+            best_params = []
+            mse, test_mse, std = (np.zeros(maxdegree-mindegree) for _ in range(3))
+
+            for idx, deg in enumerate(degs):
+                best_params.append(modelsearch[deg].best_params_[f"{model}__alpha"])
+                mse[idx] = - modelsearch[deg].best_score_
+                test_mse[idx] = - modelsearch[deg].score(X_test_dict[deg], y_test) #this is the MSE of the fit on the test
+
+                if return_std:
+                    best_index = modelsearch[deg].best_index_
+                    std[idx] = modelsearch[deg].cv_results_["std_test_score"][best_index] # std of the k fold MSEs for the best params.
+    
+
+            model_shorthands.append(f"{model} folds = {k}")
+            result = {'model': modelsearch, #indexed by degree
+                      'fit' : fit, #indexed by degree
+                      'best_params': best_params,
+                      'mse' : mse,
+                      'test_mse': test_mse}
+            if return_std:
+                result['std_test_score'] = std
+            results[f"{model} folds = {k}"] = result
+        
+    return results, model_shorthands
+
+def mse_decomposer(x, y, results, model_shorthands, resamples = 100,  method ='kfold_resampling',
+                   mindegree=1, maxdegree=21, return_std=False, test_wholedataset = False):
+    """
+    Estimates prediction error, squared bias, and variance for each model and
+    polynomial degree using resampling.
+
+    Params:
+        x (array): Input values to evaluate. Unspilt
+        y (array): Target values corresponding to x. Unspilt
+        results (dict): Results returned by train_through_gridsearchCV.
+        model_shorthands (list): Model and fold-count keys from results.
+        resamples (int): Number of resampling runs.
+        method (str): Resampling method; use "kfold_resampling" or
+            "bootstrap_resampling".
+        mindegree (int): Minimum polynomial degree to evaluate.
+        maxdegree (int): Upper bound for polynomial degrees (not included).
+        return_std (bool): If True, also returns the standard deviation across
+            data-point contributions for error, bias squared plus noise, and
+            variance.
+
+    Returns:
+        mse_decomposition (dict): Results indexed by model and fold count.
+            Each entry contains arrays of error, squared bias plus noise, and
+            variance, ordered by polynomial degree. 
+        std_decomposition (dict): Standard deviations of those metrics across
+            data-point contributions, returned only when return_std is True.
+
+    Raises:
+        ValueError: If method is not "kfold_resampling" or
+            "bootstrap_resampling".
+
+    """
+
+    if method not in ('kfold_resampling', 'bootstrap_resampling'):
+        raise ValueError(
+            "method must be 'kfold_resampling' or 'bootstrap_resampling'"
+        )
+
+    mse_decomposition = {}
+    std_decomposition = {}
+    degs = np.arange(mindegree, maxdegree)
+
+
+    for model_shorthand in model_shorthands:
+        model_name, _, _, k = model_shorthand.split()
+        k = int(k)
+
+        mse_decomposition[model_shorthand] = {}
+        error, bias2_plus_noise, variance = (np.zeros(maxdegree-mindegree) for _ in range(3))
+        error_std, bias_std, variance_std = (np.zeros(maxdegree-mindegree) for _ in range(3))
+        for idx, deg in enumerate(degs):
+            deg = int(deg)
+            
+            best_estimator = results[model_shorthand]['fit'][deg].best_estimator_
+
+            if method == 'kfold_resampling':
+                output = kfold_resampling(
+                    x, y, k, best_estimator, deg, deg+1,
+                    n_resamples=resamples, test_wholedataset=test_wholedataset,
+                    return_std=return_std,
+                )
+            elif method =='bootstrap_resampling':
+                output = bootstrap_resampling(
+                    x, y, deg, deg+1, best_estimator=best_estimator,
+                    n_bootstraps=resamples, test_wholedataset=test_wholedataset,
+                    return_std=return_std,
+                )
+
+            if return_std:
+                error_, bias2_plus_noise_, variance_, std_ = output
+                error_std[idx], bias_std[idx], variance_std[idx] = (
+                    metric_std[0] for metric_std in std_
+                )
+            else:
+                error_, bias2_plus_noise_, variance_ = output
+            error[idx], bias2_plus_noise[idx], variance[idx] = error_[0], bias2_plus_noise_[0], variance_[0] 
+        mse_decomposition[model_shorthand] = {'error': error,
+                                                    'bias2_plus_noise': bias2_plus_noise,
+                                                    'variance': variance }
+        if return_std:
+            std_decomposition[model_shorthand] = {
+                'error': error_std,
+                'bias2_plus_noise': bias_std,
+                'variance': variance_std,
+            }
+    if return_std:
+        return mse_decomposition, std_decomposition
+    return mse_decomposition
