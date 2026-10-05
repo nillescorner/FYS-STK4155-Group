@@ -1,5 +1,5 @@
 """
-This python file contains the function(s?) used throughout this project to plot relevant data.
+This python file contains the functions used throughout this project to plot relevant data.
 
 """
 
@@ -35,6 +35,9 @@ def plot_heatmap_grid(data, xvals, yvals, title, cbar_label, xlabel='Number of d
         fontsize (int): font size of the annotations
         best (str or None): 'min' marks the lowest value (MSE), 'max' marks the highest (R2),
                             None marks nothing
+
+        Returns:
+            ax (matplotlib.axes.Axes): the axis the heatmap was drawn on
     """
     if ax is None:
         fig, ax = plt.subplots(figsize=(7, 5))
@@ -104,7 +107,12 @@ def plot_theta(thetas, x_values, xlabel='Polynomial Degree',
     log        : symlog y-scale
     xlog       : log x-scale (use for lambdas)
     ax         : existing axis to draw on (None = new figure)
+
+    Returns:
+            fig (matplotlib.figure.Figure): the figure the coefficients were drawn on
+            ax (matplotlib.axes.Axes): the axis the coefficients were drawn on
     """
+
     max_len = max(len(np.ravel(t)) for t in thetas)
     theta_matrix = np.full((len(thetas), max_len), np.nan)
     for i, theta in enumerate(thetas):
@@ -142,20 +150,31 @@ def plot_theta(thetas, x_values, xlabel='Polynomial Degree',
     fig.tight_layout()
     return fig, ax
 
+
 def plot_cost_heatmap(cost_grid, param_values, param_label, title, fname=None,
                        cmap='plasma', y_tick_fmt="{:.3g}", relative_to=None,
                        relative_fmt=r"{:.2f}$\,\gamma_{{\max}}$"):
-    """Draws a (parameter value) x (epoch) heatmap of cost, log-colored since cost
+    """
+    LLM assisted. 
+
+    Draws a (parameter value) x (epoch) heatmap of cost, log-colored since cost
     typically spans several orders of magnitude as it decays.
  
-    Some hyperparameter values (e.g. a learning rate right at or above the
-    theoretical stability limit) can make SGD diverge. This shows up either as
-    inf/nan cost, or as a finite but astronomically large cost (e.g. 1e250)
-    just before it overflows -- both break LogNorm/its tick locator if used
-    directly as vmax. So the color range is instead capped at a fixed multiple
-    of the cost at epoch 0 (same for every row, since all runs start from
-    theta=0): anything at or below that is "still in the game", anything above
-    it (finite or not) is "diverged" and gets clipped to the cap for display.
+    Params:
+        cost_grid (NDArray): 2D array of shape (len(param_values), n_epochs + 1), cost per parameter/epoch
+        param_values (NDArray): swept hyperparameter values (e.g. learning rates or batch sizes)
+        param_label (str): label for the y axis (the swept parameter)
+        title (str): title of the heatmap
+        fname (str or None): if given, the figure is saved to this path, default: None
+        cmap (str): colormap to use, default: 'plasma'
+        y_tick_fmt (str): number format for the y axis tick labels, default: "{:.3g}"
+        relative_to (float or None): if given, y axis tick labels are shown as a fraction of
+            this reference value (e.g. gamma_max) instead of the raw parameter value, default: None
+        relative_fmt (str): format string used for the tick labels when relative_to is given
+ 
+    Returns:
+        fig (matplotlib.figure.Figure): the figure the heatmap was drawn on
+        ax (matplotlib.axes.Axes): the axis the heatmap was drawn on
     """
     n_epochs = cost_grid.shape[1] - 1
  
@@ -177,11 +196,7 @@ def plot_cost_heatmap(cost_grid, param_values, param_label, title, fname=None,
         norm=LogNorm(vmin=vmin, vmax=vmax),
         cmap=cmap,
     )
- 
-    # Label a readable subset of rows with their actual parameter value -- or,
-    # when relative_to is given (e.g. gamma_max_OLS), as a fraction of that
-    # reference value instead of the raw number, since "0.24 gamma_max" is more
-    # meaningful here than the raw learning rate on its own.
+    
     n_ticks = min(10, len(param_values))
     tick_idx = np.linspace(0, len(param_values) - 1, n_ticks).astype(int)
     ax.set_yticks(tick_idx + 0.5)
