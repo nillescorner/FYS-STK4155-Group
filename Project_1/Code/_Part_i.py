@@ -8,12 +8,6 @@ import matplotlib.pyplot as plt
 import colors as c
 from matplotlib.lines import Line2D
 from matplotlib.patches import Patch
-
-mindegree, maxdegree = 1, 21
-x_axis_20 = np.arange(mindegree, maxdegree)
-X_,y_ = make_data()
-X_train, X_test, y_train, y_test = scaling(X_,y_, split_data = True )
-
 """
 This is implements the functions defined in resampling_methods 
 
