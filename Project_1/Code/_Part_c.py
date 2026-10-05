@@ -31,7 +31,7 @@ ax.set_ylabel('MSE')
 ax.set_yscale('log')
 ax.set_xticks(degrees)
 ax.legend()
-plt.savefig(FIG_DIR/'Part_c_recreate_2.11.pdf')
+#plt.savefig(FIG_DIR/'Part_c_recreate_2.11.pdf')
 plt.show()
 
 
@@ -43,7 +43,7 @@ _, mse_test, *_ = regression(x,y, mindeg=mindegree, maxdeg=maxdegree)
 best_index = np.argmin(error)
 best_degree = degrees[best_index]
 best_mse = error[best_index]
-print(f'Best mse for bootstrap {best_mse:.3e}')
+print(f'Best mse for bootstrap {best_mse:.3e} with bias^2: {bias[best_index]:.3e} and variance: {variance[best_index]:.3e}')
 print(f'Best mse for OLS {mse_test[np.argmin(mse_test)]:.3e}')
 
 
@@ -62,7 +62,7 @@ ax.set_xlabel('Polynomial Degree')
 ax.set_ylabel('MSE decomposition')
 ax.legend()
 ax.set(xticks=degrees)
-plt.savefig(FIG_DIR/'Part_c_bootstrap.pdf')
+#plt.savefig(FIG_DIR/'Part_c_bootstrap.pdf')
 plt.show()
 
 

@@ -48,12 +48,11 @@ best_degrees = {}
 for method, (meansq,std) in results.items():
     best_index = np.argmin(meansq)
     best_degrees[method] = degrees[best_index]
-    line = f'{method:6s}: best degree = {degrees[best_index]} with MSE = {meansq[best_index]:4f} '
+    line = f'{method:6s}: best degree = {degrees[best_index]} with MSE = {meansq[best_index]:.3e} '
     if std is not None:
-        line += f' ± {std[best_index]:.4f}'
+        line += f' ± {std[best_index]:.3e}'
     print(line)
 #LLM Assited until this comment
-
 
 
 """"
@@ -110,5 +109,5 @@ ax.set_xlabel(r'$\lambda$')
 ax.set_ylabel('MSE (CV)')
 ax.set_title(r'Ridge CV-MSE over $\lambda$s. k = 5 (solid) and k = 10 (dashed)')
 ax.legend()
-plt.savefig(FIG_DIR/'Part_d_Ridge_k5_vs_k10_lambda.pdf')
+#plt.savefig(FIG_DIR/'Part_d_Ridge_k5_vs_k10_lambda.pdf')
 plt.show()
