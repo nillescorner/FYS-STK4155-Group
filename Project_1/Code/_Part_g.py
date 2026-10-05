@@ -218,8 +218,11 @@ plt.grid()
 #plt.savefig(FIG_DIR/"Part_g_cost_lambda_testtrain.png")
 plt.show()
 
-fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(7, 7), sharey=True)
 
+print('Ridge theta to comapre to Lasso theta----------------------')
+print(f'theta_Ridge = {theta_Ridge}')
+
+fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(7, 7), sharey=True)
 plot_theta(thetas_Ridge, lambdas, xlabel=r'$\lambda$', title='Ridge coefficients', intercept=False, xlog=True, ax=ax1)
 plot_theta(thetas_Lasso, lambdas, xlabel=r'$\lambda$', title='Lasso coefficients', intercept=False, xlog=True, ax=ax2)
 #plt.savefig(FIG_DIR/"Part_g_theta_lambda.png")
