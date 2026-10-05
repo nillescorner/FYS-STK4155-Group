@@ -15,14 +15,16 @@ from sklearn.base import clone
 def bootstrap_resampling(x,y, mindegree=1, maxdegree=21, n_bootstraps=100, seed=2026, best_estimator = None, test_wholedataset=False, return_std=False):
     """
 
-    Bootstrap resampling function for simpler ordinary least squares based on code from p.65, or predefined estimator given in 'estimator'
+    Bias-variance analysis for simpler ordinary least squares using bootstrap.
+    Based on the bootstrap exmple on p. 65 in lecture book.
+
 
         Params:
-            x (any): input values.
-            y (any): input values. 
-            mindegree (int): minimum degree
-            maxdegree (int): maximum degree
-            n_bootstraps (int): number of iterations for bootstrap
+            x (NDArray): input values.
+            y (NDArray): target values. 
+            mindegree (int): minimum degree (included)
+            maxdegree (int): maximum degree (excluded)
+            n_bootstraps (int): number of bootstap samples
             seed (int): randomizer seed
             best_estimator(scikit learn estimator) : predefined estimator
             test_wholedataset (bool): if True, resampling uses the whole dataset. Intended use is to decompose fitted estimator
@@ -92,8 +94,8 @@ def kfold_resampling(x,y,k, best_est, mindegree=1, maxdegree=21, n_resamples=100
             x (any): input values.
             y (any): input values. 
             k (int) : k-folds
-            mindegree (int): minimum degree
-            maxdegree (int): maximum degree
+            mindegree (int): minimum degree (included)
+            maxdegree (int): maximum degree (excluded)
             n_resamples (int): number of iterations for resamples
             seed (int): randomizer seed
             test_wholedataset (bool): if True, resampling uses the whole dataset. Intended use is to decompose fitted estimator
@@ -154,12 +156,12 @@ def cross_validation(x, y, model='OLS', lamba=0.0, mindegree=1, maxdegree=21, k=
     Cross-validation resampling technique. Works for OLS, Ridge, Lasso
 
         Params:
-            x (any): input value
-            y (any): input value
-            model (str): which model used
-            lamba (float): penalty parameter
-            mindegree (int): minimum degree
-            maxdegree (int): maximum degree
+            x (NDArray): input values
+            y (NDArray): target values
+            model (str): which model used: 'OLS', 'Ridge', 'Lasso'
+            lamba (float): penalty parameter lambda, 0 for OLS
+            mindegree (int): minimum degree (included)
+            maxdegree (int): maximum degree (excluded)
             k (int): number of folds
             max_iter (int): max iterations for Lasso
             seed (int): randomizer seed 
@@ -168,7 +170,6 @@ def cross_validation(x, y, model='OLS', lamba=0.0, mindegree=1, maxdegree=21, k=
         Returns:
             mse (list): mean squared error per polynomial degree
             std (list): std of mean squared error per polynomial degree
-    
 
     """
     kFold = KFold(n_splits=k, shuffle=True, random_state=seed)
@@ -192,11 +193,12 @@ def cross_validation(x, y, model='OLS', lamba=0.0, mindegree=1, maxdegree=21, k=
                                      scoring='neg_mean_squared_error')
         mse.append(np.mean(scores))
         std.append(np.std(scores))
-
+    
     output = [mse]
     if return_std:
         output.append(std)
     return output[0] if len(output) == 1 else tuple(output)
+
 
 def grid_search(x_train, x_test, y_train, k,  param_grid = {"ridge__alpha": np.logspace(-5, 3, 30)},
                   model='Ridge', lamba=0.0,

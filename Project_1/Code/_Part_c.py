@@ -34,7 +34,7 @@ ax.legend()
 #plt.savefig(FIG_DIR/'Part_c_recreate_2.11.pdf')
 plt.show()
 
-
+"""Bias-variance analysis using bootstrap resampling method"""
 mindegree, maxdegree = 1, 16 #same as for other parts
 degrees = np.arange(mindegree, maxdegree)
 error, bias, variance = np.asarray(bootstrap_resampling(x,y,mindegree=mindegree, maxdegree=maxdegree))
@@ -46,7 +46,6 @@ best_mse = error[best_index]
 print(f'Best mse for bootstrap {best_mse:.3e} with bias^2: {bias[best_index]:.3e} and variance: {variance[best_index]:.3e}')
 print(f'Best mse for OLS {mse_test[np.argmin(mse_test)]:.3e}')
 
-
 fig, ax = plt.subplots()
 ax.plot(degrees, error, 'o-', color='#FF2B2B', label='Test MSE Bootstrap')
 ax.plot(degrees, bias, 's-', color='#4E20A1', label=r'Bias$^2$ (+ $\sigma^2$) Bootstrap')
@@ -54,7 +53,6 @@ ax.plot(degrees, variance, 'd-', color='#FFB107', label='Variance Bootstrap')
 ax.plot(degrees, mse_test, 'o-', color='#F433DA', label='Test MSE OLS' )
 ax.axvline(x=best_degree, color="#696968", ls='--', label=rf'Best degree Bootstrap = {best_degree}')
 ax.axhline(sigma**2, color='black', ls=':', label=rf'Noise floor $\sigma^2$ = {sigma**2:.3g}')
-
 
 ax.set_yscale('log')
 ax.set_title('Bias-variance tradeoff and test MSE for OLS')
