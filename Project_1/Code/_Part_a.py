@@ -80,10 +80,10 @@ fig, axes = plt.subplots(2, 1, figsize=(7, 7), sharex=True)
 
 
 print('Heatmap answers')
-i,j = np.argwhere(mse_test==mse_test.min())[0]
+i,j = np.argwhere(mse_test==mse_test.min())[0] #LLM Assisted
 print(f'Best test MSE = {mse_test[i,j]:.3e} at n = {ns[j]}, sigma = {sigmas[i]:.3e}')
 
-i,j = np.argwhere(r2_test==r2_test.max())[0]
+i,j = np.argwhere(r2_test==r2_test.max())[0]    #LLM Assisted
 print(f'Best test R2 score  = {r2_test[i,j]:.4f} at n = {ns[j]}, sigma = {sigmas[i]:.3e}')
 
 
