@@ -6,19 +6,20 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from pathlib import Path
 
-
+#Path in order to save figures in Project_1/figs, LLM Assisted 
 FIG_DIR = Path(__file__).resolve().parent.parent / "figs"   # Project_1/figs
 FIG_DIR.mkdir(exist_ok=True)
+
 
 def runge(x):
     """
     Runge function given in Project 1 description
 
         Params:
-            x (any): input data to generate Runge function
+            x (NDArray or float): input values to generate Runge function
         
         Returns:
-            Runge function (any) from input x
+            f(x) (NDarray or float): The Runge function evaluated at input x
     """
     return 1.0 / (1.0 + 25.0 * x**2)
 
@@ -29,12 +30,12 @@ def design_matrix(x, degree, intercept=True):
     Polynomial features [1, x, x^2, ..., x^degree] (drop the 1 if intercept=False)
 
         Params:
-            x (any): input data
+            x (NDArray): input data
             degree (int): degree of polynomial
-            intercept
+            intercept (bool): if False, column of ones is left out
         
         Returns:
-            Design matrix X (NDArray)
+            X (NDArray): design matrix
     """
     start = 0 if intercept else 1
     return np.vstack([x**p for p in range(start, degree + 1)]).T
@@ -52,7 +53,7 @@ def make_data(n=100, noise=0.1, seed=2026):
         
         Returns:
             x (NDArray): input data x
-            y (NDArray): target data/true data
+            y (NDArray): target data
     """
     rng = np.random.default_rng(seed)
     x = np.sort(rng.uniform(-1, 1, n))
@@ -70,9 +71,9 @@ def scaling(X,y, seed=2026, split_data=False):
        Based on p116 fit with intercept from lecturebook
        
            Params:
-               X (any): Design matrix X
-               y (any): Target/true data 
-               seed (int): Seed for randomizer
+               X (NDArray): Design matrix X
+               y (NDArray): Target data 
+               seed (int): Seed for randomizer in the train-test split
                split_data(bool): set to True if want to split into train and test data_points
         
             Returns:

@@ -5,7 +5,8 @@ It also derives the plot for Ridge regression that shows different polynomial de
 
 x and y arrays were generated using make_data function from general_functions.py, 
 Test MSE from bootstrap resampling was derived using bootstrap_resampling function from resampling_methods.py
-Test MSE and Ridge regression as a function of both polynomial degree and penalty parameter (lambda) was derived from cross_validation function from resampling.py
+Test MSE and Ridge regression as a function of both polynomial degree and penalty parameter (lambda) was derived from 
+cross_validation function from resampling_methods.py
 """
 
 from general_functions import make_data, np, FIG_DIR
@@ -27,8 +28,8 @@ fig, ax = plt.subplots()
 ax.set_title('Mean squared error comparison different methods')
 ax.plot(degrees, bootstrap_compare, 'o-', color='#FF2B2B', label='Bootstrap')
 ax.axhline(sigma**2, color='black', ls=':', label=rf'Noise floor $\sigma^2$ = {sigma**2:.3g}')
-#LLM Assisted from this comment
 
+#LLM Assisted from this comment
 #degrees -0.1 and 0.1 so it is easier to see the standard deviation for CV k=5 and k=10 since theyre on the same degrees
 ax.errorbar(degrees - 0.1, mse_cv_5_OLS, yerr=std_cv_5_OLS, fmt='s-', color='#0F2D9A',
             capsize=3, label=r'CV k=5 ($\pm$1 std)')
@@ -39,7 +40,7 @@ ax.set_ylabel('MSE')
 ax.set_xticks(degrees)
 ax.set_yscale('log')
 ax.legend()
-plt.savefig(FIG_DIR/'Part_d_MSE_comparison.pdf')
+#plt.savefig(FIG_DIR/'Part_d_MSE_comparison.pdf')
 plt.show()
 
 results = {'Bootstrap': (bootstrap_compare, None), 'CV k=5': (mse_cv_5_OLS, std_cv_5_OLS), 'CV k=10': (mse_cv_10_OLS,std_cv_10_OLS)}
@@ -57,39 +58,46 @@ for method, (meansq,std) in results.items():
 
 """"
 Analysis of Ridge Regression for Cross-validation method over different lambdas
-Divided degrees into two for figure to be clearer and not so compact
 """
 n = 100
 lambdas = np.logspace(-8,4,n)
 
+#For k = 5
 mse_polynomials_5 = np.zeros((len(lambdas), len(degrees)))
+std_polynomials_5 = np.zeros((len(lambdas), len(degrees)))
 
 print('K=5')
 for j, lmb in enumerate(lambdas):
-    mse_cv_5 = cross_validation(x, y, model='Ridge', lamba=lmb, mindegree=mindegree, maxdegree=maxdegree, k=5)
+    mse_cv_5, std_cv5 = cross_validation(x, y, model='Ridge', lamba=lmb, mindegree=mindegree, maxdegree=maxdegree, k=5, return_std=True)
     #fills current lambda row and fills it with mse values for that row
     mse_polynomials_5[j, :] = mse_cv_5 
+    std_polynomials_5[j, :] = std_cv5
 
 #LLM Assisted FROM HERE
 for index_degree, deg in enumerate(degrees):
     best = np.argmin(mse_polynomials_5[:, index_degree])
     print(f"  Degree = {deg:2d}:  Best lambda = {lambdas[best]:8.4g}"
-          f"  CV-MSE = {mse_polynomials_5[best, index_degree]:.3e}")
+          f"  CV-MSE = {mse_polynomials_5[best, index_degree]:.3e}"
+          f" ± {std_polynomials_5[best, index_degree]:.3e}")
 #LLM Assisted UNTIL HERE
 
+#For k = 10
 mse_polynomials_10 = np.zeros((len(lambdas), len(degrees)))
+std_polynomials_10 = np.zeros((len(lambdas), len(degrees)))
 
 print('\n','K=10')
 for j, lmb in enumerate(lambdas):
-    mse_cv_10 = cross_validation(x, y, model='Ridge', lamba=lmb, mindegree=mindegree, maxdegree=maxdegree, k=10)
+    mse_cv_10, std_cv10 = cross_validation(x, y, model='Ridge', lamba=lmb, mindegree=mindegree, maxdegree=maxdegree, k=10, return_std=True)
     #fills current lambda row and fills it with mse values for that row
     mse_polynomials_10[j, :] = mse_cv_10
+    std_polynomials_10[j, :] = std_cv10
 
 #Reused LLM Assisted code for k = 10
 for index_degree, deg in enumerate(degrees):
     best = np.argmin(mse_polynomials_10[:, index_degree])
     print(f"  Degree = {deg:2d}:  Best_lambda = {lambdas[best]:8.4g}"
-          f"  CV-MSE = {mse_polynomials_10[best, index_degree]:.3e}")
+          f"  CV-MSE = {mse_polynomials_10[best, index_degree]:.3e}"
+          f" ± {std_polynomials_10[best, index_degree]:.3e}")
 
 
 """Ploting Ridge CV-MSE over lambda for chose degrees """
@@ -100,7 +108,7 @@ fig, ax = plt.subplots()
 for degree, color in zip(plotting_degrees, colors):
     i = np.where(degrees == degree)[0][0]          # LLM Assisted column index for this degree
     ax.plot(lambdas, mse_polynomials_5[:,i], ls='-', color=color, label=f'Degree {degree}')
-    ax.plot(lambdas, mse_polynomials_10[:, i], ls='--', color=color, label=f'Degree={degree}')
+    ax.plot(lambdas, mse_polynomials_10[:, i], ls='--', color=color, label=f'Degree {degree}')
 
 ax.axhline(sigma**2, color='black', ls=':', label=rf'Noise floor $\sigma^2$ = {sigma**2:.3g}')
 ax.set_xscale('log')

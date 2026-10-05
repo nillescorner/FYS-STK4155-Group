@@ -52,6 +52,7 @@ ax[2].set_xticks(degrees)
 plt.savefig(FIG_DIR / "Part_a_Paramets_over_polynomial.pdf")
 plt.show()
 
+"""How the coefficients of theta for OLS act over the degree of the polynomial"""
 plot_theta(thetas, degrees, title=r'Coefficients $\theta_j$ for OLS over polynomial degree')
 #plt.savefig(FIG_DIR / "Part_a_theta_coeff.pdf")
 plt.show()

@@ -21,11 +21,11 @@ mse_train_R, mse_test_R, = [], []
 r2_train_R, r2_test_R = [], [] 
 thetas_R = []
 
-#Needed to calculate the degree of freedom, set intercept = False to avoid 0 column
-X = design_matrix(x, degree=degree, intercept=False)
+#Needed to calculate the degree of freedom
+X = design_matrix(x, degree=degree)
 X_train, X_test, y_train, y_test = scaling(X, y, seed=2026, split_data=True)
-s = np.linalg.svd(X_train, compute_uv=False)
-dfs = []
+s = np.linalg.svd(X_train, compute_uv=False)    
+dfs = []    #effective degrees of freedom
 
 #Based on w35tuesday.ipynb to calculate degrees of freedom
 lambas = np.logspace(-8,4, 61)
@@ -70,12 +70,13 @@ ax[2].legend()
 #plt.savefig(FIG_DIR / "Part_b_Params_vs_lambda.pdf")
 plt.show()
 
+"""How the coefficients of theta for Ridge act over the penalty parameter lambda"""
 plot_theta(thetas_R, lambas, xlabel=r'$\lambda$', title=rf'Ridge coefficients $\theta_j$ over $\lambda$ at degree {degree}', xlog=True, log=False)
 #plt.savefig(FIG_DIR / "Part_b_theta_vs_lambda.pdf")
 plt.show()
 
 #For further analysis that depends on other parameters then lambda, we use the best lambda derived above.
-"""Analysis of how the MSE, R2 score and Theta are affected by polynomial degree"""
+"""Analysis of how the MSE, R2 score and Theta are affected by polynomial degree for Ridge regression"""
 mindegree, maxdegree = 1, 16
 degrees = np.arange(mindegree, maxdegree)
 
