@@ -67,7 +67,7 @@ ax[2].set_yscale('log')
 ax[2].set_ylabel(r'$\|\theta\|_2$')
 ax[2].set_xlabel(r'$\lambda$')
 ax[2].legend()
-plt.savefig(FIG_DIR / "Part_b_Params_vs_lambda.pdf")
+#plt.savefig(FIG_DIR / "Part_b_Params_vs_lambda.pdf")
 plt.show()
 
 plot_theta(thetas_R, lambas, xlabel=r'$\lambda$', title=rf'Ridge coefficients $\theta_j$ over $\lambda$ at degree {degree}', xlog=True, log=False)
