@@ -211,8 +211,7 @@ Model fit to data and true runge function
 
 """
 
-
-def plot_best_model_fits(x, y, results, model_shorthands, degrees, ncols, nrows, figsize):
+def plot_model_fits(x, y, results, model_shorthands, degrees, ncols, nrows, figsize, set_deg=None, fname='best_fits'):
     """Plot and return the fitted GridSearchCV model selected for each configuration.
         LLM used for plotting function, but logic defined by ourselves.
 
@@ -231,15 +230,20 @@ def plot_best_model_fits(x, y, results, model_shorthands, degrees, ncols, nrows,
                 nrows (int): Number of subplot rows. If ncols and nrows are both
                         1, the generated data and Runge function are plotted only once.
                 figsize (tuple): Figsize as used in subplot 
+                set_deg (int or None): If provided, plot only the model for this degree.
+                    If None, plot the models for all degrees.
+                fname (str): Base filename used to save the plot. Defaults to
+                    'best_fits'.
 
         Returns:
-                best_models (dict): Fitted GridSearchCV objects for the degree with
+                models (dict): If set_degs=False: Fitted GridSearchCV objects for the degree with
                         the lowest cross-validation MSE for each model and fold-count
                         configuration, indexed by model shorthand.
+                        If set_degs=True itted GridSearchCV objects for the set degree are returned instead
 
         Saves:
                 A plot of the selected model fits to
-                FIG_DIR / "Part_i_bestfits.pdf".
+                FIG_DIR / "Part_i_{fname}.pdf".
 
     """
     x = np.asarray(x).reshape(-1, 1)
@@ -254,7 +258,7 @@ def plot_best_model_fits(x, y, results, model_shorthands, degrees, ncols, nrows,
     }
 
     fig, axs = plt.subplots(nrows, ncols, figsize=figsize, sharex=True, sharey=True)
-    best_models = {}
+    models = {}
     single_axes = ncols == 1 and nrows == 1
 
     if single_axes:
@@ -277,18 +281,29 @@ def plot_best_model_fits(x, y, results, model_shorthands, degrees, ncols, nrows,
         axes = np.asarray(axs, dtype=object).reshape(-1)
         axes_and_models = zip(axes, model_shorthands)
 
-    for ax, model_shorthand in axes_and_models:
+    for idx, (ax, model_shorthand) in enumerate(axes_and_models):
         model_name, _, _, k = model_shorthand.split()
         color = colors[(model_name, k)]
 
-        best_idx = np.argmin(results[model_shorthand]['mse'])
-        best_degree = int(degrees[best_idx])
-        best_model = results[model_shorthand]['fit'][best_degree]
-        best_models[model_shorthand] = best_model
+        if set_deg == None:
+            best_idx = np.argmin(results[model_shorthand]['mse'])
+            degree = int(degrees[best_idx])
+            title = 'Best Ridge and Lasso fits by cross-validation MSE'
+        elif isinstance(set_deg, list):
+            degree = set_deg[idx]
+        elif isinstance(set_deg, int):
+            degree = set_deg
 
-        X_sorted = PolynomialFeatures(degree=best_degree).fit_transform(x_sorted)
-        y_pred = best_model.predict(X_sorted).ravel()
-        alpha = best_model.best_params_[f'{model_name}__alpha']
+        if set_deg != None:
+            best_idx = degree
+            title = 'Ridge and Lasso fits by cross-validation MSE'
+
+        model = results[model_shorthand]['fit'][degree]
+        models[model_shorthand] = model
+
+        X_sorted = PolynomialFeatures(degree=degree).fit_transform(x_sorted)
+        y_pred = models.predict(X_sorted).ravel()
+        alpha = models.best_params_[f'{model_name}__alpha']
 
         if not single_axes:
             ax.scatter(
@@ -313,8 +328,10 @@ def plot_best_model_fits(x, y, results, model_shorthands, degrees, ncols, nrows,
             linewidth=2,
             label=(
                 f'{model_name.capitalize()} k={k}, '
-                + r'$\lambda$'
-                + f'={alpha:.2e}'
+                + r'$\lambda$'+ f'={alpha:.2e}'
+    
+                + f', degree={degree}',
+                
             ),
         )
         if single_axes:
@@ -329,15 +346,20 @@ def plot_best_model_fits(x, y, results, model_shorthands, degrees, ncols, nrows,
         fit_legend = ax.legend(handles=fit_handles, loc='lower center', title='Model fits', framealpha = 0.3)
         ax.add_artist(fit_legend)
         ax.legend(handles=shared_handles, loc='upper right', title='Reference',  framealpha = 0.3)
-
+    
     fig.suptitle('Best Ridge and Lasso fits by cross-validation MSE')
     fig.tight_layout()
-    plt.savefig(fname=FIG_DIR / 'Part_i_bestfits.pdf')
-    return best_models
+    plt.savefig(fname=FIG_DIR / f'Part_i_{fname}.pdf')
+    return models
 
 
-best_models = plot_best_model_fits(
+best_models = plot_model_fits(
     x_, y_, results, model_shorthands, degs, 1, 1, (5,4)
+)
+
+#cheapest degrees decided by being within one std of the best model.
+cheapest_best_models = plot_model_fits(
+    x_, y_, results, model_shorthands, degs, 1, 1, (5,5), [8,4,5,4], 'setdegsfits', 
 )
 
 
