@@ -116,6 +116,7 @@ def optimiser_step(optimizer, theta, g, opt_state):
 
 
 def optimise(grad, optimizer, num_iters):
+    # LLM assisted
     """
     JIT-compiled fixed-length Optax optimization routine.
 
@@ -153,6 +154,7 @@ def optimise(grad, optimizer, num_iters):
 
 
 def funct_comparison(X, y, FUNCT_RUNS, num_iters=1000, lmbda=0.0):
+    # LLM assisted
     """
     Compare optimizer performance using excess cost based on a linear regression objective.
 
