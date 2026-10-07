@@ -13,8 +13,8 @@ from sklearn.base import clone
 
 
 def bootstrap_resampling(x,y, mindegree=1, maxdegree=21, n_bootstraps=100, seed=2026, best_estimator = None, test_wholedataset=False, return_std=False):
+    # LLM assisted
     """
-
     Bias-variance analysis for simpler ordinary least squares using bootstrap.
     Based on the bootstrap exmple on p. 65 in lecture book.
 
@@ -29,7 +29,7 @@ def bootstrap_resampling(x,y, mindegree=1, maxdegree=21, n_bootstraps=100, seed=
             best_estimator(scikit learn estimator) : predefined estimator
             test_wholedataset (bool): if True, resampling uses the whole dataset. Intended use is to decompose fitted estimator
             return_std (bool): if True, also returns the standard deviations
-                across data-point contributions for each metric. DO NOT USE. DOES NOT WORK
+                across data-point contributions for each metric. Unsure if implementation is correct
 
         Returns:
             error (list): test error for each polynomial degree
@@ -86,8 +86,8 @@ def bootstrap_resampling(x,y, mindegree=1, maxdegree=21, n_bootstraps=100, seed=
 
 
 def kfold_resampling(x,y,k, best_est, mindegree=1, maxdegree=21, n_resamples=100, seed=2026, test_wholedataset = False, return_std=False):
+    # LLM assisted
     """
-
     kfold resampling function for simpler ordinary least squares based on code from p.65, or predefined estimator given in 'estimator'
 
         Params:
@@ -100,7 +100,7 @@ def kfold_resampling(x,y,k, best_est, mindegree=1, maxdegree=21, n_resamples=100
             seed (int): randomizer seed
             test_wholedataset (bool): if True, resampling uses the whole dataset. Intended use is to decompose fitted estimator
             return_std (bool): if True, also returns the standard deviations
-                across data-point contributions for each metric. DO NOT USE. DOES NOT WORK
+                across data-point contributions for each metric. Unsure if implementation is correct
 
         Returns:
             error (list): test error for each polynomial degree
@@ -204,7 +204,7 @@ def grid_search(x_train, x_test, y_train, k,  param_grid = {"ridge__alpha": np.l
                   model='Ridge', lamba=0.0,
                   mindegree=1, maxdegree=21, max_iter=10000,  seed=2026,
                   return_X = False, return_std=False):
-
+    #LLM assisted
     """
     Uses cross-validation to find the best regularization parameter for Ridge
     or Lasso models at each polynomial degree.
@@ -348,6 +348,7 @@ def train_through_gridsearchCV(x,y, models = ['ridge'], Ks=[5,10],   mindegree=1
 
 def mse_decomposer(x, y, results, model_shorthands, resamples = 100,  method ='kfold_resampling',
                    mindegree=1, maxdegree=21, return_std=False, test_wholedataset = False):
+    # LLM assisted
     """
     Estimates prediction error, squared bias, and variance for each model and
     polynomial degree using resampling.
@@ -364,7 +365,7 @@ def mse_decomposer(x, y, results, model_shorthands, resamples = 100,  method ='k
         maxdegree (int): Upper bound for polynomial degrees (not included).
         return_std (bool): If True, also returns the standard deviation across
             data-point contributions for error, bias squared plus noise, and
-            variance.
+            variance. Unsure if implementation is correct
 
     Returns:
         mse_decomposition (dict): Results indexed by model and fold count.
