@@ -2,8 +2,9 @@
 
 import numpy as np
 
-from gradient_descent_methods import gradient
+from gradient_descent_methods import gradient, cost_history
 from optimizer_methods import optimiser
+
 
 
 def make_batches(n, batch_size, rng):
@@ -73,3 +74,30 @@ def sgd(X, y, method="plain", n_epochs=50, batch_size=5, gamma=0.1, schedule=Non
         history.append(theta.copy())
 
     return np.array(history), t + 1
+
+def cost_grid_over_param(X, y, param_name, param_values, n_epochs=100, **fixed_kwargs):
+    """
+    Runs sgd once per value in param_values, varying either 'gamma' or 'batch_size'
+    (the other sgd kwargs held fixed), and stacks the resulting per-epoch cost
+    histories into a grid, ready for a heatmap.
+ 
+        Params:
+            X (NDArray, shape: (n, p)): Design matrix X
+            y (NDArray, shape: (n, )): y
+            param_name (str): name of the sgd keyword argument to sweep, e.g. 'gamma' or 'batch_size'
+            param_values (iterable): values of param_name to run sgd with, one run each
+            n_epochs (int): number of epochs per run, default: 100
+            **fixed_kwargs: remaining sgd keyword arguments, held fixed across all runs
+ 
+        Returns:
+            cost_rows (NDArray, shape: (len(param_values), n_epochs + 1)): cost per epoch for
+                each parameter value (rows = parameter value, columns = epoch)
+    """
+    
+    cost_rows = []
+    for val in param_values:
+        kwargs = dict(fixed_kwargs)
+        kwargs[param_name] = val
+        hist, _ = sgd(X, y, n_epochs=n_epochs, **kwargs)
+        cost_rows.append(cost_history(hist, X, y, penalty="None"))
+    return np.array(cost_rows)

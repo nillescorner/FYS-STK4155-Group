@@ -24,7 +24,9 @@ best_index = np.argmin(mse_test)
 best_degree = degrees[best_index]
 best_mse = mse_test[best_index]
 
-print(f'Best MSE for as function of polynomial = {best_mse:.4f}', '\n')
+print(f'Best Test MSE for as function of polynomial = {best_mse:.3e}')
+print(f'Best Test R2 for as function of polynomial = {r2_test[np.argmax(r2_test)]:.4f}', '\n')
+
 
 fig, ax = plt.subplots(nrows=3, sharex=True, figsize=(7,7))
 fig.suptitle('Parameters dependence on Polynomial degree for OLS')
@@ -39,7 +41,6 @@ ax[0].set_yscale('log')
 ax[1].plot(degrees, r2_train, color='#8C564B')
 ax[1].plot(degrees, r2_test, color='#0AC23E')
 ax[1].axvline(x=best_degree, color='#696968', ls='--')
-ax[1].axhline(sigma**2, color='black', ls=':')
 ax[1].set_ylabel('R2')
 
 ax[2].plot(degrees, theta_norm_per_deg, color="#001E43", label=r'$\|\theta\|_2$')
@@ -51,14 +52,15 @@ ax[2].set_xticks(degrees)
 plt.savefig(FIG_DIR / "Part_a_Paramets_over_polynomial.pdf")
 plt.show()
 
+"""How the coefficients of theta for OLS act over the degree of the polynomial"""
 plot_theta(thetas, degrees, title=r'Coefficients $\theta_j$ for OLS over polynomial degree')
-plt.savefig(FIG_DIR / "Part_a_theta_coeff.pdf")
+#plt.savefig(FIG_DIR / "Part_a_theta_coeff.pdf")
 plt.show()
 
 """Analysis of how different amounts of data points (n) and different noise (sigma) affect
 MSE and R2 score for the test data at the best degree"""
-ns = np.linspace(40,4000, 50, dtype=int)
-sigmas = np.linspace(0.01, 1.0, 50)
+ns = np.linspace(40,4000, 15, dtype=int)
+sigmas = np.linspace(0.01, 1.0, 10)
 
 mse_test = np.zeros((len(sigmas), len(ns)))
 r2_test = np.zeros_like(mse_test)
@@ -76,11 +78,21 @@ for i, sigma in enumerate(sigmas):
 
 fig, axes = plt.subplots(2, 1, figsize=(7, 7), sharex=True)
 
-plot_heatmap_grid(mse_test, ns, sigmas, 'Test MSE', 'MSE', log=True, ax=axes[0])
-plot_heatmap_grid(r2_test, ns, sigmas, r'Test $R^2$', r'$R^2$', log=False, ax=axes[1])
+
+print('Heatmap answers')
+i,j = np.argwhere(mse_test==mse_test.min())[0] #LLM Assisted
+print(f'Best test MSE = {mse_test[i,j]:.3e} at n = {ns[j]}, sigma = {sigmas[i]:.3e}')
+
+i,j = np.argwhere(r2_test==r2_test.max())[0]    #LLM Assisted
+print(f'Best test R2 score  = {r2_test[i,j]:.4f} at n = {ns[j]}, sigma = {sigmas[i]:.3e}')
+
+
+
+plot_heatmap_grid(mse_test, ns, sigmas, 'Test MSE', 'MSE', log=True, ax=axes[0], best='min', annotate=True)
+plot_heatmap_grid(r2_test, ns, sigmas, r'Test $R^2$', r'$R^2$', ax=axes[1], best='max', annotate=True)
 axes[0].set_xlabel('')  #they share x axis so xlabel on top plot is empty
 
 fig.suptitle(f'Dependence on data points and noise at degree {best_degree} for OLS')
 fig.tight_layout()
-plt.savefig(FIG_DIR / "Part_a_heatmaps_MSE_R2.pdf")
+#plt.savefig(FIG_DIR / "Part_a_heatmaps_MSE_R2.pdf")
 plt.show()

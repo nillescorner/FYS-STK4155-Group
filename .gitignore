@@ -1,6 +1,8 @@
 #Jupyter checkpoints
 .ipynb_checkpoints/
+
+#OS
 *.DS_Store
 
-#ignoring pycache
-Project_1/Code/__pycache__/
+#Python
+__pycache__/

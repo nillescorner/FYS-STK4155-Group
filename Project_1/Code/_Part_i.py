@@ -8,12 +8,6 @@ import matplotlib.pyplot as plt
 import colors as c
 from matplotlib.lines import Line2D
 from matplotlib.patches import Patch
-
-mindegree, maxdegree = 1, 21
-x_axis_20 = np.arange(mindegree, maxdegree)
-X_,y_ = make_data()
-X_train, X_test, y_train, y_test = scaling(X_,y_, split_data = True )
-
 """
 This is implements the functions defined in resampling_methods 
 
@@ -161,7 +155,7 @@ for idx, model_shorthand in zip(range(0,4,1), model_shorthands):
 
 
     
-    
+        # LLM assisted
         axs[idx].plot(degs, results[model_shorthand]['test_mse'], color = color, linestyle = 'dashed',  label =  model + f" k={k} test")
         # axs[idx].errorbar(degs, results[model_shorthand]['mse'], yerr= std_uncertainty(results[model_shorthand]['std_test_score'],k),
         #                 color = color, linestyle = 'solid',  label = model_shorthand + " k-fold MSE", capsize = 5)
@@ -193,7 +187,7 @@ for idx, model_shorthand in zip(range(0,4,1), model_shorthands):
         axs[idx].set_xticks(degs)
         axs[idx].grid(which="both", alpha=0.5)
         axs[idx].legend(framealpha=0.5)
-
+        # end of LLM assisted
     
     
 
@@ -212,6 +206,7 @@ Model fit to data and true runge function
 """
 
 def plot_model_fits(x, y, results, model_shorthands, degrees, ncols, nrows, figsize, set_deg=None, fname='best_fits'):
+    # LLM assisted
     """Plot and return the fitted GridSearchCV model selected for each configuration.
         LLM used for plotting function, but logic defined by ourselves.
 
@@ -429,7 +424,7 @@ if bootstrap_kfold_resampling_MSE_decomposition:
                 ax.plot(degs, results[model_shorthand]['mse'], color = 'black', linestyle = 'solid',  label = "MSE")
 
                 
-
+        # LLM assisted 
         bias_variance_handels = [
         Line2D([0], [0],  linestyle="solid", color = c.ERROR, linewidth=2, label="error"),
         Line2D([0], [0],  linestyle="solid", color = c.BIAS, linewidth=2, label="variance"),
@@ -482,3 +477,4 @@ if bootstrap_kfold_resampling_MSE_decomposition:
         fig.supylabel("MSE").set_in_layout(True)
         fig.tight_layout()
         plt.savefig(fname=FIG_DIR/'Part_i_hyperparameters_msedecomposition_kfold_bootstrap.pdf')
+        # end of LLM assisted

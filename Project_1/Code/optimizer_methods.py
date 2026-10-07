@@ -10,21 +10,25 @@ jax.config.update("jax_enable_x64", True)
 from gradient_descent_methods import cost
 
 
-def optimiser_solver(method, learning_rate, beta=0.9, rho=0.99,
-                   beta1=0.9, beta2=0.999, eps=1e-8):
+def optimiser_solver(method, learning_rate, beta=0.9, rho=0.99, beta1=0.9, beta2=0.999, eps=1e-8):
     """
-    Using optax to implement the methods
-    Args:
-        method : "plain", "momentum", "adagrad", "rmsprop", "adam"
-        learning_rate : learning rate of each model
-        
-    beta, rho, beta1 and beta2  are all used track the magnitude of previous gradients
-    beta for "momentum"
-    rho for "rmsprop"
-    beta1 and beta2 for "adam"
-        
+    Builds an optax optimizer object for the chosen method.
+ 
+    Based on optax's built-in implementations of SGD, AdaGrad, RMSprop and Adam.
+ 
+        Params:
+            method (str): "plain", "momentum", "adagrad", "rmsprop" or "adam"
+            learning_rate (float): learning rate used by the optimizer
+            beta (float): momentum coefficient, only used for "momentum", default: 0.9
+            rho (float): decay rate for the squared-gradient average, only used for "rmsprop", default: 0.99
+            beta1 (float): first-moment decay rate, only used for "adam", default: 0.9
+            beta2 (float): second-moment decay rate, only used for "adam", default: 0.999
+            eps (float): small constant added for numerical stability, default: 1e-8
+ 
+        Returns:
+            optimizer (optax.GradientTransformation): the configured optax optimizer object
     """
-    
+
     if method == "plain":
         optimizer = optax.sgd(learning_rate=learning_rate)
 
@@ -44,10 +48,30 @@ def optimiser_solver(method, learning_rate, beta=0.9, rho=0.99,
         raise ValueError(f"unknown method {method}")
     return optimizer
 
-def optimiser(method, theta, g, state, t, gamma, beta=0.9, rho=0.99,
-                   beta1=0.9, beta2=0.999, eps=1e-8):
-    """One update of theta from the gradient g at step t (t = 1, 2, ...), Eqs. (4.10), (4.28),
-    (4.42)-(4.45), (4.47)-(4.48) and (4.51)-(4.55).  state carries the running quantities."""
+def optimiser(method, theta, g, state, t, gamma, beta=0.9, rho=0.99, beta1=0.9, beta2=0.999, eps=1e-8):
+    """
+    Performs one manual (non-optax) update of theta from the gradient g at step t (t = 1, 2, ...).
+ 
+    Based on Eqs. (4.10), (4.28), (4.42)-(4.45), (4.47)-(4.48) and (4.51)-(4.55) from the lecturebook.
+ 
+        Params:
+            method (str): "plain", "momentum", "adagrad", "rmsprop" or "adam"
+            theta (NDArray): current parameter vector
+            g (NDArray): gradient of the cost function at theta
+            state (dict): running quantities (e.g. "v", "r", "m") carried between steps
+            t (int): current step number, starting at 1
+            gamma (float): learning rate
+            beta (float): momentum coefficient, only used for "momentum", default: 0.9
+            rho (float): decay rate for the squared-gradient average, only used for "rmsprop", default: 0.99
+            beta1 (float): first-moment decay rate, only used for "adam", default: 0.9
+            beta2 (float): second-moment decay rate, only used for "adam", default: 0.999
+            eps (float): small constant added for numerical stability, default: 1e-8
+ 
+        Returns:
+            theta (NDArray): updated parameter vector
+            state (dict): updated running quantities
+    """
+
     if method == "plain":
         return theta - gamma * g, state
     if method == "momentum":
@@ -72,12 +96,27 @@ def optimiser(method, theta, g, state, t, gamma, beta=0.9, rho=0.99,
     raise ValueError(f"unknown method {method}")
 
 def optimiser_step(optimizer, theta, g, opt_state):
+    """
+    Performs one optax-based update of theta from the gradient g.
+ 
+        Params:
+            optimizer (optax.GradientTransformation): optax optimizer object, from optimiser_solver
+            theta (NDArray): current parameter vector
+            g (NDArray): gradient of the cost function at theta
+            opt_state (optax state): optax optimizer state carried between steps
+ 
+        Returns:
+            theta (NDArray): updated parameter vector
+            opt_state (optax state): updated optax optimizer state
+    """
+
     updates, opt_state = optimizer.update(g, opt_state, theta)
     theta = optax.apply_updates(theta, updates)
     return theta, opt_state
 
 
 def optimise(grad, optimizer, num_iters):
+    # LLM assisted
     """
     JIT-compiled fixed-length Optax optimization routine.
 
@@ -115,6 +154,7 @@ def optimise(grad, optimizer, num_iters):
 
 
 def funct_comparison(X, y, FUNCT_RUNS, num_iters=1000, lmbda=0.0):
+    # LLM assisted
     """
     Compare optimizer performance using excess cost based on a linear regression objective.
 
