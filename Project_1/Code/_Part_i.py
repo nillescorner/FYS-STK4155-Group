@@ -297,8 +297,8 @@ def plot_model_fits(x, y, results, model_shorthands, degrees, ncols, nrows, figs
         models[model_shorthand] = model
 
         X_sorted = PolynomialFeatures(degree=degree).fit_transform(x_sorted)
-        y_pred = models.predict(X_sorted).ravel()
-        alpha = models.best_params_[f'{model_name}__alpha']
+        y_pred = model.predict(X_sorted).ravel()
+        alpha = model.best_params_[f'{model_name}__alpha']
 
         if not single_axes:
             ax.scatter(
@@ -315,18 +315,19 @@ def plot_model_fits(x, y, results, model_shorthands, degrees, ncols, nrows, figs
                 linestyle='dashed',
                 label='Runge function',
             )
+ 
+        extra = f', degree={degree}' if set_deg is not None else ''
 
         fit_handle, = ax.plot(
             x_sorted[:, 0],
             y_pred,
             color=color,
             linewidth=2,
+            linestyle = 'solid' if idx == 0 or idx == 1 else 'dashed',
             label=(
                 f'{model_name.capitalize()} k={k}, '
                 + r'$\lambda$'+ f'={alpha:.2e}'
-    
-                + f', degree={degree}',
-                
+                + extra
             ),
         )
         if single_axes:
@@ -342,7 +343,7 @@ def plot_model_fits(x, y, results, model_shorthands, degrees, ncols, nrows, figs
         ax.add_artist(fit_legend)
         ax.legend(handles=shared_handles, loc='upper right', title='Reference',  framealpha = 0.3)
     
-    fig.suptitle('Best Ridge and Lasso fits by cross-validation MSE')
+    fig.suptitle('Ridge and Lasso fits by cross-validation MSE')
     fig.tight_layout()
     plt.savefig(fname=FIG_DIR / f'Part_i_{fname}.pdf')
     return models
