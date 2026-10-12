@@ -5,7 +5,6 @@ Cost functions, their derivatives and activations function and their derivatives
 that will be used in project 2. 
 """
 
-import numpy as np
 import jax
 jax.config.update("jax_enable_x64", True)   # 64-bit floats, so that hand and JAX agree to ~1e-15
 import jax.numpy as jnp
@@ -193,7 +192,7 @@ def cross_entropy(P, Y):
         float: cross entropy
     """
 
-    P = np.clip(P, epsilon, 1.0)
+    P = jnp.clip(P, epsilon, 1.0)
     return - jnp.sum(Y * jnp.log(P)) 
 
 
