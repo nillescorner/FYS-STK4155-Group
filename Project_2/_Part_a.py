@@ -62,7 +62,7 @@ def penalty(theta, lmbda, reg):
 
 def l1_penalty_grad(theta, lmbda):
     """
-    Gradient for the L1 penalty: lambda * sng(theta)
+    Gradient for the L1 penalty: lambda * sgn(theta)
 
     Params: 
         theta (jnp.ndarray): model parameters
@@ -113,7 +113,7 @@ def penalty_grad(theta, lmbda, reg):
 """Mean square error function, derivative, cost function and gradient of cost function"""
 def mse(predict, target):
     """
-    Mean square error: C = (1/n) * sum (predict_i + target_i)^2 
+    Mean square error: C = (1/n) * sum (predict_i - target_i)^2 
 
     Params: 
         predict (jnp.ndarray): model predictions
@@ -128,7 +128,7 @@ def mse(predict, target):
 
 def mse_der(predict, target):
     """
-    Derivative of MSE: dC/dpredict = (2/n) * (predict + target)
+    Derivative of MSE: dC/dpredict = (2/n) * (predict - target)
 
     Params: 
         predict (jnp.ndarray): model predictions
@@ -210,6 +210,35 @@ def cross_entropy_der(P, Y):
 
     P = jnp.clip (P, epsilon, 1.0)
     return - Y / P 
+
+def softmax(z):
+    """
+    Softmax, row-wise: p_ik = exp(z_ik) / sum_l exp(z_il)
+
+    Params:
+        z (jnp.ndarray): Input to the output layer, shape: (n, K)
+
+    Returns:
+        jnp.ndarray: same shape as z, each row is a probability distribution (sums to 1)
+    """
+
+    e = jnp.exp(z - jnp.max(z, axis=1, keepdims=True))   #subtract max for numerical stability
+    return e / jnp.sum(e, axis=1, keepdims=True)
+
+
+def softmax_cross_entropy_der(P, Y):
+    """
+    Derivative of cross entropy: dC/dz = P - Y
+
+    Params:
+        P (jnp.ndarray): predicted class probabilities (softmax output), shape: (n, K)
+        Y (jnp.ndarray): one-hot encoded targets, shape: (n, K)
+
+    Returns:
+        jnp.ndarray: same shape as P
+    """
+
+    return P - Y
 
 
 
