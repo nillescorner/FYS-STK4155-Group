@@ -24,6 +24,7 @@ def create_layers(network_input_size, layer_output_size, rng):
     """
     layers = []
     i_size = network_input_size
+
     for layer_output_size in layer_output_size:
         W = rng.normal(0, 1 / jnp.sqrt(i_size), (i_size, layer_output_size))
         b = jnp.zeros(layer_output_size) + 0.01
@@ -68,10 +69,11 @@ def feed_forward_saver(inputs, layers, activation_funcs):
 
     layer_inputs, zs = [], []
     a = inputs
-    for (W, b), activation_funcs in zip(layers, activation_funcs):
+
+    for (W, b), activation_func in zip(layers, activation_funcs):
         layer_inputs.append(a)
         z = a @ W + b
-        a = activation_funcs(z)
+        a = activation_func(z)
         zs.append(z)
     return layer_inputs, zs, a
 
@@ -98,6 +100,7 @@ def backpropagation(inputs, layers, activation_funcs, targets, activation_ders, 
 
     layer_inputs, zs, predict = feed_forward_saver(inputs, layers, activation_funcs)
     layer_grads = [() for _ in layers]
+
     for i in reversed(range(len(layers))):
         layer_input, z, activation_der = layer_inputs[i], zs[i], activation_ders[i]
         if i == len(layers) - 1:
@@ -110,8 +113,11 @@ def backpropagation(inputs, layers, activation_funcs, targets, activation_ders, 
             W_next, _ = layers[i + 1]
             dC_da = dC_dz @ W_next.T
             dC_dz = dC_da * activation_der(z) 
+
         W, _ = layers[i]
         dC_dW = layer_input.T @ dC_dz + penalty_grad(W, lmbda, reg)
         dC_db = jnp.sum(dC_dz, axis = 0)
         layer_grads[i] = (dC_dW, dC_db)
     return layer_grads
+
+
