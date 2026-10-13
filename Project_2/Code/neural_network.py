@@ -10,7 +10,7 @@ jax.config.update("jax_enable_x64", True)   # 64-bit floats, so that hand and JA
 import jax.numpy as jnp
 
 
-def create_layers(network_input_size, layer_output_size, rng):
+def create_layers(network_input_size, layer_output_size):
     """
     Initilizes weights and bias for each layer
 
@@ -22,13 +22,15 @@ def create_layers(network_input_size, layer_output_size, rng):
     Returns:
         list of (W, b): W has shape (n_in, n_out), b has shape (n_out,)
     """
+
     layers = []
     i_size = network_input_size
 
     for layer_output_size in layer_output_size:
-        W = rng.normal(0, 1 / jnp.sqrt(i_size), (i_size, layer_output_size))
-        b = jnp.zeros(layer_output_size) + 0.01
+        W = jnp.random.randn(layer_output_size, i_size)
+        b = jnp.random.randn(layer_output_size) 
         layers.append((W, b))
+
         i_size = layer_output_size
     return layers
 
@@ -50,6 +52,23 @@ def feed_forward(input, layers, activation_funcs):
     for (W, b), activation_func in zip(layers, activation_funcs):
         a = activation_func(a @ W + b)
     return a
+
+
+def cost(layers, inputs, activation_funcs, target, lmbda = 0.0, reg = None):
+    """
+    Total cost of network
+
+    Params: 
+        layers (list of (W, b)): weights and bias
+        inputs (jnp.ndarray): input data, shape: (n, n_features)
+        activation_funcs (list of callables): one activation function per layer
+        targets (jnp.ndarray): targets, same shape as outpu
+        lmbda (float): penalty strength, default: 0.0
+        reg (str or None): None,  "L1", "L2"
+    """
+    
+    predict = feed_forward(inputs, layers, activation_funcs)
+    return mse(predict, target) + jnp.sum(penalty(W, lmbda, reg) for W, _ in layers)
 
 
 def feed_forward_saver(inputs, layers, activation_funcs):
@@ -78,7 +97,7 @@ def feed_forward_saver(inputs, layers, activation_funcs):
     return layer_inputs, zs, a
 
 
-def backpropagation(inputs, layers, activation_funcs, targets, activation_ders, cost_der = mse_der, lmbda = 0.0, reg = None, output_delta = None):
+def backpropagation(inputs, layers, activation_funcs, targets, activation_ders, cost_der = mse_der, lmbda = 0.0, reg = None):
     """
     Backpropagation: gradients of the cost wrt. every W and b
  
@@ -91,9 +110,7 @@ def backpropagation(inputs, layers, activation_funcs, targets, activation_ders, 
         cost_der (callable): dC/da^L, default: mse_der
         lmbda (float): penalty strength
         reg (str or None): None, "L1" or "L2" (penalty on the weights only), default: None
-        output_delta (callable or None): if given, dC/dz^L = output_delta(predict, targets)
-            is used directly for the output layer, default: None
- 
+
     Returns:
         list of (dC_dW, dC_db): same structure as layers
     """
@@ -101,23 +118,23 @@ def backpropagation(inputs, layers, activation_funcs, targets, activation_ders, 
     layer_inputs, zs, predict = feed_forward_saver(inputs, layers, activation_funcs)
     layer_grads = [() for _ in layers]
 
+    #loops over the layers, from last to first
     for i in reversed(range(len(layers))):
         layer_input, z, activation_der = layer_inputs[i], zs[i], activation_ders[i]
-        if i == len(layers) - 1:
-            if output_delta is not None:
-                dC_da = output_delta(predict, targets)
-            else:
-                dC_da = cost_der(predict, targets)
-                dC_dz = dC_da * activation_der(z)
+        if i == len(layers) - 1: 
+            #last layer: cost derivative as dC/da(L)
+            dC_da = cost_der(predict, targets)
         else: 
-            W_next, _ = layers[i + 1]
-            dC_da = dC_dz @ W_next.T
-            dC_dz = dC_da * activation_der(z) 
-
-        W, _ = layers[i]
+            #all other layers: build on previous z derivative, dCda(i) = dCdz(i + 1) * dz(i + 1)da(i)
+            (W, b) = layers[i + 1]
+            dC_da = dC_dz @ W.T
+            
+        dC_dz = dC_da * activation_der(z) 
         dC_dW = layer_input.T @ dC_dz + penalty_grad(W, lmbda, reg)
         dC_db = jnp.sum(dC_dz, axis = 0)
+
         layer_grads[i] = (dC_dW, dC_db)
+
     return layer_grads
 
 
