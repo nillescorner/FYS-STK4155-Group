@@ -1,5 +1,9 @@
 """
 This python file contains the generalized functions used throughout this project.
+
+The Runge function for our data, function for setting up the design matrix, 
+making the x and y data, and scaling for data where it also can be split into
+test and training data.
 """
 
 import jax
