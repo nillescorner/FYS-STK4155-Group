@@ -11,320 +11,270 @@ import jax.numpy as jnp
 
 
 """Penalty terms for the different regression methods (OLS, Ridge and Lasso), and their gradients"""
-def l1_penalty(theta, lmbda):
+class Penalty:
     """
-    L1 penalty (Lasso): lambda * sum|theta_j|
-
-    Params: 
-        theta (jnp.ndarray): model parameters
-        lmbda (float): penalty strength
-
-    Returns: 
-        float: scalar penalty value
-    """
-
-    return lmbda * jnp.sum(jnp.abs(theta))
-
-def l2_penalty(theta, lmbda):
-    """
-    L2 penalty (Ridge): lambda * sum theta_j^2
-
-    Params: 
-        theta (jnp.ndarray): model parameters
-        lmbda (float): penalty strength
-
-    Returns: 
-        float: scalar penalty value
-    """
-    return lmbda * jnp.sum(theta ** 2)
-
-def penalty(theta, lmbda, reg):
-    """
-    Selects the penalty based on the regression method
-
+    Penalty term and its gradient for the different regression methods
+ 
     Params:
-        theta (jnp.ndarray): model parameters
-        lmbda (float): penalty strength
         reg (str or None): None for OLS, "L2" for Ridge, "L1" for Lasso
-
-    Returns: 
-        float: scalar penalty value (0 for OLS)
-    """
-
-    if reg is None or lmbda == 0: #for OLS
-        return 0.0
-    if reg == "L2": #for Ridge
-        return l2_penalty(theta, lmbda)
-    if reg == "L1": #for Lasso
-        return l1_penalty(theta, lmbda)
-    raise ValueError("reg must be None, L1 or L2")
-
-
-def l1_penalty_grad(theta, lmbda):
-    """
-    Gradient for the L1 penalty: lambda * sgn(theta)
-
-    Params: 
-        theta (jnp.ndarray): model parameters
         lmbda (float): penalty strength
-
-    Returns: 
-        jnp.ndarray: same shape as theta
     """
+ 
+    def __init__(self, reg=None, lmbda=0.0):
+        if reg not in (None, "L1", "L2"):
+            raise ValueError("reg must be None, L1 or L2")
+        self.reg = reg
+        self.lmbda = lmbda
 
-    return lmbda * jnp.sign(theta)
+ 
+    def __call__(self, theta):
+        """
+        L1 (Lasso): lambda * sum|theta_j|,  L2 (Ridge): lambda * sum theta_j^2,  OLS: 0
+ 
+        Params:
+            theta (jnp.ndarray): model parameters
+ 
+        Returns:
+            float: scalar penalty value (0 for OLS)
+        """
 
-def l2_penalty_grad(theta, lmbda):
-    """
-    Gradient for the L2 penalty: 2 * lambda * theta
-
-    Params: 
-        theta (jnp.ndarray): model parameters
-        lmbda (float): penalty strength
-
-    Returns: 
-        jnp.ndarray: same shape as theta
-    """
-     
-    return 2.0 * lmbda * theta
-
-def penalty_grad(theta, lmbda, reg):
-    """
-    Selects the gradient of the penalty based on the regression method
-
-    Params: 
-        theta (jnp.ndarray): model parameters
-        lmbda (float): penalty strength
-        reg (str or None): None for OLS, "L2" for Ridge, "L1" for Lasso
-
-    Returns:
-        jnp.ndarray: same shape as theta
-    """
-
-    if reg is None or lmbda == 0: #for OLS
-        return jnp.zeros_like(theta)
-    if reg == "L2": #for Ridge
-        return l2_penalty_grad(theta, lmbda)
-    if reg == "L1": #for Lasso
-        return l1_penalty_grad(theta, lmbda)
-    raise ValueError("reg must be None, L1 or L2")
+        if self.reg is None or self.lmbda == 0: #OLS
+            return 0.0
         
+        if self.reg == "L2":    #Ridge
+            return self.lmbda * jnp.sum(theta ** 2)
+        
+        return self.lmbda * jnp.sum(jnp.abs(theta)) #Lasso
+
+ 
+    def grad(self, theta):
+        """
+        L1: lambda * sgn(theta),  L2: 2 * lambda * theta,  OLS: 0
+ 
+        Params:
+            theta (jnp.ndarray): model parameters
+ 
+        Returns:
+            jnp.ndarray: same shape as theta
+        """
+
+        if self.reg is None or self.lmbda == 0: # OLS
+            return jnp.zeros_like(theta)
+        
+        if self.reg == "L2":    #Ridge
+            return 2.0 * self.lmbda * theta
+        
+        return self.lmbda * jnp.sign(theta) #Lasso
+      
+
 
 """Mean square error function, derivative, cost function and gradient of cost function"""
-def mse(predict, target):
-    """
-    Mean square error: C = (1/n) * sum (predict_i - target_i)^2 
+class MSE:
+    """Mean squared error"""
+ 
+    def __call__(self, predict, target):
+        """
+        Mean square error: C = (1/n) * sum (predict_i - target_i)^2
+ 
+        Params:
+            predict (jnp.ndarray): model predictions
+            target (jnp.ndarray): true values, same shape as predict
+ 
+        Returns:
+            float: MSE
+        """
+        return jnp.mean((predict - target) ** 2)
 
-    Params: 
-        predict (jnp.ndarray): model predictions
-        target (jnp.ndarray): true values 
+ 
+    def der(self, predict, target):
+        """
+        Derivative of MSE: dC/dpredict = (2/n) * (predict - target)
+ 
+        Params:
+            predict (jnp.ndarray): model predictions
+            target (jnp.ndarray): true values, same shape as predict
+ 
+        Returns:
+            jnp.ndarray: same shape as predict
+        """
+        return 2.0 * (predict - target) / predict.size
 
-    Returns:
-        float: MSE
-    """
+ 
+    def linear_cost(self, X, y, theta, penalty=Penalty()):
+        """
+        MSE cost function for a linear model X @ theta (project 1 regression)
+ 
+        Params:
+            X (jnp.ndarray): design matrix, shape: (n, p)
+            y (jnp.ndarray): target values, shape: (n, )
+            theta (jnp.ndarray): parameters, shape: (p, )
+            penalty (Penalty): Penalty() for OLS, Penalty("L2", lmbda) for Ridge, Penalty("L1", lmbda) for Lasso
+ 
+        Returns:
+            float: value of cost function
+        """
+        return self(X @ theta, y) + penalty(theta)
 
-    return jnp.mean((predict - target)**2)
-
-
-def mse_der(predict, target):
-    """
-    Derivative of MSE: dC/dpredict = (2/n) * (predict - target)
-
-    Params: 
-        predict (jnp.ndarray): model predictions
-        target (jnp.ndarray): true values 
-
-    Returns:
-        jnp.ndarray: same shape as predict
-    """
-
-    return 2.0*(predict - target)/predict.size 
-
-
-def mse_cost(X, y, theta, lmbda = 0.0, reg = None):
-    """
-    MSE cost function for a linear model X @ theta
-
-    Params: 
-        X (jnp.ndarray): design matrix, shape: (n, p)
-        y (jnp.ndarray): target values, shape: (n, )
-        theta (jnp.ndarray): parameters, shape: (p, )
-        lmbda (float): penalty strength
-        reg (str or None): None for OLS, "L1" for Lasso, "L2" for Ridge
-
-    Returns: 
-        float: value of cost function
-    """
-
-    return mse(X @ theta, y) + penalty(theta, lmbda, reg)
-
-
-def mse_grad(X, y, theta, lmbda = 0.0, reg = None):
-    """
-    Gradient of the MSE cost: (2/n) X^T (X theta - y) + (penalty for given regression method)
-
-    Params: 
-        X (jnp.ndarray): design matrix, shape: (n, p)
-        y (jnp.ndarray): target values, shape: (n, )
-        theta (jnp.ndarray): parameters, shape: (p, )
-        lmbda (float): penalty strength
-        reg (str or None): None for OLS, "L1" for Lasso, "L2" for Ridge
-
-    Returns:
-        jnp.ndarray: the gradient, same shape as theta
-    """
-
-    n = X.shape[0]
-    return 2.0 / n * X.T @ (X @ theta - y) + penalty_grad(theta, lmbda, reg)
-
+ 
+    def linear_grad(self, X, y, theta, penalty=Penalty()):
+        """
+        Gradient of the MSE cost: (2/n) X^T (X theta - y) + penalty gradient
+ 
+        Params:
+            X (jnp.ndarray): design matrix, shape: (n, p)
+            y (jnp.ndarray): target values, shape: (n, )
+            theta (jnp.ndarray): parameters, shape: (p, )
+            penalty (Penalty): Penalty() for OLS, Penalty("L2", lmbda) for Ridge, Penalty("L1", lmbda) for Lasso
+ 
+        Returns:
+            jnp.ndarray: the gradient, same shape as theta
+        """
+        n = X.shape[0]
+        return 2.0 / n * X.T @ (X @ theta - y) + penalty.grad(theta)
+ 
 
 """Multiclass cross entropy (softmax)"""
-epsilon = 1e-12     #to avoid log(0)
-def cross_entropy(P, Y):
-    """
-    multiclass cross entropy: C = - sum_i sum_k (y_ik log(p_ik)) (eq. 5.28)
 
-    Params: 
-        P (jnp.ndarray): predicted class probabilities, shape: (n, K)
-        Y (jnp.ndarray): one-hot encoded targets, shape: (n, K)
-
-    Returns: 
-        float: cross entropy
-    """
-
-    P = jnp.clip(P, epsilon, 1.0)
-    return - jnp.sum(Y * jnp.log(P)) 
-
-
-def cross_entropy_der(P, Y):
-    """
-    derivative of multiclass cross entropy: dC/dp = - y_ik / p_ik
-
-    Params: 
-        P (jnp.ndarray): predicted class probabilities, shape: (n, K)
-        Y (jnp.ndarray): one-hot encoded targets, shape: (n, K)
-
-    Returns: 
-        jnp.ndarray: same shape as P
-    """
-
-    P = jnp.clip (P, epsilon, 1.0)
-    return - Y / P 
-
-def softmax(z):
-    """
-    Softmax, row-wise: p_ik = exp(z_ik) / sum_l exp(z_il)
-
-    Params:
-        z (jnp.ndarray): Input to the output layer, shape: (n, K)
-
-    Returns:
-        jnp.ndarray: same shape as z, each row is a probability distribution (sums to 1)
-    """
-
-    e = jnp.exp(z - jnp.max(z, axis=1, keepdims=True))   #subtract max for numerical stability
-    return e / jnp.sum(e, axis=1, keepdims=True)
-
-
-def softmax_cross_entropy_der(P, Y):
-    """
-    Derivative of cross entropy: dC/dz = P - Y
-
-    Params:
-        P (jnp.ndarray): predicted class probabilities (softmax output), shape: (n, K)
-        Y (jnp.ndarray): one-hot encoded targets, shape: (n, K)
-
-    Returns:
-        jnp.ndarray: same shape as P
-    """
-
-    return P - Y
-
+class CrossEntropy:
+    """Multiclass cross entropy, used together with a softmax output layer"""
+ 
+    epsilon = 1e-12     #to avoid log(0)
+ 
+    def __call__(self, P, Y):
+        """
+        Multiclass cross entropy: C = - sum_i sum_k (y_ik log(p_ik)) (eq. 5.28)
+ 
+        Params:
+            P (jnp.ndarray): predicted class probabilities, shape: (n, K)
+            Y (jnp.ndarray): one-hot encoded targets, shape: (n, K)
+ 
+        Returns:
+            float: cross entropy
+        """
+        P = jnp.clip(P, self.epsilon, 1.0)
+        return -jnp.sum(Y * jnp.log(P))
+ 
+    def der(self, P, Y):
+        """
+        Derivative of multiclass cross entropy: dC/dp_ik = - y_ik / p_ik
+ 
+        Params:
+            P (jnp.ndarray): predicted class probabilities, shape: (n, K)
+            Y (jnp.ndarray): one-hot encoded targets, shape: (n, K)
+ 
+        Returns:
+            jnp.ndarray: same shape as P
+        """
+        P = jnp.clip(P, self.epsilon, 1.0)
+        return -Y / P
+ 
+    def softmax_delta(self, P, Y):
+        """
+        Combined derivative of softmax + cross entropy: dC/dz = P - Y (eq. 8.69)
+        Used directly as the output error delta^L when the output layer is softmax
+ 
+        Params:
+            P (jnp.ndarray): predicted class probabilities (softmax output), shape: (n, K)
+            Y (jnp.ndarray): one-hot encoded targets, shape: (n, K)
+ 
+        Returns:
+            jnp.ndarray: same shape as P
+        """
+        return P - Y
 
 
 """Activation functions"""
-def sigmoid(z):
-    """
-    Sigmoid: sigma(z) = 1 / (1 + exp(-z))
+class Sigmoid:
+    """Sigmoid activation function"""
+ 
+    def __call__(self, z):
+        """
+        Sigmoid: sigma(z) = 1 / (1 + exp(-z))
+ 
+        Params:
+            z (jnp.ndarray): Input to activation function. z = a^(l - 1) W^l + b^l
+ 
+        Returns:
+            jnp.ndarray: same shape as z, every entry put to interval (0, 1)
+        """
+        return 1.0 / (1.0 + jnp.exp(-z))
+ 
+    def der(self, z):
+        """
+        Derivative of sigmoid: sigma'(z) = sigma(z) * (1 - sigma(z))
+ 
+        Params:
+            z (jnp.ndarray): Input to activation function. z = a^(l - 1) W^l + b^l
+ 
+        Returns:
+            jnp.ndarray: same shape as z, values in (0, 0.25]
+        """
+        s = self(z)
+        return s * (1.0 - s)
 
+
+
+class ReLU:
+    """ReLU activation function """
+ 
+    def __call__(self, z):
+        """
+        ReLU(z) = max(0, z) (eq. 8.23)
+ 
+        Params:
+            z (jnp.ndarray): Input to the activation function. z = a^(l - 1) W^l + b^l
+ 
+        Returns:
+            jnp.ndarray: same shape as z, negative entries are set to 0, positive entries are held
+        """
+        return jnp.where(z > 0, z, 0.0)
+ 
+    def der(self, z):
+        """
+        ReLU'(z) = 1 for z > 0, 0 for z <= 0 (eq. 8.23)
+ 
+        Params:
+            z (jnp.ndarray): Input to the activation function. z = a^(l - 1) W^l + b^l
+ 
+        Returns:
+            jnp.ndarray: same shape as z, set to 1 for z > 0, and 0 for z <= 0, set to 0 at 0
+        """
+        return jnp.where(z > 0, 1.0, 0.0)
+ 
+
+class LeakyReLU:
+    """
+    Leaky ReLU activation function
+ 
     Params:
-        z( jnp.ndarray): Input to activation function. z = a^(l - 1) W^l + b^l
-
-    Returns: 
-        jnp.ndarray: same shape as z,every entry put to interval (0, 1)
-    """
-
-    return 1.0/(1.0 + jnp.exp(-z))
-
-
-def sigmoid_der(z):
-    """
-    derivative of sigmoid: sigma'(z) = sigma(z) * (1 - sigma(z))
-
-    Params: 
-        z( jnp.ndarray): Input to activation function. z = a^(l - 1) W^l + b^l
-        
-    Returns: 
-        jnp.ndarray: same shape as z 
-    """
-    
-    s = sigmoid(z)
-    return s*(1.0 - s)
-
-
-def ReLU(z):
-    """
-    ReLU(z) = max(0, z) (eq. 8.23)
-
-    Params:
-        z (jnp.ndarray): Input to the activation function. z = a^(l - 1) W^l + b^l 
-
-    Returns: 
-        jnp.ndarray: same shape as z, negative entries are set to 0, positive entries are held. 
-    """
-
-    return jnp.where(z > 0, z, 0.0)
-
-
-def ReLU_der(z):
-    """
-    ReLU'(z) = 1 for z > 0, 0, for z <= 0 (eq. 8.23)
-
-    Params:
-        z (jnp.ndarray): Input to the activation function. z = a^(l - 1) W^l + b^l 
-
-    Returns: 
-        jnp.ndarray: same shape as z, set to 1 for z > 0, and 0 for z <= 0, set to 0 at 0. 
-    """
-
-    return jnp.where(z > 0, 1.0, 0.0)
-
-
-def leaky_ReLU(z, alpha = 0.01):
-    """
-    LReLU(z) = z for z > 0, alpha * z for z <= 0 (eq. 8.24)
-
-    Params:
-        z (jnp.ndarray): Input to the activation function. z = a^(l - 1) W^l + b^l 
         alpha (float): slope for negative inputs, default: 0.01
-
-    Returns: 
-        jnp.ndarray: same shape as z, negative entries are scaled by alpha, positive entries are held. 
     """
+ 
+    def __init__(self, alpha=0.01):
+        self.alpha = alpha
+ 
+    def __call__(self, z):
+        """
+        LReLU(z) = z for z > 0, alpha * z for z <= 0 (eq. 8.24)
+ 
+        Params:
+            z (jnp.ndarray): Input to the activation function. z = a^(l - 1) W^l + b^l
+ 
+        Returns:
+            jnp.ndarray: same shape as z, negative entries are scaled by alpha, positive entries are held
+        """
+        return jnp.where(z > 0, z, self.alpha * z)
 
-    return jnp.where(z > 0, z, alpha * z)
-
-
-def leaky_ReLU_der(z, alpha = 0.01):
-    """
-    LReLU'(z) = 1 for z > 0, alpha for z <= 0 (eq. 8.24)
-
-    Params:
-        z (jnp.ndarray): Input to the activation function. z = a^(l - 1) W^l + b^l 
-        alpha (float): slope for negative inputs, default: 0.01
-
-    Returns: 
-        jnp.ndarray: same shape as z, set to 1 for z > 0, and alpha for z <= 0, set to alpha at 0. 
-    """
-
-    return jnp.where(z > 0, 1.0, alpha)
+ 
+    def der(self, z):
+        """
+        LReLU'(z) = 1 for z > 0, alpha for z <= 0 (eq. 8.24)
+ 
+        Params:
+            z (jnp.ndarray): Input to the activation function. z = a^(l - 1) W^l + b^l
+ 
+        Returns:
+            jnp.ndarray: same shape as z, set to 1 for z > 0, and alpha for z <= 0, set to alpha at 0
+        """
+        return jnp.where(z > 0, 1.0, self.alpha)
+ 

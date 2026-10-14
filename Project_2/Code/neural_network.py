@@ -8,13 +8,10 @@ from Project_2.Code._Part_a import *
 
 
 class NeuralNetwork:
-    def __init__(self, network_input_size, layer_output_sizes, activation_funcs, activation_ders, cost_fun = mse, cost_der = mse_der, lmbda = 0.0, reg = None):
-        self.activation_funcs = activation_funcs
-        self.activation_ders = activation_ders
-        self.cost_fun = cost_fun
-        self.cost_der = cost_der
-        self.lmbda = lmbda
-        self.reg = reg
+    def __init__(self, network_input_size, layer_output_sizes, activations, cost = MSE(), penalty = Penalty()):
+        self.activations = activations
+        self.cost_obj = cost
+        self.penalty = penalty
         self.layers = self.create_layers(network_input_size, layer_output_sizes)
  
     def create_layers(network_input_size, layer_output_size):
@@ -92,7 +89,7 @@ class NeuralNetwork:
         layer_inputs, zs = [], []
         a = inputs
 
-        for (W, b), activation_func in zip(self.layers, self.activation_funcs):
+        for (W, b), activation_func in zip(self.layers, self.activations):
             layer_inputs.append(a)
             z = a @ W + b
             a = activation_func(z)
@@ -123,34 +120,35 @@ class NeuralNetwork:
 
         #loops over the layers, from last to first
         for i in reversed(range(len(self.layers))):
-            layer_input, z, activation_der = layer_inputs[i], zs[i], self.activation_ders[i]
+            layer_input, z, activation_der = layer_inputs[i], zs[i], self.activations[i]
             if i == len(self.layers) - 1: 
                 #last layer: cost derivative as dC/da(L)
-                dC_da = self.cost_der(predict, targets)
+                dC_da = self.cost_obj(predict, targets)
             else: 
                 #all other layers: build on previous z derivative, dCda(i) = dCdz(i + 1) * dz(i + 1)da(i)
                 (W, b) = self.layers[i + 1]
                 dC_da = dC_dz @ W.T
                 
             dC_dz = dC_da * activation_der(z) 
-            dC_dW = layer_input.T @ dC_dz + penalty_grad(W, self.lmbda, self.reg)
+            dC_dW = layer_input.T @ dC_dz + self.penalty_grad(W)
             dC_db = jnp.sum(dC_dz, axis = 0)
 
             layer_grads[i] = (dC_dW, dC_db)
 
         return layer_grads
 
+
     #the next functions are to check the backproagation to JAX
     def jax_compliant_predict(self, layers, inputs):
         a = inputs
-        for (W, b), activation_func in zip(layers, self.activation_funcs):
+        for (W, b), activation_func in zip(layers, self.activations):
             a = activation_func(a @ W + b)
         return a
 
 
     def jax_cost(self, layers, inputs, targets):
         predict = self.jax_compliant_predict(layers, inputs)
-        return self.cost_fun(predict, targets) + jnp.sum(penalty(W, self.lmbda, self.reg) for W, _ in layers)
+        return self.cost_obj(predict, targets) + jnp.sum(self.penalty(W) for W, _ in layers)
 
 
     def jax_gradient(self, inputs, targets):
