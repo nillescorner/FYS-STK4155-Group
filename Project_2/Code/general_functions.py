@@ -5,7 +5,7 @@ The Runge function for our data, function for setting up the design matrix,
 making the x and y data, and scaling for data where it also can be split into
 test and training data.
 """
-
+import numpy as np
 import jax
 jax.config.update("jax_enable_x64", True)   # 64-bit floats, so that hand and JAX agree to ~1e-15
 import jax.numpy as jnp
@@ -56,8 +56,8 @@ def make_data(n=100, noise=0.1, seed=2026):
             y (NDArray): target data
     """
 
-    rng = jnp.random.default_rng(seed)
-    x = jnp.sort(rng.uniform(-1, 1, n))
+    rng = np.random.default_rng(seed)
+    x = np.sort(rng.uniform(-1, 1, n))
     y = runge(x) + rng.normal(0, noise, n)
     return x, y
 
