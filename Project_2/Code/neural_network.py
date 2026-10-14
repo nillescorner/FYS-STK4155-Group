@@ -55,13 +55,10 @@ class NeuralNetwork:
             jnp.ndarray: network output, shape: (n, n_outputs)
         """
 
-        a = inputs
-        for (W, b), activation_func in zip(self.layers, self.activation_funcs):
-            a = activation_func(a @ W + b)
-        return a
+        return self.jax_compliant_predict(self.layers, inputs)
 
 
-    def cost(self, inputs, target):
+    def cost(self, inputs, targets):
         """
         Total cost of network
 
@@ -74,8 +71,7 @@ class NeuralNetwork:
             reg (str or None): None,  "L1", "L2"
         """
         
-        predict = self.feed_forward(inputs, self.layers, self.activation_funcs)
-        return mse(predict, target) + jnp.sum(penalty(W, self.lmbda, self.reg) for W, _ in self.layers)
+        return self._jax_cost(self.layers, inputs, targets)
 
 
     def feed_forward_saver(self, inputs):
@@ -143,6 +139,27 @@ class NeuralNetwork:
             layer_grads[i] = (dC_dW, dC_db)
 
         return layer_grads
+
+    #the next functions are to check the backproagation to JAX
+    def jax_compliant_predict(self, layers, inputs):
+        a = inputs
+        for (W, b), activation_func in zip(layers, self.activation_funcs):
+            a = activation_func(a @ W + b)
+        return a
+
+
+    def jax_cost(self, layers, inputs, targets):
+        predict = self.jax_compliant_predict(layers, inputs)
+        return self.cost_fun(predict, targets) + jnp.sum(penalty(W, self.lmbda, self.reg) for W, _ in layers)
+
+
+    def jax_gradient(self, inputs, targets):
+        """
+        Gradient of the cost with jax.grad, same structure as compute_gradient
+        """
+
+        return jax.grad(self._jax_cost)(self.layers, inputs, targets)
+        
 
 
 
