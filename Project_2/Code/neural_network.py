@@ -42,7 +42,7 @@ class NeuralNetwork:
         return layers
 
 
-    def feed_forward(input, layers, activation_funcs):
+    def feed_forward(self, inputs):
         """
         Feed-forward pass, a^l = f(a^(l-1) W^l + b^l), used for predictions
     
@@ -55,13 +55,13 @@ class NeuralNetwork:
             jnp.ndarray: network output, shape: (n, n_outputs)
         """
 
-        a = input
-        for (W, b), activation_func in zip(layers, activation_funcs):
+        a = inputs
+        for (W, b), activation_func in zip(self.layers, self.activation_funcs):
             a = activation_func(a @ W + b)
         return a
 
 
-    def cost(layers, inputs, activation_funcs, target, lmbda = 0.0, reg = None):
+    def cost(self, inputs, target):
         """
         Total cost of network
 
@@ -74,11 +74,11 @@ class NeuralNetwork:
             reg (str or None): None,  "L1", "L2"
         """
         
-        predict = feed_forward(inputs, layers, activation_funcs)
-        return mse(predict, target) + jnp.sum(penalty(W, lmbda, reg) for W, _ in layers)
+        predict = self.feed_forward(inputs, self.layers, self.activation_funcs)
+        return mse(predict, target) + jnp.sum(penalty(W, self.lmbda, self.reg) for W, _ in self.layers)
 
 
-    def feed_forward_saver(inputs, layers, activation_funcs):
+    def feed_forward_saver(self, inputs):
         """
         Feed-forward pass that also stores the inputs and z of every layer
     
@@ -96,7 +96,7 @@ class NeuralNetwork:
         layer_inputs, zs = [], []
         a = inputs
 
-        for (W, b), activation_func in zip(layers, activation_funcs):
+        for (W, b), activation_func in zip(self.layers, self.activation_funcs):
             layer_inputs.append(a)
             z = a @ W + b
             a = activation_func(z)
@@ -104,7 +104,7 @@ class NeuralNetwork:
         return layer_inputs, zs, a
 
 
-    def backpropagation(inputs, layers, activation_funcs, targets, activation_ders, cost_der = mse_der, lmbda = 0.0, reg = None):
+    def backpropagation(self, inputs, targets):
         """
         Backpropagation: gradients of the cost wrt. every W and b
     
@@ -122,22 +122,22 @@ class NeuralNetwork:
             list of (dC_dW, dC_db): same structure as layers
         """
 
-        layer_inputs, zs, predict = feed_forward_saver(inputs, layers, activation_funcs)
-        layer_grads = [() for _ in layers]
+        layer_inputs, zs, predict = self.feed_forward_saver(inputs)
+        layer_grads = [() for _ in self.layers]
 
         #loops over the layers, from last to first
-        for i in reversed(range(len(layers))):
-            layer_input, z, activation_der = layer_inputs[i], zs[i], activation_ders[i]
-            if i == len(layers) - 1: 
+        for i in reversed(range(len(self.layers))):
+            layer_input, z, activation_der = layer_inputs[i], zs[i], self.activation_ders[i]
+            if i == len(self.layers) - 1: 
                 #last layer: cost derivative as dC/da(L)
-                dC_da = cost_der(predict, targets)
+                dC_da = self.cost_der(predict, targets)
             else: 
                 #all other layers: build on previous z derivative, dCda(i) = dCdz(i + 1) * dz(i + 1)da(i)
-                (W, b) = layers[i + 1]
+                (W, b) = self.layers[i + 1]
                 dC_da = dC_dz @ W.T
                 
             dC_dz = dC_da * activation_der(z) 
-            dC_dW = layer_input.T @ dC_dz + penalty_grad(W, lmbda, reg)
+            dC_dW = layer_input.T @ dC_dz + penalty_grad(W, self.lmbda, self.reg)
             dC_db = jnp.sum(dC_dz, axis = 0)
 
             layer_grads[i] = (dC_dW, dC_db)
