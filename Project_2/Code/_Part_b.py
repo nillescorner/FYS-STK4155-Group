@@ -131,7 +131,6 @@ plt.show()
 
 
 """Different network sizes"""
-
 networks_sizes = {"1 x 50": [50, 1], "1 x 100": [100, 1], "2 x 50": [50, 50, 1], "2 x 100": [100, 100, 1]}
 
 networks, histories, y_grids = {}, {}, {}
@@ -149,3 +148,28 @@ for name, sizes in networks_sizes.items():
 
     networks[name], histories[name] = nn, hist
     y_grids[name] = scaler. inverse_transform_y(nn.feed_forward(x_grid_s)).ravel()
+
+
+"""plot of the neural network fit for the different network sizes"""
+plt.plot(x_grid, runge(x_grid), label = "Runge function")
+plt.scatter(X_train.ravel(), y_train, alpha = 0.4, label = "training data")
+
+for name, y_g in y_grids.items():
+    plt.plot(x_grid, y_g, label = name)
+
+plt.xlabel("x")
+plt.ylabel("y")
+plt.legend()
+plt.grid()
+plt.show()
+
+"""plot of the MSE for the different network sizes"""
+for name, hist in histories.items():
+    plt.plot(hist["val"], label = name)
+plt.xlabel("Epoch")
+plt.ylabel("Test MSE")
+plt.yscale("log")
+plt.legend()
+plt.grid()
+plt.show()
+
