@@ -28,10 +28,10 @@ y_test_s = y_test_s.reshape(-1, 1)
 
 """Neural network training"""
 nn = NeuralNetwork(1, [50, 1], [Sigmoid(), Identity()])
-print(f'Gradient check (max |backprop - jax.grad|): {nn.gradient_check(X_train_s, y_train_s)}')
+print(f'Gradient check (max |backprop - jax.grad|): {nn.gradient_check(X_train_s, y_train_s):.2e}')
 
 history = train(nn, X_train_s, y_train_s, Adam(gamma = 0.01), epochs = 500, batch_size = 16, X_val = X_test_s, y_val = y_test_s)
-print(f"Final train MSE: {history["train"][-1]}, test MSE: {history["val"][-1]} ")
+print(f"Final train MSE: {history["train"][-1]:.4f}, test MSE: {history["val"][-1]:.4f} ")
 
 x_grid = np.linspace(-1, 1, 400).reshape(-1, 1)
 x_grid_s = scaler.transform_X(x_grid)                            
@@ -48,6 +48,20 @@ plt.ylabel("y")
 plt.legend()
 plt.grid()
 plt.show()
+
+
+"""Plot of the MSE for train and test data"""
+plt.plot(history["train"], label = "Train")
+plt.plot(history["val"], label = "Test")
+plt.xlabel("Epoch")
+plt.ylabel("MSE")
+#plt.xscale("log")
+plt.yscale("log")
+plt.grid()
+plt.legend()
+plt.tight_layout()
+plt.show()
+
 
 
 
