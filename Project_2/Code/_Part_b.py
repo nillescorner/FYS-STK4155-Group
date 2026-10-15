@@ -108,6 +108,19 @@ for i, (name, make) in enumerate(optimizers.items()):
         #print(f"{name:14s}, gamma = {gamma:.1e}, test MSE = {results[i,j]:.4f} ")
 
 
+"""Finding the best learning rate"""
+best = {}
+for i, name in enumerate(optimizers):
+    j = np.nanargmin(results[i])
+    best[name] = (gammas[j], results[i, j])
+    print(f"{name:14s}: best gamma = {gammas[j]:.1e}, MSE = {results[i, j]:.4f}")
+
+i_best, j_best = np.unravel_index(np.nanargmin(results), results.shape)
+best_name, best_gamma = list(optimizers)[i_best], gammas[j_best]
+
+print(f"Best overall: {best_name} with gamma = {best_gamma:.1e}")
+
+
 """plotting heatmap for learningrate sweep"""
 results_plot = np.where(np.isfinite(results), results, np.nan)
 sea.heatmap(results_plot, xticklabels = [f"{g:.0e}" for g in gammas], yticklabels = list(optimizers))
