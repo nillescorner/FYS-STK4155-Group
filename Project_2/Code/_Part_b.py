@@ -8,4 +8,5 @@ import jax.numpy as jnp
 from Project_2.Code._Part_a import Penalty, MSE, CrossEntropy, ReLU, LeakyReLU, Sigmoid
 from Project_2.Code.optimizer import SGD, RMSprop, Adam
 from Project_2.Code.neural_network import NeuralNetwork
-from Project_2.Code.general_functions import *
+from Project_2.Code.general_functions import RungeData
+
