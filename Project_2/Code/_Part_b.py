@@ -29,15 +29,15 @@ y_train_s = y_train_s.reshape(-1, 1)
 y_test_s = y_test_s.reshape(-1, 1)
 
 """Neural network training"""
-nn = NeuralNetwork(1, [50, 1], [Sigmoid(), Identity()])
-print(f'Gradient check (max |backprop - jax.grad|): {nn.gradient_check(X_train_s, y_train_s):.2e}')
+nn50 = NeuralNetwork(1, [50, 1], [Sigmoid(), Identity()])
+print(f'Gradient check (max |backprop - jax.grad|): {nn50.gradient_check(X_train_s, y_train_s):.2e}')
 
-history = train(nn, X_train_s, y_train_s, Adam(gamma = 0.01), epochs = 500, batch_size = 16, X_val = X_test_s, y_val = y_test_s)
-print(f"Final train MSE: {history["train"][-1]:.4f}, test MSE: {history["val"][-1]:.4f} ")
+history50 = train(nn50, X_train_s, y_train_s, Adam(gamma = 0.01), epochs = 500, batch_size = 16, X_val = X_test_s, y_val = y_test_s)
+print(f"Final train MSE: {history50["train"][-1]:.4f}, test MSE: {history50["val"][-1]:.4f} ")
 
 x_grid = np.linspace(-1, 1, 400).reshape(-1, 1)
 x_grid_s = scaler.transform_X(x_grid)                            
-y_grid = scaler.inverse_transform_y(nn.feed_forward(x_grid_s)).ravel()
+y_grid = scaler.inverse_transform_y(nn50.feed_forward(x_grid_s)).ravel()
 
 
 """Testing against OLS"""
@@ -74,8 +74,8 @@ plt.show()
 
 
 """Plot of the MSE for train and test data"""
-plt.plot(history["train"], label = "Train")
-plt.plot(history["val"], label = "Test")
+plt.plot(history50["train"], label = "Train")
+plt.plot(history50["val"], label = "Test")
 plt.xlabel("Epoch")
 plt.ylabel("MSE")
 #plt.xscale("log")
@@ -130,3 +130,22 @@ plt.tight_layout()
 plt.show()
 
 
+"""Different network sizes"""
+
+networks_sizes = {"1 x 50": [50, 1], "1 x 100": [100, 1], "2 x 50": [50, 50, 1], "2 x 100": [100, 100, 1]}
+
+networks, histories, y_grids = {}, {}, {}
+for name, sizes in networks_sizes.items():
+    np.random.seed(2026)
+
+    activations = [Sigmoid()] * (len(sizes) - 1) + [Identity()]
+    nn = NeuralNetwork(1, sizes, activations)
+
+    print(f"{name:8s} gradient check: {nn.gradient_check(X_train_s, y_train_s):.2e}")
+
+    hist = train(nn, X_train_s, y_train_s, Adam(gamma = 0.01), epochs=500, batch_size= batches, X_val = X_test_s, y_val = y_test_s)
+
+    print(f"{name:.8s} train MSE: {hist['train'][-1]:.4f}, test MSE: {hist['val'][-1]:.4f}")
+
+    networks[name], histories[name] = nn, hist
+    y_grids[name] = scaler. inverse_transform_y(nn.feed_forward(x_grid_s)).ravel()
