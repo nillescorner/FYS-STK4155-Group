@@ -3,6 +3,7 @@ This file contain the neural network function used for project 2.
 
 Feed forward, backward propagation, predict
 """
+import numpy as np
 import jax
 jax.config.update("jax_enable_x64", True)   # 64-bit floats, so that hand and JAX agree to ~1e-15
 import jax.numpy as jnp
@@ -10,13 +11,14 @@ from Project_2.Code._Part_a import Penalty, MSE, CrossEntropy, ReLU, LeakyReLU, 
 
 
 class NeuralNetwork:
-    def __init__(self, network_input_size, layer_output_sizes, activations, cost = MSE(), penalty = Penalty()):
+    def __init__(self, network_input_size, layer_output_sizes, activations, cost = MSE(), penalty = Penalty(), seed = 2026):
         self.activations = activations
         self.cost_obj = cost
         self.penalty = penalty
-        self.layers = self.create_layers(network_input_size, layer_output_sizes)
- 
-    def create_layers(network_input_size, layer_output_size):
+        self.layers = self.create_layers(network_input_size, layer_output_sizes, np.random.default_rng(seed))
+
+    @staticmethod
+    def create_layers(network_input_size, layer_output_sizes, rng):
         """
         Initilizes weights and bias for each layer
 
@@ -32,9 +34,9 @@ class NeuralNetwork:
         layers = []
         i_size = network_input_size
 
-        for layer_output_size in layer_output_size:
-            W = jnp.random.randn(layer_output_size, i_size)
-            b = jnp.random.randn(layer_output_size) 
+        for layer_output_size in layer_output_sizes:
+            W = jnp.asarray(rng.normal(0, 1 / np.sqrt(i_size), (i_size, layer_output_size)))
+            b = jnp.zeros(layer_output_size) + 0.01
             layers.append((W, b))
 
             i_size = layer_output_size
@@ -70,7 +72,7 @@ class NeuralNetwork:
             reg (str or None): None,  "L1", "L2"
         """
         
-        return self._jax_cost(self.layers, inputs, targets)
+        return self.jax_cost(self.layers, inputs, targets)
 
 
     def feed_forward_saver(self, inputs):
@@ -122,22 +124,34 @@ class NeuralNetwork:
 
         #loops over the layers, from last to first
         for i in reversed(range(len(self.layers))):
-            layer_input, z, activation_der = layer_inputs[i], zs[i], self.activations[i]
+            layer_input, z, activation = layer_inputs[i], zs[i], self.activations[i]
             if i == len(self.layers) - 1: 
                 #last layer: cost derivative as dC/da(L)
-                dC_da = self.cost_obj(predict, targets)
+                dC_da = self.cost_obj.der(predict, targets)
             else: 
                 #all other layers: build on previous z derivative, dCda(i) = dCdz(i + 1) * dz(i + 1)da(i)
-                (W, b) = self.layers[i + 1]
-                dC_da = dC_dz @ W.T
+                W_next, b = self.layers[i + 1]
+                dC_da = dC_dz @ W_next.T
                 
-            dC_dz = dC_da * activation_der(z) 
-            dC_dW = layer_input.T @ dC_dz + self.penalty_grad(W)
+            dC_dz = dC_da * activation.der(z)
+
+            W, b = self.layers[i]
+            dC_dW = layer_input.T @ dC_dz + self.penalty.grad(W)
             dC_db = jnp.sum(dC_dz, axis = 0)
 
             layer_grads[i] = (dC_dW, dC_db)
 
         return layer_grads
+
+    def update_weights(self, layer_steps):
+        """
+        Applies the steps computed by the optimizer
+        
+        Params:
+            layer_steps (list of (dW, db)): same stucture as layers 
+        """
+
+        self.layers = [(W - dW, b - db) for (W, b), (dW, db) in zip(self.layers, layer_steps)]
 
 
     #the next functions are to check the backproagation to JAX
@@ -150,7 +164,7 @@ class NeuralNetwork:
 
     def jax_cost(self, layers, inputs, targets):
         predict = self.jax_compliant_predict(layers, inputs)
-        return self.cost_obj(predict, targets) + jnp.sum(self.penalty(W) for W, _ in layers)
+        return self.cost_obj(predict, targets) + sum(self.penalty(W) for W, _ in layers)
 
 
     def jax_gradient(self, inputs, targets):
@@ -158,7 +172,16 @@ class NeuralNetwork:
         Gradient of the cost with jax.grad, same structure as compute_gradient
         """
 
-        return jax.grad(self._jax_cost)(self.layers, inputs, targets)
+        return jax.grad(self.jax_cost)(self.layers, inputs, targets)
+
+    def gradient_check(self, inputs, targets):
+        """
+        finds the largest absolute difference between backpropagation and the jax_gradient
+        """
+
+        ours = self.backpropagation(inputs, targets)
+        auto = self.jax_gradient(inputs, targets)
+        return max(float(jnp.max(jnp.abs(g1 - g2))) for (dW1, db1), (dW2, db2) in zip (ours, auto) for g1, g2 in ((dW1, dW2), (db1, db2)))
         
 
 

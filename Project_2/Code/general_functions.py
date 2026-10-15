@@ -46,7 +46,7 @@ class RungeData:
         self.x = jnp.asarray(np.sort(rng.uniform(-1, 1, n)))
         self.y = runge(self.x) + jnp.asarray(rng.normal(0, noise, n))
 
-
+    @staticmethod
     def design_matrix(x, degree, intercept=True):
         """
         Creates design matrix X

@@ -184,6 +184,30 @@ class CrossEntropy:
 
 
 """Activation functions"""
+
+class Identity:
+    """
+    Linear activation f(z) = z
+    """
+
+    def __call__(self, z):
+        """
+        Params:
+        z (jnp.ndarray): input to activation function
+        
+        Returns: 
+            jnp.ndarray: z unchanged
+        """
+
+        return z
+
+    def der(self, z):
+        """
+        f'(z) = 1
+        """
+
+        return jnp.ones_like(z)
+
 class Sigmoid:
     """Sigmoid activation function"""
  
@@ -277,4 +301,26 @@ class LeakyReLU:
             jnp.ndarray: same shape as z, set to 1 for z > 0, and alpha for z <= 0, set to alpha at 0
         """
         return jnp.where(z > 0, 1.0, self.alpha)
+
+class Softmax:
+    """
+    Softmax activation for the output layer in multiclass classification
+    """
+
+    def __init__(self, z):
+        """
+        Softmax, row-wise: p_ik = exp(z_ik) / sum_l exp(z_il)
+        
+        Params:
+            z (jnp.ndarray): input to the output layer, shape: (n, K)
+            
+        Returns: 
+            jnp.ndarray: same shape as z, each row is a probability
+        """
+
+        e = jnp.exp(z - jnp.max(z, axis = 1, keepdims = True)) #numerical stability
+
+        return e / jnp.sum(e, axis = 1, keepdims = True)
+
+
  
