@@ -14,7 +14,7 @@ from Project_2.Code.neural_network import NeuralNetwork
 from Project_2.Code.general_functions import RungeData, Scaler, runge
 
 
-#getting data
+"""Getting and scaling the data"""
 data = RungeData()
 
 X_train, X_test, y_train, y_test = data.split(data.nn_features())
@@ -26,7 +26,7 @@ X_test_s, y_test_s = scaler.transform(X_test, y_test)
 y_train_s = y_train_s.reshape(-1, 1)
 y_test_s = y_test_s.reshape(-1, 1)
 
-#neural network
+"""Neural network training"""
 nn = NeuralNetwork(1, [50, 1], [Sigmoid(), Identity()])
 print(f'Gradient check (max |backprop - jax.grad|): {nn.gradient_check(X_train_s, y_train_s)}')
 
@@ -38,6 +38,7 @@ x_grid_s = scaler.transform_X(x_grid)
 y_grid = scaler.inverse_transform_y(nn.feed_forward(x_grid_s)).ravel()
 
 
+"""Plotting the data, the runge function and the neural network data"""
 plt.plot(x_grid, runge(x_grid), label = "Runge function")
 plt.scatter(X_train.ravel(), y_train,  alpha = 0.6, label = "training data")
 plt.scatter(X_test.ravel(), y_test, alpha = 0.6, label = "test data")
@@ -47,6 +48,8 @@ plt.ylabel("y")
 plt.legend()
 plt.grid()
 plt.show()
+
+
 
 
 
