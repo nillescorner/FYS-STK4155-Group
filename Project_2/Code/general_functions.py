@@ -25,93 +25,149 @@ def runge(x):
     return 1.0 / (1.0 + 25.0 * x**2)
 
 
-def design_matrix(x, degree, intercept=True):
+class RungeData:
     """
-    Creates design matrix X
-    Polynomial features [1, x, x^2, ..., x^degree] (drop the 1 if intercept=False)
-
-        Params:
-            x (NDArray): input data
-            degree (int): degree of polynomial
-            intercept (bool): if False, column of ones is left out
-        
-        Returns:
-            X (NDArray): design matrix
-    """
-    start = 0 if intercept else 1
-    return jnp.vstack([x**p for p in range(start, degree + 1)]).T
-
-def make_data(n=100, noise=0.1, seed=2026):
-    """
-    Creates data arrays x and y from number of data points, noise and seed.
+    Noisy data from the Runge function, y = f(x) + N(0, noise^2), x uniform in [-1, 1]
     Default at n = 100, noise = 0.1, seed = 2026
-
-        Parameters:
-            n (int): Number of data points (observables)
+ 
+        Params:
+            n (int): Number of data points
             noise (float): Noise on the data (sigma)
             seed (int): Use the same seed to generate same numbers 
-        
-        Returns:
-            x (NDArray): input data x
-            y (NDArray): target data
+ 
+        Attributes:
+            x (NDArray): input data x, shape: (n,)
+            y (NDArray): target data, shape: (n,)
     """
 
-    rng = np.random.default_rng(seed)
-    x = np.sort(rng.uniform(-1, 1, n))
-    y = runge(x) + rng.normal(0, noise, n)
-    return x, y
+    def __init__(self, n = 100, noise = 0.1, seed = 2026):
+        self.n, self.noise, self.seed = n, noise, seed
+        rng = np.random.default_rng(seed)
+        self.x = jnp.asarray(np.sort(rng.uniform(-1, 1, n)))
+        self.y = runge(self.x) + jnp.asarray(rng.normal(0, noise, n))
 
+    @staticmethod
+    def design_matrix(x, degree, intercept=True):
+        """
+        Creates design matrix X
+        Polynomial features [1, x, x^2, ..., x^degree] (drop the 1 if intercept=False)
 
-def scaling(X,y, seed=2026, split_data=False):
-    """
-       Normalizes design matrix X and centers array y.
-       Can be used with or without train_test_split by setting split_data = False. 
-       If split_data= True it returns normalized design matrices: X_train, X_test and centered y_train, y_test
-       If split_data = False it returns normalized design matrix X and centered array y.
-   
-       Based on p116 fit with intercept from lecturebook
-       
-           Params:
-               X (NDArray): Design matrix X
-               y (NDArray): Target data 
-               seed (int): Seed for randomizer in the train-test split
-               split_data(bool): set to True if want to split into train and test data_points
-        
+            Params:
+                x (NDArray): input data
+                degree (int): degree of polynomial
+                intercept (bool): if False, column of ones is left out
+            
             Returns:
-                If split == True:
-                    X_train_norm (NDArray): Design matrix training data normalized
-                    X_test_norm (NDArray): Design matrix test data normalized
-                    y_train_centered (NDArray): True/target training data centered
-                    y_test_centered (NDArray): True/target test data centered
-                else:
-                    X_norm (NDArray): Design matrix normalized
-                    y_centered (NDArray): True/target data cenetered
+                X (NDArray): design matrix
+        """
+        start = 0 if intercept else 1
+        return jnp.vstack([x**p for p in range(start, degree + 1)]).T
+
+    def polynomial_features(self, degree, intercept=True):
+        """
+        Design matrix of this data set 
+        """
+
+        return self.design_matrix(self.x, degree, intercept)
+ 
+    def nn_features(self):
+        """
+        Raw x as a single input feature for the neural network, shape: (n, 1)
+        """
+
+        return self.x.reshape(-1, 1)
+ 
+    def split(self, X, test_size=0.2):
+        """
+        Train-test split of a feature matrix X and this data's y, using the data's seed.
+ 
+            Params:
+                X (NDArray): features
+                test_size (float): fraction of the data used for testing
+ 
+            Returns:
+                X_train, X_test, y_train, y_test (NDArray)
+        """
+
+        return train_test_split(X, self.y, test_size=test_size, random_state=self.seed)
+
+
+class Scaler:
+    """
+    Normalizes a design matrix X and centers an array y, with the means and stds
+    computed from the data it is fitted on 
+ 
+    Based on p116 fit with intercept from lecturebook.
+ 
+        Usage:
+            scaler = Scaler().fit(X_train, y_train)
+            X_train_s, y_train_s = scaler.transform(X_train, y_train)
+            X_test_s, y_test_s = scaler.transform(X_test, y_test)
+            y_pred = scaler.inverse_transform_y(model_output)   
+    """
+ 
+    def fit(self, X, y=None):
+        """
+        Computes the column means and stds of X, and the mean of y
+ 
+            Params:
+                X (NDArray): Design matrix
+                y (NDArray or None): Target data
+ 
+            Returns:
+                self (Scaler): so that Scaler().fit(X, y) can be chained
+        """
+
+        self.X_mean = X.mean(axis=0)
+        X_std = X.std(axis=0)
+        self.X_std = jnp.where(X_std == 0, 1, X_std)   # leave constant columns alone
+        self.y_mean = y.mean() if y is not None else 0.0
+        return self
+ 
+    def transform_X(self, X):
+        """
+        (X - X_mean) / X_std, with the fitted mean and std
+        """
+        return (X - self.X_mean) / self.X_std
+ 
+    def transform_y(self, y):
+        """
+        y - y_mean, with the fitted mean
+        """
+        return y - self.y_mean
+ 
+    def inverse_transform_y(self, y_scaled):
+        """
+        y_scaled + y_mean: brings predictions back to the original scale
+        """
+        return y_scaled + self.y_mean
+ 
+    def transform(self, X, y):
+        """
+        Scales both X and y, 
+        Returns: X_norm, y_centered
+        """
+        return self.transform_X(X), self.transform_y(y)
+ 
+    def fit_transform(self, X, y):
+        """
+        Fits on X, y and scales them, 
+        Returns: X_norm, y_centered
+        """
+        return self.fit(X, y).transform(X, y)
+
+
+
+def scaling(X, y, seed=2026, split_data=False):
+    """
+    If split_data=True it returns X_train_norm, X_test_norm, y_train_centered, y_test_centered
+    (test data scaled with the training mean/std), otherwise X_norm, y_centered
     """
 
-    if split_data == True:
-        X_train, X_test, y_train, y_test = train_test_split(X,y, test_size=0.2, random_state=seed)
+    if split_data:
 
-        X_train_mean, X_train_std = X_train.mean(axis=0), X_train.std(axis=0)
-        X_train_std = jnp.where(X_train_std == 0, 1, X_train_std ) #leave constant columns alone
-        y_train_mean = y_train.mean()
-
-        #Scaling training data
-        X_train_norm = (X_train - X_train_mean) / X_train_std
-        y_train_centered = y_train - y_train_mean
-
-        #Scaling testing data using training data to avoid data leakage
-        X_test_norm = (X_test - X_train_mean) / X_train_std 
-        y_test_centered = y_test - y_train_mean
-
-        return X_train_norm, X_test_norm, y_train_centered, y_test_centered
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=seed)
+        scaler = Scaler().fit(X_train, y_train)
+        return (scaler.transform_X(X_train), scaler.transform_X(X_test), scaler.transform_y(y_train), scaler.transform_y(y_test))
     
-    else:
-        X_mean, X_std = X.mean(axis=0), X.std(axis=0)
-        X_std = jnp.where(X_std == 0, 1, X_std ) #leave constant columns alone
-        y_mean = y.mean()
-
-        #Scale data
-        X_norm = (X - X_mean) / X_std
-        y_centered = y - y_mean
-
-        return X_norm, y_centered
+    return Scaler().fit_transform(X, y)

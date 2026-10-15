@@ -73,7 +73,7 @@ class Adam:
     step = gamma * m_hat / (sqrt(v_hat) + eps)
     """
 
-    def __init__(self, gamma, beta1, beta2, eps = 1e-8):
+    def __init__(self, gamma, beta1 = 0.9, beta2 = 0.999, eps = 1e-8):
         self.gamma, self.beta1, self.beta2, self.eps = gamma, beta1, beta2, eps
         self.reset()
 
@@ -96,4 +96,40 @@ class Adam:
 
         return [(self.gamma * (mW / c1) / (jnp.sqrt(vW / c2) + self.eps), self.gamma * (mb / c1) / (jnp.sqrt(vb / c2) + self.eps)) for (mW, mb), (vW, vb) in zip(self.m, self.v)]
 
+
+def train(network, X, y, optimizer, epochs = 500, batch_size = None, seed = 2026, X_val = None, y_val = None):
+    """
+    Trains the network
+
+    Params: 
+        network (NeuralNetwork): the network to train
+        X, y (jnp.ndarray): training data
+        optimizer (int): SGD, RMSprop or Adam
+        epochs (int): number of passes over the training data
+        batch_sizes (int or None): None: plain gradient descent, otherwise SGD with minibatches
+        seed (int): seed for reshuffeling the data every epoch 
+        X_val, y_val (jnp.ndarray or None): validation data, for cost history
+
+    Returns:
+        dict: cost per epoch
+    """
+
+    n = X.shape[0]
+    batch_size = batch_size or n
+    rng = np.random.default_rng(seed)
+    optimizer.reset()
+    history = {"train": [], "val": []}
+
+    for epoch in range(epochs):
+        idx = rng.permutation(n)
+        for start in range(0, n, batch_size):
+            batch = idx[start: start + batch_size]
+            layer_grads = network.backpropagation(X[batch], y[batch])
+            network.update_weights(optimizer.step(layer_grads))
+
+        history["train"].append(float(network.cost(X, y)))
+        if X_val is not None:
+            history["val"].append(float(network.cost(X_val, y_val)))
+
+    return history
 
