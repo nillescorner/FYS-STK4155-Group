@@ -13,6 +13,7 @@ from Project_2.Code.optimizer import SGD, RMSprop, Adam, train
 from Project_2.Code.neural_network import NeuralNetwork
 from Project_2.Code.general_functions import RungeData, Scaler, runge
 
+np.random.seed(2026)
 
 """Getting and scaling the data"""
 data = RungeData()
@@ -36,6 +37,21 @@ print(f"Final train MSE: {history["train"][-1]:.4f}, test MSE: {history["val"][-
 x_grid = np.linspace(-1, 1, 400).reshape(-1, 1)
 x_grid_s = scaler.transform_X(x_grid)                            
 y_grid = scaler.inverse_transform_y(nn.feed_forward(x_grid_s)).ravel()
+
+
+"""Testing against OLS"""
+best_degree = 8
+
+X_polynom = data.polynomial_features(best_degree)
+Xp_train, Xp_test, yp_train, yp_test = data.split(X_polynom)
+
+scaler_OLS = Scaler().fit(Xp_train, yp_train)
+Xp_train_s, yp_train_s = scaler_OLS.transform(Xp_train, yp_train)
+Xp_test_s, yp_test_s = scaler_OLS.transform(Xp_test, yp_test)
+
+theta_OLS = jnp.linalg.pinv(Xp_train_s.T @ Xp_train_s) @ Xp_train_s.T @ yp_train_s
+MSE_OLS = MSE()(Xp_test_s @ theta_OLS, yp_test_s)
+print(f"OLS (degree: {best_degree}) test MSE: {MSE_OLS:.4f}")
 
 
 """Plotting the data, the runge function and the neural network data"""
@@ -63,6 +79,25 @@ plt.tight_layout()
 plt.show()
 
 
+"""Learning rate sweep for different optimizers"""
+gammas = np.logspace(-4, 0, 9)
+batches = 16
+
+optimizers = {"GD": lambda g: (SGD(g), None), "SGD": lambda g: (SGD(g), batches), "SGD + RMSprop": lambda g: (RMSprop(g), batches), "SGD + Adam": lambda g: (Adam(g), batches) }
+
+results = np.zeros((len(optimizers), len(gammas)))
+
+for i, (name, make) in enumerate(optimizers.items()):
+    for j, gamma in enumerate(gammas):
+        np.random.seed(2026)
+
+        nn = NeuralNetwork(1, [50, 1], [Sigmoid(), Identity()])
+        opt, batch_size = make(gamma)
+        hist = train(nn, X_train_s, y_train_s, opt, epochs = 500, batch_size = batch_size, X_val = X_test_s, y_val = y_test_s)
+
+        results[i, j] = hist["val"][-1]
+
+        print(f"{name:14s}, gamma = {gamma:.1e}, test MSE = {results[i,j]:.4f} ")
 
 
 
