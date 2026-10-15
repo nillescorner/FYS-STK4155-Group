@@ -7,6 +7,7 @@ jax.config.update("jax_enable_x64", True)   # 64-bit floats, so that hand and JA
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import numpy as np
+import seaborn as sea
 
 from Project_2.Code._Part_a import Penalty, MSE, CrossEntropy, ReLU, LeakyReLU, Sigmoid, Identity
 from Project_2.Code.optimizer import SGD, RMSprop, Adam, train
@@ -97,12 +98,17 @@ for i, (name, make) in enumerate(optimizers.items()):
 
         results[i, j] = hist["val"][-1]
 
-        print(f"{name:14s}, gamma = {gamma:.1e}, test MSE = {results[i,j]:.4f} ")
+        #print(f"{name:14s}, gamma = {gamma:.1e}, test MSE = {results[i,j]:.4f} ")
 
 
+"""plotting heatmap for learningrate sweep"""
 
-
-
+results_plot = np.where(np.isfinite(results), results, np.nan)
+sea.heatmap(results_plot, xticklabels = [f"{g:.0e}" for g in gammas], yticklabels = list(optimizers))
+plt.xlabel(r"Learning rate $\gamma$")
+plt.title("Test MSE, 1 hidden layer, 50 nodes")
+plt.tight_layout()
+plt.show()
 
 
 
