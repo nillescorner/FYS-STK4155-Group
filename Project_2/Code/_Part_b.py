@@ -54,12 +54,18 @@ theta_OLS = jnp.linalg.pinv(Xp_train_s.T @ Xp_train_s) @ Xp_train_s.T @ yp_train
 MSE_OLS = MSE()(Xp_test_s @ theta_OLS, yp_test_s)
 print(f"OLS (degree: {best_degree}) test MSE: {MSE_OLS:.4f}")
 
+"""OLS predictions on the grid"""
+X_grid_poly = RungeData.design_matrix(x_grid.ravel(), best_degree)
+X_grid_poly_s = scaler_OLS.transform_X(X_grid_poly)
+y_grid_OLS = scaler_OLS.inverse_transform_y(X_grid_poly_s @ theta_OLS)
+
 
 """Plotting the data, the runge function and the neural network data"""
 plt.plot(x_grid, runge(x_grid), label = "Runge function")
 plt.scatter(X_train.ravel(), y_train,  alpha = 0.6, label = "training data")
 plt.scatter(X_test.ravel(), y_test, alpha = 0.6, label = "test data")
 plt.plot(x_grid, y_grid, label = "neural network")
+plt.plot(x_grid, y_grid_OLS, "--", label = f"OLS (degree {best_degree})")
 plt.xlabel("x")
 plt.ylabel("y")
 plt.legend()
@@ -74,6 +80,7 @@ plt.xlabel("Epoch")
 plt.ylabel("MSE")
 #plt.xscale("log")
 plt.yscale("log")
+plt.title("MSE for training and test, with Adam")
 plt.grid()
 plt.legend()
 plt.tight_layout()
@@ -102,16 +109,11 @@ for i, (name, make) in enumerate(optimizers.items()):
 
 
 """plotting heatmap for learningrate sweep"""
-
 results_plot = np.where(np.isfinite(results), results, np.nan)
 sea.heatmap(results_plot, xticklabels = [f"{g:.0e}" for g in gammas], yticklabels = list(optimizers))
 plt.xlabel(r"Learning rate $\gamma$")
 plt.title("Test MSE, 1 hidden layer, 50 nodes")
 plt.tight_layout()
 plt.show()
-
-
-
-
 
 
