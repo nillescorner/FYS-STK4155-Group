@@ -1,0 +1,2 @@
+# Python >= 3.10 recommended
+# Install with: pip install -r requirements.txt
