@@ -92,6 +92,7 @@ gammas = np.logspace(-4, 0, 9)
 batches = 16
 
 optimizers = {"GD": lambda g: (SGD(g), None), "SGD": lambda g: (SGD(g), batches), "SGD + RMSprop": lambda g: (RMSprop(g), batches), "SGD + Adam": lambda g: (Adam(g), batches) }
+all_histories = {}
 
 results = np.zeros((len(optimizers), len(gammas)))
 
@@ -103,8 +104,9 @@ for i, (name, make) in enumerate(optimizers.items()):
         opt, batch_size = make(gamma)
         hist = train(nn, X_train_s, y_train_s, opt, epochs = 500, batch_size = batch_size, X_val = X_test_s, y_val = y_test_s)
 
+        all_histories[(name, j)] = hist
         results[i, j] = hist["val"][-1]
-
+    
         #print(f"{name:14s}, gamma = {gamma:.1e}, test MSE = {results[i,j]:.4f} ")
 
 
@@ -130,6 +132,8 @@ plt.tight_layout()
 plt.show()
 
 
+
+
 """Different network sizes"""
 networks_sizes = {"1 x 50": [50, 1], "1 x 100": [100, 1], "2 x 50": [50, 50, 1], "2 x 100": [100, 100, 1]}
 
@@ -142,7 +146,7 @@ for name, sizes in networks_sizes.items():
 
     print(f"{name:8s} gradient check: {nn.gradient_check(X_train_s, y_train_s):.2e}")
 
-    hist = train(nn, X_train_s, y_train_s, Adam(gamma = 0.01), epochs=500, batch_size= batches, X_val = X_test_s, y_val = y_test_s)
+    hist = train(nn, X_train_s, y_train_s, Adam(gamma = best_gamma), epochs=500, batch_size= batches, X_val = X_test_s, y_val = y_test_s)
 
     print(f"{name:.8s} train MSE: {hist['train'][-1]:.4f}, test MSE: {hist['val'][-1]:.4f}")
 
@@ -153,6 +157,7 @@ for name, sizes in networks_sizes.items():
 """plot of the neural network fit for the different network sizes"""
 plt.plot(x_grid, runge(x_grid), label = "Runge function")
 plt.scatter(X_train.ravel(), y_train, alpha = 0.4, label = "training data")
+plt.scatter(X_test.ravel(), y_test, alpha = 0.6, label = "test data")
 
 for name, y_g in y_grids.items():
     plt.plot(x_grid, y_g, label = name)
@@ -172,4 +177,5 @@ plt.yscale("log")
 plt.legend()
 plt.grid()
 plt.show()
+
 
