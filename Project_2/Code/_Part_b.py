@@ -9,10 +9,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sea
 
-from Project_2.Code._Part_a import Penalty, MSE, CrossEntropy, ReLU, LeakyReLU, Sigmoid, Identity
-from Project_2.Code.optimizer import SGD, RMSprop, Adam, train
-from Project_2.Code.neural_network import NeuralNetwork
-from Project_2.Code.general_functions import RungeData, Scaler, runge
+from _Part_a import Penalty, MSE, CrossEntropy, ReLU, LeakyReLU, Sigmoid, Identity
+from optimizer import SGD, RMSprop, Adam, train
+from neural_network import NeuralNetwork
+from general_functions import RungeData, Scaler, runge
 
 np.random.seed(2026)
 

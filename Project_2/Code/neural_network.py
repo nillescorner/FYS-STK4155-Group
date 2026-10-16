@@ -7,7 +7,7 @@ import numpy as np
 import jax
 jax.config.update("jax_enable_x64", True)   # 64-bit floats, so that hand and JAX agree to ~1e-15
 import jax.numpy as jnp
-from Project_2.Code._Part_a import Penalty, MSE, CrossEntropy, ReLU, LeakyReLU, Sigmoid
+from _Part_a import Penalty, MSE, CrossEntropy, ReLU, LeakyReLU, Sigmoid
 
 
 class NeuralNetwork:
