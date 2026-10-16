@@ -70,6 +70,7 @@ plt.xlabel("x")
 plt.ylabel("y")
 plt.legend()
 plt.grid()
+plt.tight_layout()
 plt.show()
 
 
@@ -115,7 +116,7 @@ best = {}
 for i, name in enumerate(optimizers):
     j = np.nanargmin(results[i])
     best[name] = (gammas[j], results[i, j])
-    print(f"{name:14s}: best gamma = {gammas[j]:.1e}, MSE = {results[i, j]:.4f}")
+    print(f"{name:14s}: best gamma = {gammas[j]:.1e}, test MSE = {results[i, j]:.4f}")
 
 i_best, j_best = np.unravel_index(np.nanargmin(results), results.shape)
 best_name, best_gamma = list(optimizers)[i_best], gammas[j_best]
@@ -132,6 +133,24 @@ plt.tight_layout()
 plt.show()
 
 
+"""The MSE for each optimizer, with the best gamma"""
+for i, name in enumerate(optimizers):
+    j = np.nanargmin(results[i])
+    hist = all_histories[(name, j)]
+    epochs = np.arange(1, len(hist["train"]) + 1)
+
+    color = f"C{i}"
+    plt.plot(epochs, hist["train"], "-", color=color, alpha = 0.4, label=rf"{name} ($\gamma$ = {gammas[j]:.0e})")
+    plt.plot(epochs, hist["val"], "--", color=color)
+
+plt.yscale("log")
+plt.xlabel("Epoch")
+plt.ylabel("MSE")
+plt.title("Solid: train, dashed: test")
+plt.legend()
+plt.grid()
+plt.tight_layout()
+plt.show()
 
 
 """Different network sizes"""
@@ -144,11 +163,12 @@ for name, sizes in networks_sizes.items():
     activations = [Sigmoid()] * (len(sizes) - 1) + [Identity()]
     nn = NeuralNetwork(1, sizes, activations)
 
-    print(f"{name:8s} gradient check: {nn.gradient_check(X_train_s, y_train_s):.2e}")
+    print(f"{name}------------------------------------")
+    print(f"gradient check (max |backprop - jax.grad|): {nn.gradient_check(X_train_s, y_train_s):.2e}")
 
     hist = train(nn, X_train_s, y_train_s, Adam(gamma = best_gamma), epochs=500, batch_size= batches, X_val = X_test_s, y_val = y_test_s)
 
-    print(f"{name:.8s} train MSE: {hist['train'][-1]:.4f}, test MSE: {hist['val'][-1]:.4f}")
+    print(f"train MSE: {hist['train'][-1]:.4f}, test MSE: {hist['val'][-1]:.4f}")
 
     networks[name], histories[name] = nn, hist
     y_grids[name] = scaler. inverse_transform_y(nn.feed_forward(x_grid_s)).ravel()
@@ -166,6 +186,7 @@ plt.xlabel("x")
 plt.ylabel("y")
 plt.legend()
 plt.grid()
+plt.tight_layout()
 plt.show()
 
 """plot of the MSE for the different network sizes"""
@@ -176,6 +197,7 @@ plt.ylabel("Test MSE")
 plt.yscale("log")
 plt.legend()
 plt.grid()
+plt.tight_layout()
 plt.show()
 
 
