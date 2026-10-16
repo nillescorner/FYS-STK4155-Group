@@ -10,6 +10,13 @@ import jax
 jax.config.update("jax_enable_x64", True)   # 64-bit floats, so that hand and JAX agree to ~1e-15
 import jax.numpy as jnp
 from sklearn.model_selection import train_test_split
+from pathlib import Path
+
+
+#Path in order to save figures in Project_2/figs, LLM Assisted 
+FIG_DIR = Path(__file__).resolve().parent.parent / "figs"   # Project_2/figs
+FIG_DIR.mkdir(exist_ok=True)
+
 
 def runge(x):
     """
