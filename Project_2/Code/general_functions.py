@@ -12,10 +12,33 @@ import jax.numpy as jnp
 from sklearn.model_selection import train_test_split
 from pathlib import Path
 
+import json
+
 
 #Path in order to save figures in Project_2/figs, LLM Assisted 
 FIG_DIR = Path(__file__).resolve().parent.parent / "figs"   # Project_2/figs
 FIG_DIR.mkdir(exist_ok=True)
+
+#Path in order to save results learning rate results so they stays consistent, LLM Assisted
+RESULTS_DIR = Path(__file__).resolve().parent / "intermediary_results"
+RESULTS_DIR.mkdir(exist_ok=True)
+
+#Save to best learning rates
+best_lrs = RESULTS_DIR / "best_lr.json"
+
+def save_best_lr(key, value):
+    """Add or update one entry in best_lr.json, keeping the others
+        LLM Assisted"""
+    data = load_best_lr()
+    data[key] = value
+    with open(best_lrs, "w") as f:
+        json.dump(data, f, indent=2)
+
+def load_best_lr(key=None):
+    """Read best_lr.json (all of it, or one entry)
+    LLM Assisted"""
+    data = json.loads(best_lrs.read_text()) if best_lrs.exists() else {}
+    return data if key is None else data[key]
 
 
 def runge(x):

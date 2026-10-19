@@ -12,7 +12,7 @@ import seaborn as sea
 from _Part_a import Penalty, MSE, CrossEntropy, ReLU, LeakyReLU, Sigmoid, Identity
 from optimizer import SGD, RMSprop, Adam, train
 from neural_network import NeuralNetwork
-from general_functions import RungeData, Scaler, runge
+from general_functions import RungeData, Scaler, runge, save_best_lr
 
 np.random.seed(2026)
 
@@ -124,6 +124,8 @@ best_name, best_gamma = list(optimizers)[i_best], gammas[j_best]
 print(f"Best overall: {best_name} with gamma = {best_gamma:.1e}")
 
 
+save_best_lr('Sigmoid', {'optimizer': best_name, 'best_lr': best_gamma, 'test_mse': results[i_best, j_best]})
+
 """plotting heatmap for learningrate sweep"""
 results_plot = np.where(np.isfinite(results), results, np.nan)
 sea.heatmap(results_plot, xticklabels = [f"{g:.0e}" for g in gammas], yticklabels = list(optimizers))
@@ -131,6 +133,8 @@ plt.xlabel(r"Learning rate $\gamma$")
 plt.title("Test MSE, 1 hidden layer, 50 nodes")
 plt.tight_layout()
 plt.show()
+
+
 
 
 """The MSE for each optimizer, with the best gamma"""
