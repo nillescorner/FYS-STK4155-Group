@@ -307,7 +307,7 @@ class Softmax:
     Softmax activation for the output layer in multiclass classification
     """
 
-    def __init__(self, z):
+    def __call__(self, z):
         """
         Softmax, row-wise: p_ik = exp(z_ik) / sum_l exp(z_il)
         
