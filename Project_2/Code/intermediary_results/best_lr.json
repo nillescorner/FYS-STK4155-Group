@@ -2,7 +2,7 @@
   "Sigmoid": {
     "optimizer": "SGD + Adam",
     "best_lr": 0.0031622776601683794,
-    "test_mse": 0.012678787055517211
+    "test_mse": 0.012678787055517227
   },
   "ReLU": {
     "Optimizer": "SGD + Adam",
