@@ -97,7 +97,7 @@ class Adam:
         return [(self.gamma * (mW / c1) / (jnp.sqrt(vW / c2) + self.eps), self.gamma * (mb / c1) / (jnp.sqrt(vb / c2) + self.eps)) for (mW, mb), (vW, vb) in zip(self.m, self.v)]
 
 
-def train(network, X, y, optimizer, epochs = 500, batch_size = None, seed = 2026, X_val = None, y_val = None):
+def train(network, X, y, optimizer, epochs = 500, batch_size = None, seed = 2026, X_val = None, y_val = None, eval_every = 1):
     """
     Trains the network
 
@@ -118,7 +118,7 @@ def train(network, X, y, optimizer, epochs = 500, batch_size = None, seed = 2026
     batch_size = batch_size or n
     rng = np.random.default_rng(seed)
     optimizer.reset()
-    history = {"train": [], "val": []}
+    history = {"train": [], "val": [], 'epoch': []}
 
     for epoch in range(epochs):
         idx = rng.permutation(n)
@@ -127,9 +127,11 @@ def train(network, X, y, optimizer, epochs = 500, batch_size = None, seed = 2026
             layer_grads = network.backpropagation(X[batch], y[batch])
             network.update_weights(optimizer.step(layer_grads))
 
-        history["train"].append(float(network.cost(X, y)))
-        if X_val is not None:
-            history["val"].append(float(network.cost(X_val, y_val)))
+        if (epoch + 1) % eval_every == 0 or epoch == epochs - 1:
+            history['epoch'].append(epoch + 1)
+            history["train"].append(float(network.cost(X, y)))
+            if X_val is not None:
+                history["val"].append(float(network.cost(X_val, y_val)))
 
     return history
 
