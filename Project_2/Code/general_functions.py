@@ -11,8 +11,24 @@ jax.config.update("jax_enable_x64", True)   # 64-bit floats, so that hand and JA
 import jax.numpy as jnp
 from sklearn.model_selection import train_test_split
 from pathlib import Path
+from matplotlib.pyplot import plt
 
 import json
+
+import argparse # to toggle saving figs or displaying them
+
+def plot_or_savefig(fname):
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--save-figs", action="store_true") # makes it optional
+    args = parser.parse_args()
+    
+    if args.save_figs:
+        plt.savefig(FIG_DIR / fname)
+    else:
+        plt.show()
+    
+    plt.close()
+
 
 
 #Path in order to save figures in Project_2/figs, LLM Assisted 
