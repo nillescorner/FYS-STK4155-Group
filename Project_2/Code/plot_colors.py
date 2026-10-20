@@ -73,7 +73,7 @@ def set_style():
         "ytick.color": "#6E5F67",                     #color of labels on y axis
         "legend.frameon": False,                        #removes box around label
         "legend.fontsize": 9,                           #size of text in labels
-        "lines.linewidth": 1.8,                         #default linewidth of plotted lines
+        "lines.linewidth": 1.7,                         #default linewidth of plotted lines
         "figure.figsize": (7, 4.5),                     #default figure size
         "figure.dpi": 110,                              #resolution of figure
         "savefig.dpi": 200,                             #resolution of figure when saved
