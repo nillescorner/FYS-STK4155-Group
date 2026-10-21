@@ -12,9 +12,10 @@ import seaborn as sea
 from _Part_a import ReLU, LeakyReLU, Sigmoid, Identity
 from optimizer import Adam, train
 from neural_network import NeuralNetwork
-from general_functions import RungeData, Scaler, FIG_DIR, save_best_lr, load_best_lr
+from general_functions import RungeData, Scaler, FIG_DIR, save_best_lr, load_best_lr, ArgsHelper
 
 np.random.seed(2026)
+argshelper = ArgsHelper(fig_dir=FIG_DIR) # assists with parsed arguments if any
 
 """Getting and scaling the data"""
 data = RungeData()
@@ -48,12 +49,16 @@ for i, (name, activation) in enumerate(ReLUs.items()):
         results[i, j] = hist['val'][-1]
     
 """Finding the best learning rate"""
-best = {}
-for i, act_func in enumerate(ReLUs):
-    j = np.nanargmin(results[i])
-    best[act_func] = (gammas[j], results[i, j])
-    save_best_lr(act_func, {'Optimizer': 'SGD + Adam', 'best_lr': gammas[j], 'test_mse': results[i,j]})
-    print(f"{act_func:14s}: best gamma = {gammas[j]:.1e}, test MSE = {results[i, j]:.4f}")
+if argshelper.load_bestlrs:
+    print("Using pre-calculated best learning rates")
+else: 
+    print("Calculating best learning rates")
+    best = {}
+    for i, act_func in enumerate(ReLUs):
+        j = np.nanargmin(results[i])
+        best[act_func] = (gammas[j], results[i, j])
+        save_best_lr(act_func, {'Optimizer': 'SGD + Adam', 'best_lr': gammas[j], 'test_mse': results[i,j]})
+        print(f"{act_func:14s}: best gamma = {gammas[j]:.1e}, test MSE = {results[i, j]:.4f}")
 
 
 """Plotting heatmap for learningrate sweep"""
@@ -62,8 +67,8 @@ sea.heatmap(results_plot, xticklabels = [f"{g:.0e}" for g in gammas], yticklabel
 plt.xlabel(r"Learning rate $\gamma$")
 plt.title("Test MSE, 1 hidden layer, 50 nodes")
 plt.tight_layout()
-#plt.savefig(FIG_DIR / "Part_c_heatmaps_ReLUS.pdf")
-plt.show()
+argshelper.plot_or_save("Part_c_heatmaps_ReLUS.pdf")
+
 
 
 """We now test different activation functions and depths of the nn using the best lrs for each"""

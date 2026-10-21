@@ -11,23 +11,10 @@ jax.config.update("jax_enable_x64", True)   # 64-bit floats, so that hand and JA
 import jax.numpy as jnp
 from sklearn.model_selection import train_test_split
 from pathlib import Path
-from matplotlib.pyplot import plt
+import matplotlib.pyplot as plt
 
 import json
 
-import argparse # to toggle saving figs or displaying them
-
-def plot_or_savefig(fname):
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--save-figs", action="store_true") # makes it optional
-    args = parser.parse_args()
-    
-    if args.save_figs:
-        plt.savefig(FIG_DIR / fname)
-    else:
-        plt.show()
-    
-    plt.close()
 
 
 
@@ -38,6 +25,39 @@ FIG_DIR.mkdir(exist_ok=True)
 #Path in order to save results learning rate results so they stays consistent, LLM Assisted
 RESULTS_DIR = Path(__file__).resolve().parent / "intermediary_results"
 RESULTS_DIR.mkdir(exist_ok=True)
+
+import argparse # to toggle saving figs or displaying them
+
+class ArgsHelper:
+    """Parses command line flags once and offers convenience methods.
+    LLM assisted lvl 2"""
+
+    def __init__(self, fig_dir="figures"):
+        self.fig_dir = Path(fig_dir)
+
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--save-figs", action="store_true",
+                            help="save figures to disk instead of showing them")
+        parser.add_argument("--load-bestlrs", action="store_true",
+                            help="load the previously found best learning rates")
+
+        # parse_known_args tolerates flags this class doesn't know about
+        self.args, _ = parser.parse_known_args()
+
+    @property
+    def load_bestlrs(self):
+        """True if --load-bestlrs was passed. Use in an if statement."""
+        return self.args.load_bestlrs
+
+    def plot_or_save(self, fname):
+        """Save the current figure if --save-figs was passed, otherwise show it."""
+        if self.args.save_figs:
+            print(f"saving figs to {self.fig_dir}/")
+            plt.savefig(self.fig_dir / fname)
+        else:
+            plt.show()
+        plt.close()
+
 
 #Save to best learning rates
 best_lrs = RESULTS_DIR / "best_lr.json"

@@ -28,4 +28,4 @@ Guide for labeling as provided in MachineLearningUiO:
 | File / notebook | LLM level | Description                            |
 | --------------- | --------- | -------------------------------------- |
 | `__init__.py` | 1         | How to access modules from other files |
-|                 |           |                                        |
+|                 'general_functions.py'|          2 |Helper class for passing arguments                                        |
