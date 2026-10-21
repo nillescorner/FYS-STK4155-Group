@@ -97,7 +97,7 @@ class Adam:
         return [(self.gamma * (mW / c1) / (jnp.sqrt(vW / c2) + self.eps), self.gamma * (mb / c1) / (jnp.sqrt(vb / c2) + self.eps)) for (mW, mb), (vW, vb) in zip(self.m, self.v)]
 
 
-def train(network, X, y, optimizer, epochs = 500, batch_size = None, seed = 2026, X_val = None, y_val = None, eval_every = 1):
+def train(network, X, y, optimizer, epochs = 150, batch_size = None, seed = 2026, X_val = None, y_val = None, eval_every = 1):
     """
     Trains the network
 
@@ -134,4 +134,3 @@ def train(network, X, y, optimizer, epochs = 500, batch_size = None, seed = 2026
                 history["val"].append(float(network.cost(X_val, y_val)))
 
     return history
-

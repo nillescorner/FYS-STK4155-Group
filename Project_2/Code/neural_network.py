@@ -183,6 +183,3 @@ class NeuralNetwork:
         auto = self.jax_gradient(inputs, targets)
         return max(float(jnp.max(jnp.abs(g1 - g2))) for (dW1, db1), (dW2, db2) in zip (ours, auto) for g1, g2 in ((dW1, dW2), (db1, db2)))
         
-
-
-

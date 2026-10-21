@@ -36,7 +36,7 @@ ARCH_COLORS = {
 ACTIVATION_COLORS = {
     "Sigmoid":    SERIES[0],
     "ReLU":       SERIES[1],
-    "Leaky ReLU": SERIES[2],
+    "LeakyReLU":  SERIES[2],
 }
 
 REG_COLORS = {
