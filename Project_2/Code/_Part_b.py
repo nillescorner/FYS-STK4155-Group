@@ -70,6 +70,7 @@ ax.plot(x_grid, y_grid, color = COLORS["nn"], label = "Neural network (1 x 50)")
 ax.plot(x_grid, y_grid_OLS, "--", color = COLORS["ols"], label = f"OLS (degree {best_degree})")
 ax.set_xlabel("x")
 ax.set_ylabel("y")
+ax.set_title("Neural network vs. OLS fit to the Runge function")
 ax.legend()
 fig.tight_layout()
 #fig.savefig(f"{FIG_DIR}/Part_bfit_nn_vs_ols.pdf")
@@ -84,7 +85,7 @@ ax.plot(epochs50, history50["val"], VAL_LS, color = COLORS["nn"], alpha = 0.5, l
 ax.set_xlabel("Epoch")
 ax.set_ylabel("MSE")
 ax.set_yscale("log")
-ax.set_title(r"MSE for training and test, Adam ($\gamma$ = 0.01)")
+ax.set_title(r"Train and test MSE, 1 x 50 network, Adam ($\gamma$ = 0.01)")
 ax.legend()
 fig.tight_layout()
 #fig.savefig(f"{FIG_DIR}/Part_b_mse_train_test_adam.pdf")
@@ -139,33 +140,13 @@ sea.heatmap(results_plot, ax = ax, cmap = MSE_CMAP, norm = LogNorm(), annot = Tr
             cbar_kws = {"label": "Test MSE"})
 ax.grid(False)
 ax.set_xlabel(r"Learning rate $\gamma$")
-ax.set_title("Test MSE, 1 hidden layer, 50 nodes")
+ax.set_title("Test MSE vs. learning rate and optimizer (1 x 50 network)")
 fig.tight_layout()
 #fig.savefig(f"{FIG_DIR}/Part_b_heatmap_lr_optimizers.pdf")
 plt.show()
 
 
-
-
 """The MSE for each optimizer, with the best gamma"""
-for i, name in enumerate(optimizers):
-    j = np.nanargmin(results[i])
-    hist = all_histories[(name, j)]
-    epochs = np.arange(1, len(hist["train"]) + 1)
-
-    color = f"C{i}"
-    plt.plot(epochs, hist["train"], "-", color=color, alpha = 0.4, label=rf"{name} ($\gamma$ = {gammas[j]:.0e})")
-    plt.plot(epochs, hist["val"], "--", color=color)
-
-plt.yscale("log")
-plt.xlabel("Epoch")
-plt.ylabel("MSE")
-plt.title("Solid: train, dashed: test")
-plt.legend()
-plt.grid()
-plt.tight_layout()
-plt.show()
-
 fig, axes = plt.subplots(2, 2, figsize = (10, 7), sharex = True, sharey = True)
  
 for ax, (i, name) in zip(axes.ravel(), enumerate(optimizers)):
@@ -185,7 +166,7 @@ for ax in axes[1]:
 for ax in axes[:, 0]:
     ax.set_ylabel("MSE")
  
-fig.suptitle("Convergence at the best learning rate for each optimizer")
+fig.suptitle("Train and test MSE at the best learning rate for each optimizer (1 x 50 network)")
 fig.tight_layout()
 #fig.savefig(f"{FIG_DIR}/Part_b_convergence_optimizers.pdf")
 plt.show()
@@ -221,6 +202,7 @@ for name, y_g in y_grids.items():
  
 ax.set_xlabel("x")
 ax.set_ylabel("y")
+ax.set_title(rf"Network fits for different sizes, Adam ($\gamma$ = {best_gamma:.0e})")
 ax.legend()
 fig.tight_layout()
 #fig.savefig(f"{FIG_DIR}/Part_b_fit_network_sizes.pdf")
@@ -235,6 +217,7 @@ for name, hist in histories.items():
 ax.set_xlabel("Epoch")
 ax.set_ylabel("Test MSE")
 ax.set_yscale("log")
+ax.set_title(rf"Test MSE for different network sizes, Adam ($\gamma$ = {best_gamma:.0e})")
 ax.legend()
 fig.tight_layout()
 #fig.savefig(f"{FIG_DIR}/Part_b_mse_network_sizes.pdf")
