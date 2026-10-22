@@ -77,7 +77,7 @@ plt.show()
 """We now test different activation functions and depths of the nn using the best lrs for each"""
 best_lrs_all = [load_best_lr(name)['best_lr'] for name in ('Sigmoid', 'ReLU', 'LeakyReLU')]
 all_act_funcs ={'Sigmoid': Sigmoid(), 'ReLU': ReLU(), 'LeakyReLU': LeakyReLU()}
-seeds = [21, 42, 67, 420, 2026]             #test for different seeds
+seeds = [21, 36, 67, 420, 2026]             #test for different seeds
 
 epochs = 150
 
@@ -114,7 +114,7 @@ test_mean, test_std = test_mse.mean(axis=2), test_mse.std(axis=2)
 labels = np.array([[f"{m:.3f} ± {s:.3f}" for m, s in zip(rm, rs)]
                    for rm, rs in zip(test_mean, test_std)])
 
-fig, ax = plt.subplots(figsize = (6, 6))
+fig, ax = plt.subplots(figsize = (7, 7))
 sea.heatmap(test_mean, ax = ax, cmap=MSE_CMAP, annot = True, fmt = ".3f", 
              annot_kws = {"size": 8}, linewidths = 1.8, linecolor = "white",
              xticklabels=list(networks_sizes), yticklabels=list(all_act_funcs), cbar_kws={'label': 'Test MSE'})
@@ -125,6 +125,8 @@ fig.tight_layout()
 fig.savefig(FIG_DIR / 'Part_c_heatmap_networks.pdf')
 plt.show()
 
+
+"""Print every train and test MSE for each activation function for each hidden layer and number of nodes"""
 mean_curves = val_curves.mean(axis=2)
 
 for i, act_name in enumerate(all_act_funcs):
@@ -135,3 +137,29 @@ for i, act_name in enumerate(all_act_funcs):
               rf' Train MSE = {train_mean[i, j]:.4f} $\pm$ {train_std[i, j]:.4f}'
               rf' Test MSE = {test_mean[i, j]:.4f} $\pm$ {test_std[i,j]:.4f}',
               rf' Epoch {best_epoch + 1}')
+
+
+"""We now want to check for overfitting, thus increase the number of epochs"""
+big_epochs = 4000
+eval_every = 25
+big_network_size = [150, 150, 150, 150, 1]
+n_ponts = big_epochs // eval_every
+
+train_mse_long = np.zeros((len(all_act_funcs), n_ponts, len(seeds)))
+test_mse_long = np.zeros_like(train_mse_long)
+
+
+for i, (_, act) in enumerate(all_act_funcs.items()):
+    gamma = best_lrs_all[i]
+    activations = [act] * (len(big_network_size) - 1 ) + [Identity()]
+    for k, seed in enumerate(seeds):
+        nn = NeuralNetwork(1, big_network_size, activations, seed=seed)
+        hist = train(nn, X_train_s, y_train_s, Adam(gamma), epochs=big_epochs, batch_size=batches, seed=seed, X_val = X_test_s, y_val = y_test_s, eval_every=eval_every)
+
+        train_mse_long[i, :, k] = hist['train']
+        test_mse_long[i, :, k] = hist['val']
+
+
+long_ep = np.arange(1, n_ponts + 1) * eval_every
+
+

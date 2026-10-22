@@ -99,7 +99,7 @@ class Adam:
 
 _STATE = {"SGD": ("v",), "RMSprop": ("s",), "Adam": ("m", "v", "t")}   # optimizer state per class
 
-def train(network, X, y, optimizer, epochs = 200, batch_size = None, seed = 2026, X_val = None, y_val = None, eval_every = 1):
+def train(network, X, y, optimizer, epochs = 150, batch_size = None, seed = 2026, X_val = None, y_val = None, eval_every = 1):
     """
     Trains the network
     LLM Assisted
