@@ -3,7 +3,7 @@ This file contains the solution to task c, in project 2.
 """
 
 import jax
-jax.config.update("jax_enable_x64", False)   # 64-bit floats, so that hand and JAX agree to ~1e-15
+jax.config.update("jax_enable_x64", True)   # 64-bit floats, so that hand and JAX agree to ~1e-15
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import numpy as np
@@ -59,21 +59,25 @@ for i, act_func in enumerate(ReLUs):
 
 
 """Plotting heatmap for learningrate sweep"""
-fig, ax = plt.subplots(figsize = (7, 7))
+fig, ax = plt.subplots(figsize = (6, 6))
 results_plot = np.where(np.isfinite(results), results, np.nan)
-sea.heatmap(results_plot, cmap=MSE_CMAP, xticklabels = [f"{g:.0e}" for g in gammas], yticklabels = list(ReLUs), cbar_kws={'label': 'Test MSE'})
+sea.heatmap(results_plot, ax = ax, cmap = MSE_CMAP, annot = True, fmt = ".3f",
+            annot_kws = {"size": 8}, linewidths = 1.8, linecolor = "white",
+            xticklabels = [f"{g:.0e}" for g in gammas], yticklabels = list(ReLUs),
+            cbar_kws = {"label": "Test MSE"})
+
 ax.set_xlabel(r"Learning rate $\gamma$")
 ax.grid(False)
 ax.set_title("Test MSE, 1 hidden layer, 50 nodes")
 fig.tight_layout()
-#fig.savefig(FIG_DIR / "Part_c_heatmaps_ReLUS.pdf")
+fig.savefig(FIG_DIR / "Part_c_heatmaps_ReLUS.pdf")
 plt.show() 
 
 
 """We now test different activation functions and depths of the nn using the best lrs for each"""
 best_lrs_all = [load_best_lr(name)['best_lr'] for name in ('Sigmoid', 'ReLU', 'LeakyReLU')]
 all_act_funcs ={'Sigmoid': Sigmoid(), 'ReLU': ReLU(), 'LeakyReLU': LeakyReLU()}
-seeds = [21, 67, 2026]             #test for different seeds
+seeds = [21, 42, 67, 420, 2026]             #test for different seeds
 
 epochs = 150
 
@@ -110,7 +114,7 @@ test_mean, test_std = test_mse.mean(axis=2), test_mse.std(axis=2)
 labels = np.array([[f"{m:.3f} ± {s:.3f}" for m, s in zip(rm, rs)]
                    for rm, rs in zip(test_mean, test_std)])
 
-fig, ax = plt.subplots(figsize = (7, 7))
+fig, ax = plt.subplots(figsize = (6, 6))
 sea.heatmap(test_mean, ax = ax, cmap=MSE_CMAP, annot = True, fmt = ".3f", 
              annot_kws = {"size": 8}, linewidths = 1.8, linecolor = "white",
              xticklabels=list(networks_sizes), yticklabels=list(all_act_funcs), cbar_kws={'label': 'Test MSE'})
