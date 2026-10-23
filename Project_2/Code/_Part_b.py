@@ -13,9 +13,11 @@ from matplotlib.colors import LogNorm
 from _Part_a import Penalty, MSE, CrossEntropy, ReLU, LeakyReLU, Sigmoid, Identity
 from optimizer import SGD, RMSprop, Adam, train
 from neural_network import NeuralNetwork
-from general_functions import RungeData, Scaler, runge, save_best_lr
+from general_functions import RungeData, Scaler, runge, save_best_lr, load_best_lr, ArgsHelper, FIG_DIR
 from plot_colors import (COLORS, OPTIMIZER_COLORS, ARCH_COLORS, MSE_CMAP, TRAIN_LS, VAL_LS, set_style, plot_data_and_truth)
 set_style()
+
+argshelper = ArgsHelper(fig_dir=FIG_DIR) # assists with parsed arguments if any
 
 np.random.seed(2026)
 
@@ -73,8 +75,8 @@ ax.set_ylabel("y")
 ax.set_title("Neural network vs. OLS fit to the Runge function")
 ax.legend()
 fig.tight_layout()
-#fig.savefig(f"{FIG_DIR}/Part_bfit_nn_vs_ols.pdf")
-plt.show()
+argshelper.plot_or_savefig("Part_bfit_nn_vs_ols.pdf")
+
 
 
 """Plot of the MSE for train and test data"""
@@ -88,8 +90,8 @@ ax.set_yscale("log")
 ax.set_title(r"Train and test MSE, 1 x 50 network, Adam ($\gamma$ = 0.01)")
 ax.legend()
 fig.tight_layout()
-#fig.savefig(f"{FIG_DIR}/Part_b_mse_train_test_adam.pdf")
-plt.show()
+argshelper.plot_or_savefig("Part_b_mse_train_test_adam.pdf")
+
 
 
 """Learning rate sweep for different optimizers"""
@@ -142,8 +144,8 @@ ax.grid(False)
 ax.set_xlabel(r"Learning rate $\gamma$")
 ax.set_title("Test MSE vs. learning rate and optimizer (1 x 50 network)")
 fig.tight_layout()
-#fig.savefig(f"{FIG_DIR}/Part_b_heatmap_lr_optimizers.pdf")
-plt.show()
+argshelper.plot_or_savefig("Part_b_heatmap_lr_optimizers.pdf")
+
 
 
 """The MSE for each optimizer, with the best gamma"""
@@ -168,8 +170,8 @@ for ax in axes[:, 0]:
  
 fig.suptitle("Train and test MSE at the best learning rate for each optimizer (1 x 50 network)")
 fig.tight_layout()
-#fig.savefig(f"{FIG_DIR}/Part_b_convergence_optimizers.pdf")
-plt.show()
+argshelper.plot_or_savefig("Part_b_convergence_optimizers.pdf")
+
 
 
 """Different network sizes"""
@@ -205,8 +207,8 @@ ax.set_ylabel("y")
 ax.set_title(rf"Network fits for different sizes, Adam ($\gamma$ = {best_gamma:.0e})")
 ax.legend()
 fig.tight_layout()
-#fig.savefig(f"{FIG_DIR}/Part_b_fit_network_sizes.pdf")
-plt.show()
+argshelper.plot_or_savefig("Part_b_fit_network_sizes.pdf")
+
 
 """plot of the MSE for the different network sizes"""
 fig, ax = plt.subplots()
@@ -220,7 +222,7 @@ ax.set_yscale("log")
 ax.set_title(rf"Test MSE for different network sizes, Adam ($\gamma$ = {best_gamma:.0e})")
 ax.legend()
 fig.tight_layout()
-#fig.savefig(f"{FIG_DIR}/Part_b_mse_network_sizes.pdf")
-plt.show()
+argshelper.plot_or_savefig("Part_b_mse_network_sizes.pdf")
+
 
 
