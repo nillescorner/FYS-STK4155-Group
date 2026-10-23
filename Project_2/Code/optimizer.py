@@ -97,9 +97,12 @@ class Adam:
         return [(self.gamma * (mW / c1) / (jnp.sqrt(vW / c2) + self.eps), self.gamma * (mb / c1) / (jnp.sqrt(vb / c2) + self.eps)) for (mW, mb), (vW, vb) in zip(self.m, self.v)]
 
 
-def train(network, X, y, optimizer, epochs = 500, batch_size = None, seed = 2026, X_val = None, y_val = None, eval_every = 1):
+_STATE = {"SGD": ("v",), "RMSprop": ("s",), "Adam": ("m", "v", "t")}   # optimizer state per class
+
+def train(network, X, y, optimizer, epochs = 150, batch_size = None, seed = 2026, X_val = None, y_val = None, eval_every = 1):
     """
     Trains the network
+    LLM Assisted
 
     Params: 
         network (NeuralNetwork): the network to train
@@ -109,6 +112,7 @@ def train(network, X, y, optimizer, epochs = 500, batch_size = None, seed = 2026
         batch_sizes (int or None): None: plain gradient descent, otherwise SGD with minibatches
         seed (int): seed for reshuffeling the data every epoch 
         X_val, y_val (jnp.ndarray or None): validation data, for cost history
+        eval_every (int): evaluate every x epoch
 
     Returns:
         dict: cost per epoch
@@ -120,18 +124,65 @@ def train(network, X, y, optimizer, epochs = 500, batch_size = None, seed = 2026
     optimizer.reset()
     history = {"train": [], "val": [], 'epoch': []}
 
+    
+    keys = _STATE[type(optimizer).__name__] #look up the state name of this optimizer
+    zeros = zeros_like_grads(network.layers)    
+
+    #build starting state
+    state = tuple(jnp.asarray(0) if k == "t" else zeros for k in keys)
+
+    
+    def step(layers, state, Xb, yb):
+        """
+        One minibatch update, using our own backpropagation and optimizer, compiled by jax.jit
+        
+        Params:
+            layers (list): list consisting of current weights and biases as (W,b)
+            state (tuple): optimizer's memory from the previous step in order given by the keys 
+            Xb (nDArray): input data for the minibatch 
+            yb (nDArray): target for the minibatch
+
+        Returns
+            new_layers(list): list of the updated weights and biases (W, b)
+            new_state (tuple): updated optimizer memory, passed into the next call of step
+        """
+        network.layers = layers
+        for k, s in zip(keys, state):
+            setattr(optimizer, k, s)
+        steps = optimizer.step(network.backpropagation(Xb, yb))
+        new_layers = [(W - dW, b - db) for (W, b), (dW, db) in zip(layers, steps)]
+        new_state = tuple(getattr(optimizer, k) for k in keys)
+        return new_layers, new_state
+
+    #compile step(). The first call will trace it and will build one optimized program
+    # all step calls later with the same array shape will run that program directly instead of repeating this
+    step = jax.jit(step)
+
+    #same logic as for step, but just for cost instead
+    cost = jax.jit(network.jax_cost)
+
+    layers = network.layers 
+    #copy data as numpy arrays
+    X_np, y_np = np.asarray(X), np.asarray(y)      
+
     for epoch in range(epochs):
         idx = rng.permutation(n)
         for start in range(0, n, batch_size):
             batch = idx[start: start + batch_size]
-            layer_grads = network.backpropagation(X[batch], y[batch])
-            network.update_weights(optimizer.step(layer_grads))
+            #backprogapation, optimizer.step and the updated weights calculated using step
+            layers, state = step(layers, state, X_np[batch], y_np[batch])
 
         if (epoch + 1) % eval_every == 0 or epoch == epochs - 1:
-            history['epoch'].append(epoch + 1)
-            history["train"].append(float(network.cost(X, y)))
+            history["epoch"].append(epoch + 1)
+
+            #compile cost with the current layer
+            history["train"].append(float(cost(layers, X, y)))
             if X_val is not None:
-                history["val"].append(float(network.cost(X_val, y_val)))
+                history["val"].append(float(cost(layers, X_val, y_val)))
 
+    # replace the placeholders from when step() was being traced with the trained
+    # weights of the network
+    network.layers = layers     
+
+    optimizer.reset()           #optimizer holds leftover tracers so they need to be reset
     return history
-

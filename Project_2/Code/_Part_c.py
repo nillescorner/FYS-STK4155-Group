@@ -8,11 +8,14 @@ import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sea
+from plot_colors import *
+set_style()
 
 from _Part_a import ReLU, LeakyReLU, Sigmoid, Identity
 from optimizer import Adam, train
 from neural_network import NeuralNetwork
 from general_functions import RungeData, Scaler, FIG_DIR, save_best_lr, load_best_lr, ArgsHelper
+
 
 np.random.seed(2026)
 argshelper = ArgsHelper(fig_dir=FIG_DIR) # assists with parsed arguments if any
@@ -35,7 +38,6 @@ the same seed (2026), same number of batches, nodes and hidden layers (16, 50 an
 
 gammas = np.logspace(-4, 0, 9)
 batches = 16
-
 
 ReLUs = {'ReLU': ReLU(), 'LeakyReLU': LeakyReLU()}
 results = np.zeros((len(ReLUs), len(gammas)))
@@ -62,32 +64,39 @@ else:
 
 
 """Plotting heatmap for learningrate sweep"""
+fig, ax = plt.subplots(figsize = (6, 6))
 results_plot = np.where(np.isfinite(results), results, np.nan)
-sea.heatmap(results_plot, xticklabels = [f"{g:.0e}" for g in gammas], yticklabels = list(ReLUs))
-plt.xlabel(r"Learning rate $\gamma$")
-plt.title("Test MSE, 1 hidden layer, 50 nodes")
-plt.tight_layout()
-argshelper.plot_or_save("Part_c_heatmaps_ReLUS.pdf")
+sea.heatmap(results_plot, ax = ax, cmap = MSE_CMAP, annot = True, fmt = ".3f",
+            annot_kws = {"size": 8}, linewidths = 1.8, linecolor = "white",
+            xticklabels = [f"{g:.0e}" for g in gammas], yticklabels = list(ReLUs),
+            cbar_kws = {"label": "Test MSE"})
 
+ax.set_xlabel(r"Learning rate $\gamma$")
+ax.grid(False)
+ax.set_title("Test MSE, 1 hidden layer, 50 nodes")
+fig.tight_layout()
+argshelper.plot_or_save("Part_c_heatmaps_ReLUS.pdf")
 
 
 """We now test different activation functions and depths of the nn using the best lrs for each"""
 best_lrs_all = [load_best_lr(name)['best_lr'] for name in ('Sigmoid', 'ReLU', 'LeakyReLU')]
 all_act_funcs ={'Sigmoid': Sigmoid(), 'ReLU': ReLU(), 'LeakyReLU': LeakyReLU()}
-seeds = [67, 420, 2026]             #test for different seeds
+seeds = [21, 36, 67, 420, 2026]             #test for different seeds
 
-epochs = 200
-batches = 16
+epochs = 150
 
-networks_sizes = {"1 x 50": [50, 1], "1 x 100": [100, 1], 
-                  "2 x 50": [50, 50, 1], "2 x 100": [100, 100, 1],
-                  '3 x 50': [50, 50, 50, 1], '3 x 100': [100, 100, 100, 1],
-                  '4 x 50': [50, 50, 50, 50, 1], '4 x 100': [100, 100, 100, 100, 1]}
+
+networks_sizes = {"1 x 50": [50, 1], "1 x 100": [100, 1], '1 x 150': [150, 1], 
+                  "2 x 50": [50, 50, 1], "2 x 100": [100, 100, 1], '2 x 150': [150, 150, 1],
+                  '3 x 50': [50, 50, 50, 1], '3 x 100': [100, 100, 100, 1], '3 x 150': [150, 150, 150, 1],
+                  '4 x 50': [50, 50, 50, 50, 1], '4 x 100': [100, 100, 100, 100, 1], '4 x 150': [150, 150, 150, 150, 1]}
+
 
 train_mse = np.zeros((len(all_act_funcs), len(networks_sizes), len(seeds)))
 test_mse = np.zeros_like(train_mse)
 
 val_curves = np.zeros((len(all_act_funcs), len(networks_sizes), len(seeds), epochs))
+
 
 for i, (_, act) in enumerate(all_act_funcs.items()):
     gamma = best_lrs_all[i]
@@ -105,12 +114,23 @@ for i, (_, act) in enumerate(all_act_funcs.items()):
 train_mean, train_std = train_mse.mean(axis=2), train_mse.std(axis=2)
 test_mean, test_std = test_mse.mean(axis=2), test_mse.std(axis=2)
 
-sea.heatmap(test_mean, xticklabels=list(networks_sizes), yticklabels=list(all_act_funcs), cbar_kws={'label': 'Test MSE'})
-plt.title(rf'Test MSE, mean $\pm$ std over {len(seeds)} seeds')
-plt.tight_layout()
-#plt.savefig(FIG_DIR / 'Part_c_heatmap_networks.pdf')
+
+labels = np.array([[f"{m:.3f} ± {s:.3f}" for m, s in zip(rm, rs)]
+                   for rm, rs in zip(test_mean, test_std)])
+
+fig, ax = plt.subplots(figsize = (7, 7))
+sea.heatmap(test_mean, ax = ax, cmap=MSE_CMAP, annot = True, fmt = ".3f", 
+             annot_kws = {"size": 8}, linewidths = 1.8, linecolor = "white",
+             xticklabels=list(networks_sizes), yticklabels=list(all_act_funcs), cbar_kws={'label': 'Test MSE'})
+
+ax.set_title(rf'Test MSE, mean $\pm$ std over {len(seeds)} seeds')
+ax.grid(False)
+fig.tight_layout()
+fig.savefig(FIG_DIR / 'Part_c_heatmap_networks.pdf')
 plt.show()
 
+
+"""Print every train and test MSE for each activation function for each hidden layer and number of nodes"""
 mean_curves = val_curves.mean(axis=2)
 
 for i, act_name in enumerate(all_act_funcs):
@@ -121,3 +141,29 @@ for i, act_name in enumerate(all_act_funcs):
               rf' Train MSE = {train_mean[i, j]:.4f} $\pm$ {train_std[i, j]:.4f}'
               rf' Test MSE = {test_mean[i, j]:.4f} $\pm$ {test_std[i,j]:.4f}',
               rf' Epoch {best_epoch + 1}')
+
+
+"""We now want to check for overfitting, thus increase the number of epochs"""
+big_epochs = 4000
+eval_every = 25
+big_network_size = [150, 150, 150, 150, 1]
+n_ponts = big_epochs // eval_every
+
+train_mse_long = np.zeros((len(all_act_funcs), n_ponts, len(seeds)))
+test_mse_long = np.zeros_like(train_mse_long)
+
+
+for i, (_, act) in enumerate(all_act_funcs.items()):
+    gamma = best_lrs_all[i]
+    activations = [act] * (len(big_network_size) - 1 ) + [Identity()]
+    for k, seed in enumerate(seeds):
+        nn = NeuralNetwork(1, big_network_size, activations, seed=seed)
+        hist = train(nn, X_train_s, y_train_s, Adam(gamma), epochs=big_epochs, batch_size=batches, seed=seed, X_val = X_test_s, y_val = y_test_s, eval_every=eval_every)
+
+        train_mse_long[i, :, k] = hist['train']
+        test_mse_long[i, :, k] = hist['val']
+
+
+long_ep = np.arange(1, n_ponts + 1) * eval_every
+
+
