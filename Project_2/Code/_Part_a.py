@@ -135,7 +135,7 @@ class MSE:
 
 """Multiclass cross entropy (softmax)"""
 
-class CrossEntropy:
+class MulticlassCrossEntropy:
     """Multiclass cross entropy, used together with a softmax output layer"""
  
     epsilon = 1e-12     #to avoid log(0)
@@ -179,6 +179,45 @@ class CrossEntropy:
  
         Returns:
             jnp.ndarray: same shape as P
+        """
+        return P - Y
+
+""" Binary cross entropy (Sigmoid output) """
+
+class BinaryCrossEntropy:
+    """Binary cross entropy, used together with a sigmoid output layer.
+    Works for a single binary output (shape (n, 1)) or several independent
+    labels (shape (n, K)), where each column is its own yes/no problem.
+    LLM assisted"""
+
+    epsilon = 1e-7  # to avoid log(0), see note below
+
+    def __call__(self, P, Y):
+        """
+        C = - sum_i sum_k [ y_ik log(p_ik) + (1 - y_ik) log(1 - p_ik) ]
+        Params:
+            P (jnp.ndarray): sigmoid outputs, shape (n, K)
+            Y (jnp.ndarray): targets in {0, 1}, shape (n, K)
+        Returns:
+            float: binary cross entropy
+        """
+        P = jnp.clip(P, self.epsilon, 1.0 - self.epsilon)
+        return -jnp.sum(Y * jnp.log(P) + (1 - Y) * jnp.log(1 - P))
+
+    def der(self, P, Y):
+        """
+        dC/dp_ik = - y_ik / p_ik + (1 - y_ik) / (1 - p_ik)
+                 = (p_ik - y_ik) / (p_ik (1 - p_ik))
+        Returns:
+            jnp.ndarray: same shape as P
+        """
+        P = jnp.clip(P, self.epsilon, 1.0 - self.epsilon)
+        return -Y / P + (1 - Y) / (1 - P)
+
+    def sigmoid_delta(self, P, Y):
+        """
+        Combined derivative of sigmoid + binary cross entropy: dC/dz = P - Y
+        Used directly as the output error delta^L when the output layer is sigmoid.
         """
         return P - Y
 
