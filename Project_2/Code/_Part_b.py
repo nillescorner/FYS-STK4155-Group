@@ -10,7 +10,7 @@ import numpy as np
 import seaborn as sea
 from matplotlib.colors import LogNorm
 
-from _Part_a import Penalty, MSE, CrossEntropy, ReLU, LeakyReLU, Sigmoid, Identity
+from _Part_a import Penalty, MSE, MulticlassCrossEntropy, ReLU, LeakyReLU, Sigmoid, Identity
 from optimizer import SGD, RMSprop, Adam, train
 from neural_network import NeuralNetwork
 from general_functions import RungeData, Scaler, runge, save_best_lr, load_best_lr, ArgsHelper, FIG_DIR
@@ -75,7 +75,7 @@ ax.set_ylabel("y")
 ax.set_title("Neural network vs. OLS fit to the Runge function")
 ax.legend()
 fig.tight_layout()
-argshelper.plot_or_savefig("Part_bfit_nn_vs_ols.pdf")
+argshelper.plot_or_save("Part_bfit_nn_vs_ols.pdf")
 
 
 
@@ -90,7 +90,7 @@ ax.set_yscale("log")
 ax.set_title(r"Train and test MSE, 1 x 50 network, Adam ($\gamma$ = 0.01)")
 ax.legend()
 fig.tight_layout()
-argshelper.plot_or_savefig("Part_b_mse_train_test_adam.pdf")
+argshelper.plot_or_save("Part_b_mse_train_test_adam.pdf")
 
 
 
@@ -144,7 +144,7 @@ ax.grid(False)
 ax.set_xlabel(r"Learning rate $\gamma$")
 ax.set_title("Test MSE vs. learning rate and optimizer (1 x 50 network)")
 fig.tight_layout()
-argshelper.plot_or_savefig("Part_b_heatmap_lr_optimizers.pdf")
+argshelper.plot_or_save("Part_b_heatmap_lr_optimizers.pdf")
 
 
 
@@ -170,7 +170,7 @@ for ax in axes[:, 0]:
  
 fig.suptitle("Train and test MSE at the best learning rate for each optimizer (1 x 50 network)")
 fig.tight_layout()
-argshelper.plot_or_savefig("Part_b_convergence_optimizers.pdf")
+argshelper.plot_or_save("Part_b_convergence_optimizers.pdf")
 
 
 
@@ -207,7 +207,7 @@ ax.set_ylabel("y")
 ax.set_title(rf"Network fits for different sizes, Adam ($\gamma$ = {best_gamma:.0e})")
 ax.legend()
 fig.tight_layout()
-argshelper.plot_or_savefig("Part_b_fit_network_sizes.pdf")
+argshelper.plot_or_save("Part_b_fit_network_sizes.pdf")
 
 
 """plot of the MSE for the different network sizes"""
@@ -222,7 +222,7 @@ ax.set_yscale("log")
 ax.set_title(rf"Test MSE for different network sizes, Adam ($\gamma$ = {best_gamma:.0e})")
 ax.legend()
 fig.tight_layout()
-argshelper.plot_or_savefig("Part_b_mse_network_sizes.pdf")
+argshelper.plot_or_save("Part_b_mse_network_sizes.pdf")
 
 
 

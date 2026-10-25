@@ -44,23 +44,17 @@ results = np.zeros((len(ReLUs), len(gammas)))
 
 for i, (name, activation) in enumerate(ReLUs.items()):
     for j, gamma in enumerate(gammas):
-
         nn = NeuralNetwork(1, [50, 1], [activation, Identity()])
         hist = train(nn, X_train_s, y_train_s, Adam(gamma), epochs = 500, batch_size = batches, X_val = X_test_s, y_val = y_test_s)
-
         results[i, j] = hist['val'][-1]
-    
+
 """Finding the best learning rate"""
-if argshelper.load_bestlrs:
-    print("Using pre-calculated best learning rates")
-else: 
-    print("Calculating best learning rates")
-    best = {}
-    for i, act_func in enumerate(ReLUs):
-        j = np.nanargmin(results[i])
-        best[act_func] = (gammas[j], results[i, j])
-        save_best_lr(act_func, {'Optimizer': 'SGD + Adam', 'best_lr': gammas[j], 'test_mse': results[i,j]})
-        print(f"{act_func:14s}: best gamma = {gammas[j]:.1e}, test MSE = {results[i, j]:.4f}")
+best = {}
+for i, act_func in enumerate(ReLUs):
+    j = np.nanargmin(results[i])
+    best[act_func] = (gammas[j], results[i, j])
+    save_best_lr(act_func, {'Optimizer': 'SGD + Adam', 'best_lr': gammas[j], 'test_mse': results[i,j]})
+    print(f"{act_func:14s}: best gamma = {gammas[j]:.1e}, test MSE = {results[i, j]:.4f}")
 
 
 """Plotting heatmap for learningrate sweep"""
@@ -126,8 +120,8 @@ sea.heatmap(test_mean, ax = ax, cmap=MSE_CMAP, annot = True, fmt = ".3f",
 ax.set_title(rf'Test MSE, mean $\pm$ std over {len(seeds)} seeds')
 ax.grid(False)
 fig.tight_layout()
-fig.savefig(FIG_DIR / 'Part_c_heatmap_networks.pdf')
-plt.show()
+argshelper.plot_or_save('Part_c_heatmap_networks.pdf')
+
 
 
 """Print every train and test MSE for each activation function for each hidden layer and number of nodes"""
