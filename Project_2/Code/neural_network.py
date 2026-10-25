@@ -7,7 +7,7 @@ import numpy as np
 import jax
 jax.config.update("jax_enable_x64", True)   # 64-bit floats, so that hand and JAX agree to ~1e-15
 import jax.numpy as jnp
-from _Part_a import Penalty, MSE, CrossEntropy, ReLU, LeakyReLU, Sigmoid
+from _Part_a import Penalty, MSE, MulticlassCrossEntropy, ReLU, LeakyReLU, Sigmoid, Softmax
 
 
 class NeuralNetwork:
@@ -132,8 +132,13 @@ class NeuralNetwork:
                 #all other layers: build on previous z derivative, dCda(i) = dCdz(i + 1) * dz(i + 1)da(i)
                 W_next, b = self.layers[i + 1]
                 dC_da = dC_dz @ W_next.T
-                
-            dC_dz = dC_da * activation.der(z)
+
+            if i == len(self.layers) - 1 and isinstance(activation, Softmax):
+                #special case: softmax has no der. using MulticlassCrossEntropy.softmax_delta
+                dC_dz = self.cost_obj.softmax_delta(predict, targets)
+            else: 
+                #all other layers: dC_dz defined by derivative of activation funct.
+                dC_dz = dC_da * activation.der(z)
 
             W, b = self.layers[i]
             dC_dW = layer_input.T @ dC_dz + self.penalty.grad(W)
