@@ -146,7 +146,6 @@ n_ponts = big_epochs // eval_every
 train_mse_long = np.zeros((len(all_act_funcs), n_ponts, len(seeds)))
 test_mse_long = np.zeros_like(train_mse_long)
 
-
 for i, (_, act) in enumerate(all_act_funcs.items()):
     gamma = best_lrs_all[i]
     activations = [act] * (len(big_network_size) - 1 ) + [Identity()]
@@ -157,7 +156,31 @@ for i, (_, act) in enumerate(all_act_funcs.items()):
         train_mse_long[i, :, k] = hist['train']
         test_mse_long[i, :, k] = hist['val']
 
-
 long_ep = np.arange(1, n_ponts + 1) * eval_every
 
+"""Plot of train and test MSE against epoch, one row per activation"""
+fig, axes = plt.subplots(len(all_act_funcs), 1, figsize=(7, 7), sharex=True, sharey=True)
+
+for ax, (i, name) in zip(axes.ravel(), enumerate(all_act_funcs)):
+    color = ACTIVATION_COLORS[name]
+    train_mean, train_std = train_mse_long[i].mean(axis=-1), train_mse_long[i].std(axis=-1)
+    test_mean, test_std = test_mse_long[i].mean(axis=-1), test_mse_long[i].std(axis=-1)
+
+    ax.plot(long_ep, train_mean, TRAIN_LS, color=color, label='Train')
+    ax.fill_between(long_ep, train_mean - train_std, train_mean + train_std, color=color, alpha=0.15)
+    ax.plot(long_ep, test_mean, VAL_LS, color=color, label='Test')
+    ax.fill_between(long_ep, test_mean - test_std, test_mean + test_std, color=color, alpha=0.15)
+    ax.axhline(0.1**2, color=COLORS['text'], ls=':', label=r'Noise floor $\sigma^2$')
+
+    best = np.argmin(test_mean)                                    # mark the lowest test MSE
+    ax.plot(long_ep[best], test_mean[best], 'o', color=color, ms=4)
+
+    ax.set_title(f'{name}, 4 x 150')
+    ax.set_ylabel('MSE')
+    ax.set_yscale('log')
+
+fig.suptitle('Train and test MSE for longer epoch')
+fig.tight_layout()
+fig.savefig(FIG_DIR/'Part_c_long_epoch.pdf')
+plt.show()
 
