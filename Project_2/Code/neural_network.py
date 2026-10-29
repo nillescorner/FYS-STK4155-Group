@@ -8,7 +8,7 @@ import jax
 jax.config.update("jax_enable_x64", True)   # 64-bit floats, so that hand and JAX agree to ~1e-15
 import jax.numpy as jnp
 from _Part_a import Penalty, MSE, MulticlassCrossEntropy, ReLU, LeakyReLU, Sigmoid, Softmax
-
+from optimizer import zeros_like_grads
 
 class NeuralNetwork:
     def __init__(self, network_input_size, layer_output_sizes, activations, cost = MSE(), penalty = Penalty(), seed = 2026):
@@ -187,4 +187,80 @@ class NeuralNetwork:
         ours = self.backpropagation(inputs, targets)
         auto = self.jax_gradient(inputs, targets)
         return max(float(jnp.max(jnp.abs(g1 - g2))) for (dW1, db1), (dW2, db2) in zip (ours, auto) for g1, g2 in ((dW1, dW2), (db1, db2)))
+
+
+    def train(
+        self, X, y, optimizer, epochs=150, batch_size=None, seed=2026,
+        X_val=None, y_val=None, eval_every=1):
         
+        """Train this network and return the training/validation cost history."""
+        optimizer_states = {
+            "SGD": ("v",),
+            "RMSprop": ("s",),
+            "Adam": ("m", "v", "t"),
+        }
+
+        n = X.shape[0]
+        if n == 0:
+            raise ValueError("Cannot train on an empty dataset")
+        if batch_size is None:
+            batch_size = n
+        elif batch_size <= 0:
+            raise ValueError("batch_size must be positive")
+        if eval_every <= 0:
+            raise ValueError("eval_every must be positive")
+        if (X_val is None) != (y_val is None):
+            raise ValueError("X_val and y_val must either both be provided or both be None")
+
+        keys = optimizer_states[type(optimizer).__name__]
+        rng = np.random.default_rng(seed)
+        optimizer.reset()
+
+        zeros = zeros_like_grads(self.layers)
+        state = tuple(
+            jnp.asarray(0) if key == "t" else zeros
+            for key in keys
+        )
+        history = {"train": [], "val": [], "epoch": []}
+
+        def step(layers, state, X_batch, y_batch):
+            self.layers = layers
+            for key, value in zip(keys, state):
+                setattr(optimizer, key, value)
+
+            updates = optimizer.step(self.backpropagation(X_batch, y_batch))
+            new_layers = [
+                (W - dW, b - db)
+                for (W, b), (dW, db) in zip(layers, updates)
+            ]
+            new_state = tuple(getattr(optimizer, key) for key in keys)
+            return new_layers, new_state
+
+        step = jax.jit(step)
+        cost = jax.jit(self.jax_cost)
+
+        layers = self.layers
+        X_np, y_np = np.asarray(X), np.asarray(y)
+
+        for epoch in range(epochs):
+            indices = rng.permutation(n)
+
+            for start in range(0, n, batch_size):
+                batch_indices = indices[start:start + batch_size]
+                layers, state = step(
+                    layers,
+                    state,
+                    X_np[batch_indices],
+                    y_np[batch_indices],
+                )
+
+            if (epoch + 1) % eval_every == 0 or epoch == epochs - 1:
+                history["epoch"].append(epoch + 1)
+                history["train"].append(float(cost(layers, X, y)))
+
+                if X_val is not None:
+                    history["val"].append(float(cost(layers, X_val, y_val)))
+
+        self.layers = layers
+        optimizer.reset()
+        return history
