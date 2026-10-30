@@ -12,6 +12,6 @@
   "LeakyReLU": {
     "Optimizer": "SGD + Adam",
     "best_lr": 0.01,
-    "test_mse": 0.015817988922703276
+    "test_mse": 0.01581798892270329
   }
 }

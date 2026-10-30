@@ -15,7 +15,7 @@ from _Part_a import ReLU, LeakyReLU, Sigmoid, Identity
 from optimizer import Adam, train
 from neural_network import NeuralNetwork
 from general_functions import RungeData, Scaler, FIG_DIR, save_best_lr, load_best_lr, ArgsHelper
-
+import time
 
 np.random.seed(2026)
 argshelper = ArgsHelper(fig_dir=FIG_DIR) # assists with parsed arguments if any
@@ -47,6 +47,7 @@ for i, (name, activation) in enumerate(ReLUs.items()):
         nn = NeuralNetwork(1, [50, 1], [activation, Identity()])
         hist = train(nn, X_train_s, y_train_s, Adam(gamma), epochs = 500, batch_size = batches, X_val = X_test_s, y_val = y_test_s)
         results[i, j] = hist['val'][-1]
+
 
 """Finding the best learning rate"""
 best = {}
@@ -88,6 +89,7 @@ networks_sizes = {"1 x 50": [50, 1], "1 x 100": [100, 1], '1 x 150': [150, 1],
 
 train_mse = np.zeros((len(all_act_funcs), len(networks_sizes), len(seeds)))
 test_mse = np.zeros_like(train_mse)
+fit_time = np.zeros_like(train_mse)
 
 val_curves = np.zeros((len(all_act_funcs), len(networks_sizes), len(seeds), epochs))
 
@@ -98,20 +100,20 @@ for i, (_, act) in enumerate(all_act_funcs.items()):
         activations = [act] * (len(sizes) - 1 ) + [Identity()]
         for k, seed in enumerate(seeds):
             nn = NeuralNetwork(1, sizes, activations, seed=seed)
+
+            time_start = time.perf_counter()
             hist = train(nn, X_train_s, y_train_s, Adam(gamma), epochs=epochs, batch_size=batches, seed=seed, X_val = X_test_s, y_val = y_test_s)
+            time_end = time.perf_counter()
 
             train_mse[i, j, k] = hist['train'][-1]
             test_mse[i, j, k] = hist['val'][-1]
+            fit_time[i, j, k] = time_end - time_start
             val_curves[i, j, k] = hist['val']
-
 
 train_mean, train_std = train_mse.mean(axis=2), train_mse.std(axis=2)
 test_mean, test_std = test_mse.mean(axis=2), test_mse.std(axis=2)
 
-
-labels = np.array([[f"{m:.3f} ± {s:.3f}" for m, s in zip(rm, rs)]
-                   for rm, rs in zip(test_mean, test_std)])
-
+#Heatmap for test mse's
 fig, ax = plt.subplots(figsize = (7, 7))
 sea.heatmap(test_mean, ax = ax, cmap=MSE_CMAP, annot = True, fmt = ".3f", 
              annot_kws = {"size": 8}, linewidths = 1.8, linecolor = "white",
@@ -120,12 +122,13 @@ sea.heatmap(test_mean, ax = ax, cmap=MSE_CMAP, annot = True, fmt = ".3f",
 ax.set_title(rf'Test MSE, mean $\pm$ std over {len(seeds)} seeds')
 ax.grid(False)
 fig.tight_layout()
-argshelper.plot_or_save('Part_c_heatmap_networks.pdf')
+argshelper.plot_or_save('Part_c_heatmap_mses.pdf')
 
-
-
-"""Print every train and test MSE for each activation function for each hidden layer and number of nodes"""
+#Print every train and test MSE and the training time for each activation 
+# function for each hidden layer and number of nodes 
 mean_curves = val_curves.mean(axis=2)
+time_median = np.median(fit_time, axis=2)
+time_std = fit_time.std(axis=2)
 
 for i, act_name in enumerate(all_act_funcs):
     for j, size_name in enumerate(networks_sizes):
@@ -133,8 +136,19 @@ for i, act_name in enumerate(all_act_funcs):
         best_epoch = np.argmin(curve)
         print(f'{act_name:10s} {size_name:10s}:'
               rf' Train MSE = {train_mean[i, j]:.4f} $\pm$ {train_std[i, j]:.4f}'
-              rf' Test MSE = {test_mean[i, j]:.4f} $\pm$ {test_std[i,j]:.4f}',
+              rf' Test MSE = {test_mean[i, j]:.4f} $\pm$ {test_std[i, j]:.4f}',
+              rf' Time = {time_median[i, j]:.3f} $\pm {time_std[i, j]:.3f}',
               rf' Epoch {best_epoch + 1}')
+
+#Heatmap for how long it takes for each network size for each activation function
+fig, ax = plt.subplots(figsize=(7, 7))
+sea.heatmap(time_median, ax = ax, cmap=MSE_CMAP, annot = True, fmt = ".3f", 
+             annot_kws = {"size": 8}, linewidths = 1.8, linecolor = "white",
+             xticklabels=list(networks_sizes), yticklabels=list(all_act_funcs), cbar_kws={'label': 'Time [s]'})
+ax.set_title(rf'Median training time that $\pm$ std over {len(seeds)} seeds')
+ax.grid(False)
+fig.tight_layout()
+argshelper.plot_or_save('Part_c_heatmap_time.pdf')
 
 
 """We now want to check for overfitting, thus increase the number of epochs"""
@@ -179,8 +193,8 @@ for ax, (i, name) in zip(axes.ravel(), enumerate(all_act_funcs)):
     ax.set_ylabel('MSE')
     ax.set_yscale('log')
 
+axes[0].legend(loc='upper right', ncol=3, fontsize=6.5)
 fig.suptitle('Train and test MSE for longer epoch')
 fig.tight_layout()
-fig.savefig(FIG_DIR/'Part_c_long_epoch.pdf')
-plt.show()
+argshelper.plot_or_save('Part_c_long_epoch.pdf')
 
