@@ -93,7 +93,7 @@ ax.set_ylabel("y")
 ax.set_title("Neural network vs. OLS fit to the Runge function")
 ax.legend()
 fig.tight_layout()
-argshelper.plot_or_save("Part_bfit_nn_vs_ols.pdf")
+argshelper.plot_or_save("Part_b_fit_nn_vs_ols.pdf")
 
 
 
