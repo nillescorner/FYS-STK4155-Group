@@ -7,11 +7,11 @@
   "ReLU": {
     "Optimizer": "SGD + Adam",
     "best_lr": 0.01,
-    "test_mse": 0.0157071678422893
+    "test_mse": 0.015707167842289302
   },
   "LeakyReLU": {
     "Optimizer": "SGD + Adam",
     "best_lr": 0.01,
-    "test_mse": 0.01581798892270329
+    "test_mse": 0.0158179889227033
   }
 }

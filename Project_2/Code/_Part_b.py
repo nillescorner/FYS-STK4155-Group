@@ -45,6 +45,11 @@ X_test_s, y_test_s = scaler.transform(X_test, y_test)
 y_train_s = y_train_s.reshape(-1, 1)
 y_test_s = y_test_s.reshape(-1, 1)
 
+#lowest MSE for a perfect model, noise floor
+noise_floor = data.noise**2
+floor_style = dict(color = COLORS["text"], ls = ":", lw = 1.2, alpha = 0.8)
+floor_label = rf"Noise floor $\sigma^2$ = {noise_floor:.2f}"
+
 
 #First network, 1 hidden layer with 50 nodes, trained with Adam
 nn50 = NeuralNetwork(1, [50, 1], [Sigmoid(), Identity()])
@@ -97,6 +102,8 @@ epochs50 = np.arange(1, len(history50["train"]) + 1)
 fig, ax = plt.subplots()
 ax.plot(epochs50, history50["train"], TRAIN_LS, color = COLORS["nn"], label = "Train")
 ax.plot(epochs50, history50["val"], VAL_LS, color = COLORS["nn"], alpha = 0.5, label = "Test")
+ax.axhline(noise_floor, **floor_style, label = floor_label)
+ax.axhline(MSE_OLS, color = COLORS["ols"], ls = "-.", lw = 1.2, label = f"OLS test MSE (degree {best_degree})")
 ax.set_xlabel("Epoch")
 ax.set_ylabel("MSE")
 ax.set_yscale("log")
@@ -172,6 +179,8 @@ for ax, (i, name) in zip(axes.ravel(), enumerate(optimizers)):
  
     ax.plot(epochs, hist["train"], TRAIN_LS, color = color, label = "Train")
     ax.plot(epochs, hist["val"], VAL_LS, color = color, alpha = 0.8, label = "Test")
+    ax.axhline(noise_floor, **floor_style, label = floor_label)
+
     ax.set_title(rf"{name}, $\gamma$ = {gammas[j]:.0e}")
     ax.set_yscale("log")
     ax.legend(loc = "upper right")
@@ -228,7 +237,8 @@ fig, ax = plt.subplots()
 for name, hist in histories.items():
     epochs = np.arange(1, len(hist["val"]) + 1)
     ax.plot(epochs, hist["val"], color = ARCH_COLORS[name], label = name)
- 
+
+ax.axhline(noise_floor, **floor_style, label = floor_label)
 ax.set_xlabel("Epoch")
 ax.set_ylabel("Test MSE")
 ax.set_yscale("log")
