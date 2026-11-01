@@ -35,7 +35,6 @@ y_test_s = y_test_s.reshape(-1, 1)
 
 """Find the best learning rates for ReLU and LeakyReLU as done in part b using
 the same seed (2026), same number of batches, nodes and hidden layers (16, 50 and 1)"""
-
 gammas = np.logspace(-4, 0, 9)
 batches = 16
 
@@ -49,7 +48,7 @@ for i, (name, activation) in enumerate(ReLUs.items()):
         results[i, j] = hist['val'][-1]
 
 
-"""Finding the best learning rate"""
+#Finding the best learning rate
 best = {}
 for i, act_func in enumerate(ReLUs):
     j = np.nanargmin(results[i])
@@ -58,7 +57,7 @@ for i, act_func in enumerate(ReLUs):
     print(f"{act_func:14s}: best gamma = {gammas[j]:.1e}, test MSE = {results[i, j]:.4f}")
 
 
-"""Plotting heatmap for learningrate sweep"""
+#Plotting heatmap for learningrate sweep
 fig, ax = plt.subplots(figsize = (6, 6))
 results_plot = np.where(np.isfinite(results), results, np.nan)
 sea.heatmap(results_plot, ax = ax, cmap = MSE_CMAP, annot = True, fmt = ".3f",
@@ -73,25 +72,25 @@ fig.tight_layout()
 argshelper.plot_or_save("Part_c_heatmaps_ReLUS.pdf")
 
 
-"""We now test different activation functions and depths of the nn using the best lrs for each"""
+"""We now test different activation functions and depths of the nn using the best lrs for each
+activation function"""
 best_lrs_all = [load_best_lr(name)['best_lr'] for name in ('Sigmoid', 'ReLU', 'LeakyReLU')]
 all_act_funcs ={'Sigmoid': Sigmoid(), 'ReLU': ReLU(), 'LeakyReLU': LeakyReLU()}
-seeds = [21, 36, 67, 420, 2026]             #test for different seeds
+seeds = [21, 67, 420, 2026]             #test for different seeds
 
 epochs = 150
 
+n_layers = [1, 2, 3, 4]
+n_nodes = [5, 25, 50, 100]
 
-networks_sizes = {"1 x 50": [50, 1], "1 x 100": [100, 1], '1 x 150': [150, 1], 
-                  "2 x 50": [50, 50, 1], "2 x 100": [100, 100, 1], '2 x 150': [150, 150, 1],
-                  '3 x 50': [50, 50, 50, 1], '3 x 100': [100, 100, 100, 1], '3 x 150': [150, 150, 150, 1],
-                  '4 x 50': [50, 50, 50, 50, 1], '4 x 100': [100, 100, 100, 100, 1], '4 x 150': [150, 150, 150, 150, 1]}
-
+#Keep same format (e.g '1 x 50': [50, 1]) but for all layers and nodes
+networks_sizes = {f' {layers} x {nodes}': [nodes] * layers + [1] for layers in n_layers for nodes in n_nodes }
 
 train_mse = np.zeros((len(all_act_funcs), len(networks_sizes), len(seeds)))
 test_mse = np.zeros_like(train_mse)
 fit_time = np.zeros_like(train_mse)
 
-val_curves = np.zeros((len(all_act_funcs), len(networks_sizes), len(seeds), epochs))
+test_curves = np.zeros((len(all_act_funcs), len(networks_sizes), len(seeds), epochs))
 
 
 for i, (_, act) in enumerate(all_act_funcs.items()):
@@ -108,25 +107,33 @@ for i, (_, act) in enumerate(all_act_funcs.items()):
             train_mse[i, j, k] = hist['train'][-1]
             test_mse[i, j, k] = hist['val'][-1]
             fit_time[i, j, k] = time_end - time_start
-            val_curves[i, j, k] = hist['val']
+            test_curves[i, j, k] = hist['val']
 
 train_mean, train_std = train_mse.mean(axis=2), train_mse.std(axis=2)
 test_mean, test_std = test_mse.mean(axis=2), test_mse.std(axis=2)
 
-#Heatmap for test mse's
-fig, ax = plt.subplots(figsize = (7, 7))
-sea.heatmap(test_mean, ax = ax, cmap=MSE_CMAP, annot = True, fmt = ".3f", 
-             annot_kws = {"size": 8}, linewidths = 1.8, linecolor = "white",
-             xticklabels=list(networks_sizes), yticklabels=list(all_act_funcs), cbar_kws={'label': 'Test MSE'})
+shape = (len(all_act_funcs), len(n_layers), len(n_nodes))
+test_mean_grid = test_mean.reshape(shape)
 
-ax.set_title(rf'Test MSE, mean $\pm$ std over {len(seeds)} seeds')
-ax.grid(False)
+fig, axes = plt.subplots(1, len(all_act_funcs), figsize=(12, 4), sharey=True)
+
+for i, (ax, name) in enumerate(zip(axes, all_act_funcs)):
+    sea.heatmap(test_mean_grid[i], ax=ax, cmap=MSE_CMAP, annot=True, fmt='.3f',
+            annot_kws = {"size": 8}, linewidths = 1.8, linecolor = "white",
+            xticklabels = n_nodes, yticklabels = n_layers,
+            cbar=(i == len(all_act_funcs) - 1), cbar_kws={"label": "Test MSE"})
+    ax.set_title(name)
+    ax.set_xlabel('Nodes per hidden layer')
+    ax.grid(False)
+
+axes[0].set_ylabel('Hidden layers')
+fig.suptitle(f'Test MSE, mean over {len(seeds)} seeds for 3 activation functions')
 fig.tight_layout()
-argshelper.plot_or_save('Part_c_heatmap_mses.pdf')
+argshelper.plot_or_save('Part_c_heatmap_mse.pdf')
 
 #Print every train and test MSE and the training time for each activation 
 # function for each hidden layer and number of nodes 
-mean_curves = val_curves.mean(axis=2)
+mean_curves = test_curves.mean(axis=2)
 time_median = np.median(fit_time, axis=2)
 time_std = fit_time.std(axis=2)
 
@@ -141,12 +148,20 @@ for i, act_name in enumerate(all_act_funcs):
               rf' Epoch {best_epoch + 1}')
 
 #Heatmap for how long it takes for each network size for each activation function
-fig, ax = plt.subplots(figsize=(7, 7))
-sea.heatmap(time_median, ax = ax, cmap=MSE_CMAP, annot = True, fmt = ".3f", 
-             annot_kws = {"size": 8}, linewidths = 1.8, linecolor = "white",
-             xticklabels=list(networks_sizes), yticklabels=list(all_act_funcs), cbar_kws={'label': 'Time [s]'})
-ax.set_title(rf'Median training time that $\pm$ std over {len(seeds)} seeds')
-ax.grid(False)
+
+time_grid = time_median.reshape(shape)
+
+fig, axes = plt.subplots(1, len(all_act_funcs), figsize=(12, 4), sharey=True)
+for i, (ax, name) in enumerate(zip(axes, all_act_funcs)):
+    sea.heatmap(time_grid[i], ax=ax, cmap=MSE_CMAP, annot=True, fmt='.2f', 
+                annot_kws={"size": 8}, linewidths=1.8, linecolor="white",
+                xticklabels=n_nodes, yticklabels=n_layers,
+                cbar=(i == len(all_act_funcs) - 1), cbar_kws={"label": "Time [s]"})
+    ax.set_title(name)
+    ax.set_xlabel('Nodes per hidden layer')
+    ax.grid(False)
+axes[0].set_ylabel('Hidden layers')
+fig.suptitle(f'Median training time over {len(seeds)} seeds for 3 different activation functions')
 fig.tight_layout()
 argshelper.plot_or_save('Part_c_heatmap_time.pdf')
 
