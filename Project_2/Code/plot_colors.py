@@ -62,8 +62,8 @@ def set_style():
         "axes.prop_cycle": mpl.cycler(color=SERIES),    #Setting default colors
         "axes.edgecolor": "#8C7A84",                  #Color of axis                 
         "axes.labelcolor": COLORS["text"],              #color of label
-        "axes.titlesize": 12,                           #size of text in title
-        "axes.labelsize": 11,                           #size of text on axis
+        "axes.titlesize": 14,                           #size of text in title
+        "axes.labelsize": 14,                           #size of text on axis
         "axes.spines.top": False,                       #removes top axis
         "axes.spines.right": False,                     #removes right axis
         "axes.grid": True,                              #sets grid
@@ -72,13 +72,13 @@ def set_style():
         "xtick.color": "#6E5F67",                     #color of labels on x axis                    
         "ytick.color": "#6E5F67",                     #color of labels on y axis
         "legend.frameon": False,                        #removes box around label
-        "legend.fontsize": 9,                           #size of text in labels
-        "lines.linewidth": 1.7,                         #default linewidth of plotted lines
-        "figure.figsize": (7, 4.5),                     #default figure size
+        "legend.fontsize": 11,                           #size of text in labels
+        "lines.linewidth": 1.5,                         #default linewidth of plotted lines
+        "figure.figsize": (6.7, 4.5),                   #default figure size
         "figure.dpi": 110,                              #resolution of figure
         "savefig.dpi": 200,                             #resolution of figure when saved
         "savefig.bbox": "tight",                        #cuts off extra white spacing when saving figure
-        "font.size": 10,                                #default fontsize
+        "font.size": 11,                                #default fontsize
     })
 
 

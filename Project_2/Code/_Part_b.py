@@ -21,7 +21,7 @@ from _Part_a import MSE, Sigmoid, Identity
 from optimizer import SGD, RMSprop, Adam, train
 from neural_network import NeuralNetwork
 from general_functions import RungeData, Scaler, runge, save_best_lr, ArgsHelper, FIG_DIR
-from plot_colors import (COLORS, OPTIMIZER_COLORS, ARCH_COLORS, MSE_CMAP, TRAIN_LS, VAL_LS, set_style, plot_data_and_truth)
+from plot_colors import *
 
 set_style()
 argshelper = ArgsHelper(fig_dir=FIG_DIR) # assists with parsed arguments if any
@@ -103,7 +103,6 @@ fig, ax = plt.subplots()
 ax.plot(epochs50, history50["train"], TRAIN_LS, color = COLORS["nn"], label = "Train")
 ax.plot(epochs50, history50["val"], VAL_LS, color = COLORS["nn"], alpha = 0.5, label = "Test")
 ax.axhline(noise_floor, **floor_style, label = floor_label)
-ax.axhline(MSE_OLS, color = COLORS["ols"], ls = "-.", lw = 1.2, label = f"OLS test MSE (degree {best_degree})")
 ax.set_xlabel("Epoch")
 ax.set_ylabel("MSE")
 ax.set_yscale("log")
