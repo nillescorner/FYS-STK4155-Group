@@ -9,6 +9,8 @@ jax.config.update("jax_enable_x64", True)   # 64-bit floats, so that hand and JA
 import jax.numpy as jnp
 from _Part_a import Penalty, MSE, MulticlassCrossEntropy, ReLU, LeakyReLU, Sigmoid, Softmax
 from optimizer import zeros_like_grads
+from sklearn.base import BaseEstimator, RegressorMixin, ClassifierMixin, clone
+from sklearn.utils.validation import check_X_y
 
 class NeuralNetwork:
     def __init__(self, network_input_size, layer_output_sizes, activations, cost = MSE(), penalty = Penalty(), seed = 2026):
@@ -193,7 +195,24 @@ class NeuralNetwork:
         self, X, y, optimizer, epochs=150, batch_size=None, seed=2026,
         X_val=None, y_val=None, eval_every=1):
         
-        """Train this network and return the training/validation cost history."""
+        """
+            Trains the network
+            LLM Assisted
+        
+            Params: 
+                network (NeuralNetwork): the network to train
+                X, y (jnp.ndarray): training data
+                optimizer (int): SGD, RMSprop or Adam
+                epochs (int): number of passes over the training data
+                batch_sizes (int or None): None: plain gradient descent, otherwise SGD with minibatches
+                seed (int): seed for reshuffeling the data every epoch 
+                X_val, y_val (jnp.ndarray or None): validation data, for cost history
+                eval_every (int): evaluate every x epoch
+        
+            Returns:
+                dict: cost per epoch
+        """
+
         optimizer_states = {
             "SGD": ("v",),
             "RMSprop": ("s",),
@@ -224,6 +243,19 @@ class NeuralNetwork:
         history = {"train": [], "val": [], "epoch": []}
 
         def step(layers, state, X_batch, y_batch):
+            """
+                One minibatch update, using our own backpropagation and optimizer, compiled by jax.jit
+                
+                Params:
+                    layers (list): list consisting of current weights and biases as (W,b)
+                    state (tuple): optimizer's memory from the previous step in order given by the keys 
+                    Xb (nDArray): input data for the minibatch 
+                    yb (nDArray): target for the minibatch
+        
+                Returns
+                    new_layers(list): list of the updated weights and biases (W, b)
+                    new_state (tuple): updated optimizer memory, passed into the next call of step
+            """
             self.layers = layers
             for key, value in zip(keys, state):
                 setattr(optimizer, key, value)
@@ -263,4 +295,133 @@ class NeuralNetwork:
 
         self.layers = layers
         optimizer.reset()
-        return history
+        return history  
+
+
+
+class NeuralNetRegressor(BaseEstimator, RegressorMixin):
+    """Regressor using the Project 2 neural network and sklearn estimator API.
+
+    Parameters
+    ----------
+    hidden : sequence of int
+        Number of units in each hidden layer.
+    activation_functions : sequence of callable
+        Activation functions, one per network layer, including the output
+        layer.
+    optimizer : type
+        Optimizer class to instantiate for fitting
+    optimizer_args : dict or None, default=None
+        Additional keyword arguments passed to the optimizer constructor.
+    gamma : float, default=0.03
+        Optimizer learning rate.
+    lmbd : float, default=0.0
+        Regularization strength passed to ``penalty``.
+    cost : callable, default=MSE()
+        Cost function used to train the network.
+    penalty : type, default=Penalty
+        Penalty class instantiated during fitting.
+    penalty_type : {None, "L1", "L2"}, default=None
+        Type of regularization passed to ``penalty``.
+    epochs : int, default=150
+        Number of training epochs.
+    batch_size : int, default=10
+        Number of samples in each training batch.
+    eval_every : int, default=1
+        Evaluate and record training cost every this many epochs.
+    seed : int, default=2026
+        Random seed used to initialize the network and shuffle training data.
+
+    Usage:
+    ---------
+    #example
+        NNR = NeuralNetRegressor([50, 1], [Sigmoid(), Identity()], SGD)
+        NNR.fit(X,y)
+        mse_wrapper = np.mean((NNR.predict(X) - y)**2)
+
+    LLM assisted
+    """
+
+    def __init__(self, hidden, activation_functions, optimizer, optimizer_args = None, 
+                  gamma=0.03, lmbd=0.0,
+                  cost = MSE(), penalty = Penalty, penalty_type = None,
+                  epochs=150, batch_size=10, eval_every=1, seed=2026):
+        # store the hyperparameters under the same names; no computation here
+        self.hidden = hidden
+        self.activation_functions = activation_functions
+        self.gamma = gamma
+        self.lmbd = lmbd
+
+        self.cost = cost
+        self.penalty = penalty
+        self.penalty_type = penalty_type
+        self.optimizer = optimizer
+        self.optimizer_args = optimizer_args
+        
+        self.epochs = epochs
+        self.batch_size = batch_size
+        self.eval_every = eval_every
+        self.seed = seed
+        
+
+    def fit(self, X, y):
+        """Fit the neural network regressor to the training data.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Training input samples.
+        y : array-like of shape (n_samples,)
+            Continuous target values for the training samples.
+
+        Returns
+        -------
+        self : NeuralNetRegressor
+            Fitted estimator.
+
+        LLM assisted
+        """
+        
+        # X has shape (n, 1), y shape (n,): build the layers from self.seed,
+        # train with your SGD for self.epochs epochs, store the layers in self.layers_
+
+
+        X, y = check_X_y(X, y) # checks X and y
+        y = y.reshape(-1, 1) # reshapes y
+     
+        penalty_obj = self.penalty(self.penalty_type, self.lmbd)
+        optimizer_obj = self.optimizer(self.gamma, **(self.optimizer_args or {}))  #initializing optimizer    
+
+        self.NN = NeuralNetwork(network_input_size = X.shape[1],
+                                    layer_output_sizes = self.hidden,
+                                    activations= self.activation_functions,
+                                    cost = self.cost,
+                                    penalty= penalty_obj,
+                                    seed=self.seed)
+
+        self.history = self.NN.train(X = X, y = y,
+                                       optimizer = optimizer_obj,
+                                       epochs= self.epochs,
+                                       batch_size= self.batch_size, 
+                                       seed=self.seed,
+                                       eval_every= self.eval_every)
+
+        self.layers_ = self.NN.layers
+
+        return self
+
+    def predict(self, X):
+        """Predict target values for input samples.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Samples for which to predict target values.
+
+        Returns
+        -------
+        y : ndarray of shape (n_samples,)
+            Predicted target values.
+        """
+        # the network output as a 1D array of length len(X)
+        return np.asarray(self.NN.feed_forward(X)).ravel()
