@@ -1,5 +1,12 @@
 """
-This file contains the solution to task b, in project 2.
+Project 2, part b): feed-forward neural network for regression on the Runge function
+This file does the following:
+    1. trains a 1 x 50 sigmoid network with Adam and checks backpropagation against jax.grad
+    2. compares the network with the OLS solution with best polynomial degree, from project 1
+    3. scans the learning rates for GD, SGD, SGD + RMSProp and SGD + Adam
+    4. compares four different network sizes (1 or 2 hidden layers for 50 or 100 nodes)
+
+All networks use sigmoid hidden layers, a linear output layer and the MSE cost
 """
 
 import jax
@@ -10,18 +17,23 @@ import numpy as np
 import seaborn as sea
 from matplotlib.colors import LogNorm
 
-from _Part_a import Penalty, MSE, MulticlassCrossEntropy, ReLU, LeakyReLU, Sigmoid, Identity
+from _Part_a import MSE, Sigmoid, Identity
 from optimizer import SGD, RMSprop, Adam, train
 from neural_network import NeuralNetwork
-from general_functions import RungeData, Scaler, runge, save_best_lr, load_best_lr, ArgsHelper, FIG_DIR
+from general_functions import RungeData, Scaler, runge, save_best_lr, ArgsHelper, FIG_DIR
 from plot_colors import (COLORS, OPTIMIZER_COLORS, ARCH_COLORS, MSE_CMAP, TRAIN_LS, VAL_LS, set_style, plot_data_and_truth)
-set_style()
 
+set_style()
 argshelper = ArgsHelper(fig_dir=FIG_DIR) # assists with parsed arguments if any
 
-np.random.seed(2026)
 
-"""Getting and scaling the data"""
+SEED = 2026
+EPOCHS = 500
+BATCH_SIZE = 16
+
+np.random.seed(SEED)
+
+#Data: Runge function with noise, split and scaled
 data = RungeData()
 
 X_train, X_test, y_train, y_test = data.split(data.nn_features())
@@ -33,11 +45,12 @@ X_test_s, y_test_s = scaler.transform(X_test, y_test)
 y_train_s = y_train_s.reshape(-1, 1)
 y_test_s = y_test_s.reshape(-1, 1)
 
-"""Neural network training"""
+
+#First network, 1 hidden layer with 50 nodes, trained with Adam
 nn50 = NeuralNetwork(1, [50, 1], [Sigmoid(), Identity()])
 print(f'Gradient check (max |backprop - jax.grad|): {nn50.gradient_check(X_train_s, y_train_s):.2e}')
 
-history50 = train(nn50, X_train_s, y_train_s, Adam(gamma = 0.01), epochs = 500, batch_size = 16, X_val = X_test_s, y_val = y_test_s)
+history50 = train(nn50, X_train_s, y_train_s, Adam(gamma = 0.01), epochs = EPOCHS, batch_size = BATCH_SIZE, X_val = X_test_s, y_val = y_test_s)
 print(f"Final train MSE: {history50["train"][-1]:.4f}, test MSE: {history50["val"][-1]:.4f} ")
 
 x_grid = np.linspace(-1, 1, 400).reshape(-1, 1)
@@ -45,7 +58,7 @@ x_grid_s = scaler.transform_X(x_grid)
 y_grid = scaler.inverse_transform_y(nn50.feed_forward(x_grid_s)).ravel()
 
 
-"""Testing against OLS"""
+#Testing against OLS from project 1
 best_degree = 8
 
 X_polynom = data.polynomial_features(best_degree)
@@ -59,13 +72,13 @@ theta_OLS = jnp.linalg.pinv(Xp_train_s.T @ Xp_train_s) @ Xp_train_s.T @ yp_train
 MSE_OLS = MSE()(Xp_test_s @ theta_OLS, yp_test_s)
 print(f"OLS (degree: {best_degree}) test MSE: {MSE_OLS:.4f}")
 
-"""OLS predictions on the grid"""
+#OLS predictions on the grid
 X_grid_poly = RungeData.design_matrix(x_grid.ravel(), best_degree)
 X_grid_poly_s = scaler_OLS.transform_X(X_grid_poly)
 y_grid_OLS = scaler_OLS.inverse_transform_y(X_grid_poly_s @ theta_OLS)
 
 
-"""Plotting the data, the runge function and the neural network data"""
+#Plotting the data, the runge function and the neural network data
 fig, ax = plt.subplots()
 plot_data_and_truth(ax, x_grid, runge(x_grid), X_train, y_train, X_test, y_test)
 ax.plot(x_grid, y_grid, color = COLORS["nn"], label = "Neural network (1 x 50)")
@@ -79,7 +92,7 @@ argshelper.plot_or_save("Part_bfit_nn_vs_ols.pdf")
 
 
 
-"""Plot of the MSE for train and test data"""
+#Plot of the MSE for train and test data
 epochs50 = np.arange(1, len(history50["train"]) + 1)
 fig, ax = plt.subplots()
 ax.plot(epochs50, history50["train"], TRAIN_LS, color = COLORS["nn"], label = "Train")
@@ -94,7 +107,7 @@ argshelper.plot_or_save("Part_b_mse_train_test_adam.pdf")
 
 
 
-"""Learning rate sweep for different optimizers"""
+#Learning rate sweep for different gradient methods
 gammas = np.logspace(-4, 0, 9)
 batches = 16
 
@@ -117,7 +130,7 @@ for i, (name, make) in enumerate(optimizers.items()):
         #print(f"{name:14s}, gamma = {gamma:.1e}, test MSE = {results[i,j]:.4f} ")
 
 
-"""Finding the best learning rate"""
+#Finding the best learning rate
 best = {}
 for i, name in enumerate(optimizers):
     j = np.nanargmin(results[i])
@@ -132,7 +145,7 @@ print(f"Best overall: {best_name} with gamma = {best_gamma:.1e}")
 
 save_best_lr('Sigmoid', {'optimizer': best_name, 'best_lr': best_gamma, 'test_mse': results[i_best, j_best]})
 
-"""plotting heatmap for learningrate sweep"""
+#plotting heatmap for learningrate sweep
 results_plot = np.where(np.isfinite(results), results, np.nan)
 
 fig, ax = plt.subplots(figsize = (9, 3.8))
@@ -148,7 +161,7 @@ argshelper.plot_or_save("Part_b_heatmap_lr_optimizers.pdf")
 
 
 
-"""The MSE for each optimizer, with the best gamma"""
+#The MSE for each optimizer, with the best gamma
 fig, axes = plt.subplots(2, 2, figsize = (10, 7), sharex = True, sharey = True)
  
 for ax, (i, name) in zip(axes.ravel(), enumerate(optimizers)):
@@ -174,7 +187,7 @@ argshelper.plot_or_save("Part_b_convergence_optimizers.pdf")
 
 
 
-"""Different network sizes"""
+#Different network sizes, 1 or 2 hidden layers with 50 or 100 nodes, trained with Adam
 networks_sizes = {"1 x 50": [50, 1], "1 x 100": [100, 1], "2 x 50": [50, 50, 1], "2 x 100": [100, 100, 1]}
 
 networks, histories, y_grids = {}, {}, {}
@@ -195,7 +208,7 @@ for name, sizes in networks_sizes.items():
     y_grids[name] = scaler. inverse_transform_y(nn.feed_forward(x_grid_s)).ravel()
 
 
-"""plot of the neural network fit for the different network sizes"""
+#plot of the neural network fit for the different network sizes
 fig, ax = plt.subplots()
 plot_data_and_truth(ax, x_grid, runge(x_grid), X_train, y_train, X_test, y_test)
  
@@ -210,7 +223,7 @@ fig.tight_layout()
 argshelper.plot_or_save("Part_b_fit_network_sizes.pdf")
 
 
-"""plot of the MSE for the different network sizes"""
+#plot of the MSE for the different network sizes
 fig, ax = plt.subplots()
 for name, hist in histories.items():
     epochs = np.arange(1, len(hist["val"]) + 1)
