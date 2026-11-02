@@ -208,7 +208,8 @@ for name, sizes in networks_sizes.items():
     print(f"gradient check (max |backprop - jax.grad|): {nn.gradient_check(X_train_s, y_train_s):.2e}")
 
     hist = train(nn, X_train_s, y_train_s, Adam(gamma = best_gamma), epochs = EPOCHS, batch_size= BATCH_SIZE, X_val = X_test_s, y_val = y_test_s)
-
+    n_params = sum(W.size + b.size for W, b in nn.layers)
+    print(f"parameters: {n_params}")
     print(f"train MSE: {hist['train'][-1]:.4f}, test MSE: {hist['val'][-1]:.4f}")
 
     networks[name], histories[name] = nn, hist
