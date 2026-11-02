@@ -115,9 +115,8 @@ argshelper.plot_or_save("Part_b_mse_train_test_adam.pdf")
 
 #Learning rate sweep for different gradient methods
 gammas = np.logspace(-4, 0, 9)
-batches = 16
 
-optimizers = {"GD": lambda g: (SGD(g), None), "SGD": lambda g: (SGD(g), batches), "SGD + RMSprop": lambda g: (RMSprop(g), batches), "SGD + Adam": lambda g: (Adam(g), batches) }
+optimizers = {"GD": lambda g: (SGD(g), None), "SGD": lambda g: (SGD(g), BATCH_SIZE), "SGD + RMSprop": lambda g: (RMSprop(g), BATCH_SIZE), "SGD + Adam": lambda g: (Adam(g), BATCH_SIZE) }
 all_histories = {}
 
 results = np.zeros((len(optimizers), len(gammas)))
@@ -128,7 +127,7 @@ for i, (name, make) in enumerate(optimizers.items()):
 
         nn = NeuralNetwork(1, [50, 1], [Sigmoid(), Identity()])
         opt, batch_size = make(gamma)
-        hist = train(nn, X_train_s, y_train_s, opt, epochs = 500, batch_size = batch_size, X_val = X_test_s, y_val = y_test_s)
+        hist = train(nn, X_train_s, y_train_s, opt, epochs = EPOCHS, batch_size = batch_size, X_val = X_test_s, y_val = y_test_s)
 
         all_histories[(name, j)] = hist
         results[i, j] = hist["val"][-1]
@@ -208,8 +207,9 @@ for name, sizes in networks_sizes.items():
     print(f"{name}------------------------------------")
     print(f"gradient check (max |backprop - jax.grad|): {nn.gradient_check(X_train_s, y_train_s):.2e}")
 
-    hist = train(nn, X_train_s, y_train_s, Adam(gamma = best_gamma), epochs=500, batch_size= batches, X_val = X_test_s, y_val = y_test_s)
-
+    hist = train(nn, X_train_s, y_train_s, Adam(gamma = best_gamma), epochs = EPOCHS, batch_size= BATCH_SIZE, X_val = X_test_s, y_val = y_test_s)
+    n_params = sum(W.size + b.size for W, b in nn.layers)
+    print(f"parameters: {n_params}")
     print(f"train MSE: {hist['train'][-1]:.4f}, test MSE: {hist['val'][-1]:.4f}")
 
     networks[name], histories[name] = nn, hist
