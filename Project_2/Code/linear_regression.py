@@ -1,6 +1,8 @@
 """Lasso regression methods (gradient descent w/ soft threshold, coordinate descent)"""
 
 import numpy as np
+import jax.numpy as jnp
+
 
 def soft_threshold(z, gamma):
     """
@@ -57,3 +59,13 @@ def lasso_coordinate_descent(X, y, lmbda, n_iter=10000, tol=1e-8):
             break
 
     return history, t + 1
+
+def ridge_theta(X, y, lamba):
+    n, p = X.shape
+    return jnp.linalg.solve(X.T @ X +  lamba * jnp.eye(p), X.T @ y)
+
+def lasso_theta(X, y, lamba, n_iter=10000, tol=1e-8):
+    history, n_steps = lasso_coordinate_descent(X, y, lamba, n_iter, tol)
+    if n_steps == n_iter:
+        print(f'Lasso did not converge at {lamba:.1e}')
+    return history[-1]
