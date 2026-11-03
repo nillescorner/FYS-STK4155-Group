@@ -4,7 +4,6 @@ This file contains the solution to task c, in project 2.
 
 import jax
 jax.config.update("jax_enable_x64", True)   # 64-bit floats, so that hand and JAX agree to ~1e-15
-import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sea
@@ -17,7 +16,6 @@ from neural_network import NeuralNetwork
 from general_functions import RungeData, Scaler, FIG_DIR, save_best_lr, load_best_lr, ArgsHelper
 import time
 
-np.random.seed(2026)
 argshelper = ArgsHelper(fig_dir=FIG_DIR) # assists with parsed arguments if any
 
 """Getting and scaling the data"""
@@ -44,7 +42,7 @@ results = np.zeros((len(ReLUs), len(gammas)))
 for i, (name, activation) in enumerate(ReLUs.items()):
     for j, gamma in enumerate(gammas):
         nn = NeuralNetwork(1, [50, 1], [activation, Identity()])
-        hist = train(nn, X_train_s, y_train_s, Adam(gamma), epochs = 500, batch_size = batches, X_val = X_test_s, y_val = y_test_s)
+        hist = train(nn, X_train_s, y_train_s, Adam(gamma), epochs=500, batch_size=batches, X_val = X_test_s, y_val = y_test_s)
         results[i, j] = hist['val'][-1]
 
 
@@ -53,7 +51,7 @@ best = {}
 for i, act_func in enumerate(ReLUs):
     j = np.nanargmin(results[i])
     best[act_func] = (gammas[j], results[i, j])
-    save_best_lr(act_func, {'Optimizer': 'SGD + Adam', 'best_lr': gammas[j], 'test_mse': results[i,j]})
+    save_best_lr(act_func, {'optimizer': 'SGD + Adam', 'best_lr': gammas[j], 'test_mse': results[i,j]})
     print(f"{act_func:14s}: best gamma = {gammas[j]:.1e}, test MSE = {results[i, j]:.4f}")
 
 
@@ -74,14 +72,13 @@ argshelper.plot_or_save("Part_c_heatmaps_ReLUS.pdf")
 
 """We now test different activation functions and depths of the nn using the best lrs for each
 activation function"""
-best_lrs_all = [load_best_lr(name)['best_lr'] for name in ('Sigmoid', 'ReLU', 'LeakyReLU')]
 all_act_funcs ={'Sigmoid': Sigmoid(), 'ReLU': ReLU(), 'LeakyReLU': LeakyReLU()}
-seeds = [21, 67, 420, 2026]             #test for different seeds
-
-epochs = 150
+best_lrs_all = [load_best_lr(name)['best_lr'] for name in all_act_funcs]
+seeds = [21, 36, 67, 420, 2026]             #test for different seeds
 
 n_layers = [1, 2, 3, 4]
 n_nodes = [5, 25, 50, 100]
+epochs = 200
 
 #Keep same format (e.g '1 x 50': [50, 1]) but for all layers and nodes
 networks_sizes = {f' {layers} x {nodes}': [nodes] * layers + [1] for layers in n_layers for nodes in n_nodes }
@@ -112,10 +109,11 @@ for i, (_, act) in enumerate(all_act_funcs.items()):
 train_mean, train_std = train_mse.mean(axis=2), train_mse.std(axis=2)
 test_mean, test_std = test_mse.mean(axis=2), test_mse.std(axis=2)
 
+#reshape into 4x4 matrix 
 shape = (len(all_act_funcs), len(n_layers), len(n_nodes))
 test_mean_grid = test_mean.reshape(shape)
 
-fig, axes = plt.subplots(1, len(all_act_funcs), figsize=(12, 4), sharey=True)
+fig, axes = plt.subplots(1, len(all_act_funcs), figsize=(12, 5), sharey=True)
 
 for i, (ax, name) in enumerate(zip(axes, all_act_funcs)):
     sea.heatmap(test_mean_grid[i], ax=ax, cmap=MSE_CMAP, annot=True, fmt='.3f',
@@ -127,7 +125,7 @@ for i, (ax, name) in enumerate(zip(axes, all_act_funcs)):
     ax.grid(False)
 
 axes[0].set_ylabel('Hidden layers')
-fig.suptitle(f'Test MSE, mean over {len(seeds)} seeds for 3 activation functions')
+fig.suptitle(f'Test MSE, mean over {len(seeds)} seeds for 3 activation functions for {epochs} epochs')
 fig.tight_layout()
 argshelper.plot_or_save('Part_c_heatmap_mse.pdf')
 
@@ -145,13 +143,13 @@ for i, act_name in enumerate(all_act_funcs):
               rf' Train MSE = {train_mean[i, j]:.4f} $\pm$ {train_std[i, j]:.4f}'
               rf' Test MSE = {test_mean[i, j]:.4f} $\pm$ {test_std[i, j]:.4f}',
               rf' Time = {time_median[i, j]:.3f} $\pm {time_std[i, j]:.3f}',
-              rf' Epoch {best_epoch + 1}')
+              rf' Best epoch {best_epoch + 1}')
 
 #Heatmap for how long it takes for each network size for each activation function
 
 time_grid = time_median.reshape(shape)
 
-fig, axes = plt.subplots(1, len(all_act_funcs), figsize=(12, 4), sharey=True)
+fig, axes = plt.subplots(1, len(all_act_funcs), figsize=(12, 5), sharey=True)
 for i, (ax, name) in enumerate(zip(axes, all_act_funcs)):
     sea.heatmap(time_grid[i], ax=ax, cmap=MSE_CMAP, annot=True, fmt='.2f', 
                 annot_kws={"size": 8}, linewidths=1.8, linecolor="white",
@@ -161,18 +159,18 @@ for i, (ax, name) in enumerate(zip(axes, all_act_funcs)):
     ax.set_xlabel('Nodes per hidden layer')
     ax.grid(False)
 axes[0].set_ylabel('Hidden layers')
-fig.suptitle(f'Median training time over {len(seeds)} seeds for 3 different activation functions')
+fig.suptitle(f'Median training time over {len(seeds)} seeds for 3 different activation functions for {epochs} epochs')
 fig.tight_layout()
 argshelper.plot_or_save('Part_c_heatmap_time.pdf')
 
 
 """We now want to check for overfitting, thus increase the number of epochs"""
-big_epochs = 4000
+big_epochs = 3000
 eval_every = 25
-big_network_size = [150, 150, 150, 150, 1]
-n_ponts = big_epochs // eval_every
+big_network_size = [25, 25, 25, 25, 1]
+n_points = big_epochs // eval_every
 
-train_mse_long = np.zeros((len(all_act_funcs), n_ponts, len(seeds)))
+train_mse_long = np.zeros((len(all_act_funcs), n_points, len(seeds)))
 test_mse_long = np.zeros_like(train_mse_long)
 
 for i, (_, act) in enumerate(all_act_funcs.items()):
@@ -185,26 +183,28 @@ for i, (_, act) in enumerate(all_act_funcs.items()):
         train_mse_long[i, :, k] = hist['train']
         test_mse_long[i, :, k] = hist['val']
 
-long_ep = np.arange(1, n_ponts + 1) * eval_every
+long_ep = np.array(hist['epoch'])
 
 """Plot of train and test MSE against epoch, one row per activation"""
 fig, axes = plt.subplots(len(all_act_funcs), 1, figsize=(7, 7), sharex=True, sharey=True)
 
 for ax, (i, name) in zip(axes.ravel(), enumerate(all_act_funcs)):
     color = ACTIVATION_COLORS[name]
-    train_mean, train_std = train_mse_long[i].mean(axis=-1), train_mse_long[i].std(axis=-1)
-    test_mean, test_std = test_mse_long[i].mean(axis=-1), test_mse_long[i].std(axis=-1)
+    train_mean_l, train_std_l = train_mse_long[i].mean(axis=-1), train_mse_long[i].std(axis=-1)
+    test_mean_l, test_std_l = test_mse_long[i].mean(axis=-1), test_mse_long[i].std(axis=-1)
 
-    ax.plot(long_ep, train_mean, TRAIN_LS, color=color, label='Train')
-    ax.fill_between(long_ep, train_mean - train_std, train_mean + train_std, color=color, alpha=0.15)
-    ax.plot(long_ep, test_mean, VAL_LS, color=color, label='Test')
-    ax.fill_between(long_ep, test_mean - test_std, test_mean + test_std, color=color, alpha=0.15)
-    ax.axhline(0.1**2, color=COLORS['text'], ls=':', label=r'Noise floor $\sigma^2$')
+    ax.plot(long_ep, train_mean_l, TRAIN_LS, color=color, label='Train')
+    ax.fill_between(long_ep, train_mean_l - train_std_l, train_mean_l + train_std_l, color=color, alpha=0.15)
+    ax.plot(long_ep, test_mean_l, VAL_LS, color=color, label='Test')
+    ax.fill_between(long_ep, test_mean_l - test_std_l, test_mean_l + test_std_l, color=color, alpha=0.15)
+    ax.axhline(data.noise**2, color=COLORS['text'], ls=':', label=r'Noise floor $\sigma^2$')
 
-    best = np.argmin(test_mean)                                    # mark the lowest test MSE
-    ax.plot(long_ep[best], test_mean[best], 'o', color=color, ms=4)
+    best_index = np.argmin(test_mean_l)     # mark the lowest test MSE
+    print(f'{name:10s}: lowest test MSE {test_mean_l[best_index]:.4f} at epoch {long_ep[best_index]}, '
+      f'At epoch {long_ep[-1]}: train MSE {train_mean_l[-1]:.4f}, test MSE{test_mean_l[-1]:.4f}')
+    ax.plot(long_ep[best_index], test_mean_l[best_index], 'o', color=color, ms=4)
 
-    ax.set_title(f'{name}, 4 x 150')
+    ax.set_title(f'{name}, {len(big_network_size) - 1} x {big_network_size[0]}')    
     ax.set_ylabel('MSE')
     ax.set_yscale('log')
 
