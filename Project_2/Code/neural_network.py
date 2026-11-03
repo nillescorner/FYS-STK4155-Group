@@ -345,7 +345,7 @@ class NeuralNetRegressor(RegressorMixin, BaseEstimator):
     def __init__(self, layer_output_sizes, activation_functions, optimizer, optimizer_args = None, 
                   gamma=0.03, lmbd=0.0,
                   cost = MSE(), penalty = Penalty, penalty_type = None,
-                  epochs=150, batch_size=10, eval_every=1, seed=2026):
+                  epochs=150, batch_size=10, eval_every=1, seed=2026, check_gradients = False):
         # store the hyperparameters under the same names; no computation here
         self.layer_output_sizes = layer_output_sizes
         self.activation_functions = activation_functions
@@ -362,6 +362,7 @@ class NeuralNetRegressor(RegressorMixin, BaseEstimator):
         self.batch_size = batch_size
         self.eval_every = eval_every
         self.seed = seed
+        self.check_gradients = check_gradients
         
 
     def fit(self, X, y):
@@ -407,6 +408,19 @@ class NeuralNetRegressor(RegressorMixin, BaseEstimator):
                                        eval_every= self.eval_every)
 
         self.layers_ = self.NN.layers
+
+        if self.check_gradients: #LLM assisted
+            rng = np.random.default_rng(self.seed)
+            n_check = min(32, len(X))
+            check_idx = rng.choice(len(X), size=n_check, replace=False)
+
+            error = self.NN.gradient_check(X[check_idx], y[check_idx])
+
+            if not np.isfinite(error) or error > 1e-8:
+                raise ValueError(
+                    f"Gradient check failed: max absolute difference = {error:.2e}"
+                )
+
 
         return self
 
@@ -480,7 +494,7 @@ class NeuralNetClassifier(ClassifierMixin, BaseEstimator):
     def __init__(self, layer_output_sizes, activation_functions, optimizer, optimizer_args = None, 
                   gamma=0.03, lmbd=0.0,
                   cost = MulticlassCrossEntropy(), penalty = Penalty, penalty_type = None,
-                  epochs=150, batch_size=10, eval_every=1, seed=2026):
+                  epochs=150, batch_size=10, eval_every=1, seed=2026, check_gradients = False):
         # store the hyperparameters under the same names; no computation here
         self.layer_output_sizes = layer_output_sizes
         self.activation_functions = activation_functions
@@ -497,6 +511,7 @@ class NeuralNetClassifier(ClassifierMixin, BaseEstimator):
         self.batch_size = batch_size
         self.eval_every = eval_every
         self.seed = seed
+        self.check_gradients = check_gradients
         
 
     def fit(self, X, y):
@@ -534,6 +549,7 @@ class NeuralNetClassifier(ClassifierMixin, BaseEstimator):
                                     penalty= penalty_obj,
                                     seed=self.seed)
 
+
         # Input validation
         X, y = validate_data(self, X, y, reset=False)
 
@@ -548,7 +564,20 @@ class NeuralNetClassifier(ClassifierMixin, BaseEstimator):
                                        eval_every= self.eval_every)
 
         self.layers_ = self.NN.layers
-        
+
+
+        if self.check_gradients: #LLM assisted
+            rng = np.random.default_rng(self.seed)
+            n_check = min(32, len(X))
+            check_idx = rng.choice(len(X), size=n_check, replace=False)
+
+            error = self.NN.gradient_check(X[check_idx], y_onehot[check_idx])
+
+            if not np.isfinite(error) or error > 1e-8:
+                raise ValueError(
+                    f"Gradient check failed: max absolute difference = {error:.2e}"
+                )
+            
 
 
         return self
