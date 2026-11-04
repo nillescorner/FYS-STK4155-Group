@@ -7,8 +7,8 @@ import numpy as np
 import jax
 jax.config.update("jax_enable_x64", True)   # 64-bit floats, so that hand and JAX agree to ~1e-15
 import jax.numpy as jnp
-from _Part_a import Penalty, MSE, MulticlassCrossEntropy, ReLU, LeakyReLU, Sigmoid, Softmax
-from optimizer import zeros_like_grads
+from _Part_a import Penalty, MSE, MulticlassCrossEntropy, ReLU, LeakyReLU, Sigmoid, Softmax, Identity
+from optimizer import zeros_like_grads, Adam
 from sklearn.base import BaseEstimator, RegressorMixin, ClassifierMixin, clone
 from sklearn.utils.validation import check_X_y, check_is_fitted, validate_data
 
@@ -342,9 +342,10 @@ class NeuralNetRegressor(RegressorMixin, BaseEstimator):
     LLM assisted
     """
 
-    def __init__(self, layer_output_sizes, activation_functions, optimizer, optimizer_args = None, 
+    def __init__(self, layer_output_sizes = [50,1], activation_functions = [Sigmoid, Identity], optimizer= Adam,
+                  optimizer_args = None, 
                   gamma=0.03, lmbd=0.0,
-                  cost = MSE(), penalty = Penalty, penalty_type = None,
+                  cost = MSE, penalty = Penalty, penalty_type = None,
                   epochs=150, batch_size=10, eval_every=1, seed=2026, check_gradients = False):
         # store the hyperparameters under the same names; no computation here
         self.layer_output_sizes = layer_output_sizes
@@ -393,10 +394,14 @@ class NeuralNetRegressor(RegressorMixin, BaseEstimator):
         penalty_obj = self.penalty(self.penalty_type, self.lmbd)
         optimizer_obj = self.optimizer(self.gamma, **(self.optimizer_args or {}))  #initializing optimizer    
 
+        activation_functions = []
+        for activation_function in self.activation_functions:
+            activation_functions.append(activation_function())
+
         self.NN = NeuralNetwork(network_input_size = X.shape[1],
                                     layer_output_sizes = self.layer_output_sizes,
-                                    activations= self.activation_functions,
-                                    cost = self.cost,
+                                    activations= activation_functions,
+                                    cost = self.cost(),
                                     penalty= penalty_obj,
                                     seed=self.seed)
 
@@ -491,9 +496,10 @@ class NeuralNetClassifier(ClassifierMixin, BaseEstimator):
     LLM assisted
     """
 
-    def __init__(self, layer_output_sizes, activation_functions, optimizer, optimizer_args = None, 
+    def __init__(self,  layer_output_sizes = [50,10], activation_functions = [ReLU, Softmax],
+                  optimizer= Adam, optimizer_args = None, 
                   gamma=0.03, lmbd=0.0,
-                  cost = MulticlassCrossEntropy(), penalty = Penalty, penalty_type = None,
+                  cost = MulticlassCrossEntropy, penalty = Penalty, penalty_type = None,
                   epochs=150, batch_size=10, eval_every=1, seed=2026, check_gradients = False):
         # store the hyperparameters under the same names; no computation here
         self.layer_output_sizes = layer_output_sizes
@@ -542,10 +548,14 @@ class NeuralNetClassifier(ClassifierMixin, BaseEstimator):
         penalty_obj = self.penalty(self.penalty_type, self.lmbd)
         optimizer_obj = self.optimizer(self.gamma, **(self.optimizer_args or {}))  #initializing optimizer    
 
+        activation_functions = []
+        for activation_function in self.activation_functions:
+            activation_functions.append(activation_function())
+
         self.NN = NeuralNetwork(network_input_size = X.shape[1],
                                     layer_output_sizes = self.layer_output_sizes,
-                                    activations= self.activation_functions,
-                                    cost = self.cost,
+                                    activations= activation_functions,
+                                    cost = self.cost(),
                                     penalty= penalty_obj,
                                     seed=self.seed)
 
