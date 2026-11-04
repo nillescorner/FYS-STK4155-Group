@@ -149,10 +149,11 @@ class MulticlassCrossEntropy:
             Y (jnp.ndarray): one-hot encoded targets, shape: (n, K)
  
         Returns:
-            float: cross entropy
+            float: mean cross entropy
         """
         P = jnp.clip(P, self.epsilon, 1.0)
-        return -jnp.sum(Y * jnp.log(P))
+        per_sample_loss = -jnp.sum(Y * jnp.log(P), axis=-1)
+        return jnp.mean(per_sample_loss)
  
     def der(self, P, Y):
         """
@@ -166,7 +167,7 @@ class MulticlassCrossEntropy:
             jnp.ndarray: same shape as P
         """
         P = jnp.clip(P, self.epsilon, 1.0)
-        return -Y / P
+        return -Y / (P *  P.shape[0])
  
     def softmax_delta(self, P, Y):
         """
@@ -180,7 +181,7 @@ class MulticlassCrossEntropy:
         Returns:
             jnp.ndarray: same shape as P
         """
-        return P - Y
+        return (P - Y) / P.shape[0]
 
 """ Binary cross entropy (Sigmoid output) """
 
@@ -202,7 +203,8 @@ class BinaryCrossEntropy:
             float: binary cross entropy
         """
         P = jnp.clip(P, self.epsilon, 1.0 - self.epsilon)
-        return -jnp.sum(Y * jnp.log(P) + (1 - Y) * jnp.log(1 - P))
+        per_sample_loss =  -jnp.sum(Y * jnp.log(P) + (1 - Y) * jnp.log(1 - P))
+        return jnp.mean(per_sample_loss)
 
     def der(self, P, Y):
         """
@@ -212,14 +214,14 @@ class BinaryCrossEntropy:
             jnp.ndarray: same shape as P
         """
         P = jnp.clip(P, self.epsilon, 1.0 - self.epsilon)
-        return -Y / P + (1 - Y) / (1 - P)
+        return (-Y / P + (1 - Y) / (1 - P)) / P.shape[0]
 
     def sigmoid_delta(self, P, Y):
         """
         Combined derivative of sigmoid + binary cross entropy: dC/dz = P - Y
         Used directly as the output error delta^L when the output layer is sigmoid.
         """
-        return P - Y
+        return (P - Y) / P.shape[0]
 
 
 """Activation functions"""
