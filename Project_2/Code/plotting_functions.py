@@ -320,29 +320,26 @@ def plot_training_history(fig, ax, search, metric="MSE", label = 'Train', color 
 def plot_three_parameter_grid(fig, ax, search, parameter_keys=None):
     """Plot a fitted three-parameter grid search in 3D.
 
-    The selected parameters are shown on the x, y, and z axes. Numeric
-    parameters retain their numeric coordinates; nonnumeric parameters are
-    mapped to positions and shown as labeled ticks. Mean cross-validation
-    scores are encoded by point color using ``MSE_CMAP``; the best result is
-    marked with a star. Scores are displayed as returned by scikit-learn, so
-    higher values indicate better results (including for scorers such as
-    ``"neg_mean_squared_error"``).
+    When ``search.param_grid`` is a list, each grid dictionary is shown in
+    its own subplot. Unless ``parameter_keys`` is provided, the three
+    parameters with multiple candidates in each dictionary are plotted.
+    Categorical values are mapped to labeled tick positions, and point
+    colors show mean CV scores.
 
     Parameters
     ----------
     fig : matplotlib.figure.Figure
-        Figure containing the supplied 3D axes.
+        Figure for the plot.
     ax : matplotlib.axes.Axes
-        Three-dimensional axes, typically created with
-        ``fig.add_subplot(111, projection="3d")``.
+        A 3D axis for one grid, one 3D axis per grid dictionary, or ``None``
+        to create the required subplot(s) in ``fig``.
     search : sklearn.model_selection.GridSearchCV
-        Fitted grid search with a single parameter-grid dictionary.
+        Fitted grid search with one parameter-grid dictionary or a list of
+        dictionaries.
     parameter_keys : sequence of str or None, default=None
-        Exactly three parameter keys from ``search.param_grid``. Values may
-        be numeric or categorical. If omitted, all parameter keys are used,
-        so the grid must contain exactly three parameters. Pipeline
-        parameter names should be passed in full, such as
-        ``"neuralnetregressor__gamma"``.
+        Exactly three parameter keys to plot. If omitted, the three varying
+        parameters are selected automatically for each dictionary. Pipeline
+        parameter names should be passed in full.
 
     Returns
     -------
@@ -351,25 +348,10 @@ def plot_three_parameter_grid(fig, ax, search, parameter_keys=None):
 
     Examples
     --------
-    Plot a fitted search with exactly three grid parameters::
+    Plot a list of grids, with one subplot per dictionary::
 
-        fig = plt.figure(figsize=(9, 7))
-        ax = fig.add_subplot(111, projection="3d")
-        results = plot_three_parameter_grid(fig, ax, search)
-        plt.show()
-
-    Select three parameters from a grid with additional parameters::
-
-        keys = [
-            "neuralnetregressor__gamma",
-            "neuralnetregressor__lmbd",
-            "neuralnetregressor__batch_size",
-        ]
-        fig = plt.figure(figsize=(9, 7))
-        ax = fig.add_subplot(111, projection="3d")
-        results = plot_three_parameter_grid(
-            fig, ax, search, parameter_keys=keys
-        )
+        fig = plt.figure(figsize=(6 * len(search.param_grid), 6))
+        results = plot_three_parameter_grid(fig, None, search)
         plt.show()
     
     LLM assisted
@@ -377,77 +359,183 @@ def plot_three_parameter_grid(fig, ax, search, parameter_keys=None):
     if not hasattr(search, "cv_results_"):
         raise ValueError("Pass a fitted GridSearchCV object.")
 
+    grids = search.param_grid if isinstance(search.param_grid, list) else [search.param_grid]
+    if not grids:
+        raise ValueError("search.param_grid must contain at least one grid.")
 
-    if isinstance(search.param_grid, list):
-        raise ValueError("This function expects one parameter-grid dictionary.")
-
-    if parameter_keys is None:
-        parameter_keys = list(search.param_grid)
-
-    if len(parameter_keys) != 3:
-        raise ValueError("Provide exactly three parameter keys to plot.")
+    if ax is None:
+        axes = np.asarray(
+            fig.subplots(
+                1, len(grids), subplot_kw={"projection": "3d"}, squeeze=False
+            )
+        ).ravel()
+    elif isinstance(search.param_grid, list):
+        axes = np.asarray(ax, dtype=object).ravel()
+        if len(axes) != len(grids):
+            raise ValueError(
+                "Provide one 3D axis per parameter grid, or pass ax=None."
+            )
+    else:
+        axes = np.asarray([ax], dtype=object)
 
     rows = search.cv_results_["params"]
-    try:
-        values = []
-        tick_labels = []
-        for key in parameter_keys:
-            grid_values = list(search.param_grid[key])
-            is_numeric = np.issubdtype(np.asarray(grid_values).dtype, np.number)
+    all_scores = np.asarray(search.cv_results_["mean_test_score"])
+    score_min, score_max = np.min(all_scores), np.max(all_scores)
+    plotted_scores = []
+    subplot_best_params = []
 
-            try:
-                row_values = [row[key] for row in rows]
-            except KeyError as exc:
-                raise ValueError(f"Parameter {key!r} was not found in the search results.") from exc
+    for grid_index, (grid, axis) in enumerate(zip(grids, axes)):
+        keys = (
+            [key for key, candidates in grid.items() if len(candidates) > 1]
+            if parameter_keys is None
+            else list(parameter_keys)
+        )
+        if len(keys) != 3:
+            raise ValueError(
+                f"Grid {grid_index} has {len(keys)} varying/selected parameters; "
+                "exactly three are required."
+            )
+        missing = [key for key in keys if key not in grid]
+        if missing:
+            raise ValueError(f"Grid {grid_index} does not contain: {missing}")
+
+        # GridSearchCV stores each candidate with the keys from its source grid.
+        grid_rows = [
+            (row_index, row)
+            for row_index, row in enumerate(rows)
+            if set(row) == set(grid)
+            and all(row[key] in grid[key] for key in grid)
+        ]
+        if not grid_rows:
+            raise ValueError(f"No results matched parameter grid index {grid_index}.")
+
+        row_indices, selected_rows = zip(*grid_rows)
+        values, tick_labels = [], []
+        for key in keys:
+            candidates = list(grid[key])
+            row_values = [row[key] for row in selected_rows]
+            is_numeric = np.issubdtype(np.asarray(candidates).dtype, np.number)
 
             if is_numeric:
                 values.append(np.asarray(row_values, dtype=float))
                 tick_labels.append(None)
             else:
-                # Use grid order for categorical positions and labels.
-                categories = list(dict.fromkeys(grid_values))
-                values.append(np.asarray([categories.index(value) for value in row_values]))
+                categories = list(dict.fromkeys(candidates))
+                values.append(
+                    np.asarray([categories.index(value) for value in row_values])
+                )
                 tick_labels.append([str(value) for value in categories])
-    except (KeyError, TypeError, ValueError) as exc:
-        raise ValueError(
-            "Grid values must be scalar numeric or categorical values."
-        ) from exc
 
-    cv_score = np.asarray(search.cv_results_["mean_test_score"])
+        scores = all_scores[list(row_indices)]
+        best_local_index = int(np.argmax(scores))
+        plotted_scores.extend(scores)
+        subplot_best_params.append(selected_rows[best_local_index])
 
-    points = ax.scatter(
-        *values,
-        c=cv_score,
-        cmap=MSE_CMAP,
-        edgecolors=COLORS["text"],
-    )
+        points = axis.scatter(
+            *values,
+            c=scores,
+            cmap=MSE_CMAP,
+            vmin=score_min,
+            vmax=score_max,
+            edgecolors=COLORS["text"],
+        )
+        axis.scatter(
+            *(value[best_local_index] for value in values),
+            color=COLORS["nn"],
+            marker="*",
+            s=180,
+            edgecolors=COLORS["text"],
+            label="Best CV score",
+        )
 
-    best_index = search.best_index_
-    ax.scatter(
-        *(value[best_index] for value in values),
-        color=COLORS["nn"],
-        marker="*",
-        s=180,
-        edgecolors=COLORS["text"],
-        label="Best CV score",
-    )
+        axis.set_xlabel(keys[0].split("__")[-1])
+        axis.set_ylabel(keys[1].split("__")[-1])
+        axis.set_zlabel(keys[2].split("__")[-1])
+        for plot_axis, labels in zip(
+            (axis.xaxis, axis.yaxis, axis.zaxis), tick_labels
+        ):
+            if labels is not None:
+                plot_axis.set_ticks(np.arange(len(labels)))
+                plot_axis.set_ticklabels(labels)
+        axis.set_title(f"Grid {grid_index + 1}: CV score")
+        axis.legend()
+        fig.colorbar(points, ax=axis, label="Mean CV score")
 
-    ax.set_xlabel(parameter_keys[0].split("__")[-1])
-    ax.set_ylabel(parameter_keys[1].split("__")[-1])
-    ax.set_zlabel(parameter_keys[2].split("__")[-1])
-    for axis, labels in zip((ax.xaxis, ax.yaxis, ax.zaxis), tick_labels):
-        if labels is not None:
-            axis.set_ticks(np.arange(len(labels)))
-            axis.set_ticklabels(labels)
-    ax.set_title("Grid-search CV score")
-    ax.legend()
-
-    fig.colorbar(points, ax=ax, label="Mean CV score")
     fig.tight_layout()
-
     return {
-        "cv_score": cv_score,
+        "cv_score": np.asarray(plotted_scores),
         "best_params": search.best_params_,
+        "subplot_best_params": subplot_best_params,
         "figure": fig,
-        "axes": ax,
+        "axes": axes,
     }
+
+
+def plot_architecture_accuracy(search, penalty_key="neuralnetclassifier__penalty_type"):
+    """Plot mean CV accuracy by hidden-layer architecture and learning rate.
+
+    If ``penalty_key`` is provided, create a separate heatmap for each
+    penalty value. Set it to ``None`` when the search has no penalty parameter.
+
+    Returns the figure and axes.
+    
+    LLM assisted
+    """
+    
+    arch_key = "neuralnetclassifier__layer_output_sizes"
+    gamma_key = "neuralnetclassifier__gamma"
+    results = search.cv_results_
+    candidates = results["params"]
+
+    # Preserve the order used in the search grid.
+    architectures = list(dict.fromkeys(
+        tuple(params[arch_key][:-1]) for params in candidates
+    ))
+    gammas = list(dict.fromkeys(params[gamma_key] for params in candidates))
+    penalties = (
+        list(dict.fromkeys(params[penalty_key] for params in candidates))
+        if penalty_key is not None
+        else [None]
+    )
+
+    arch_index = {arch: i for i, arch in enumerate(architectures)}
+    gamma_index = {gamma: i for i, gamma in enumerate(gammas)}
+    scores = results["mean_test_score"]
+
+    fig, axes = plt.subplots(
+        1, len(penalties), figsize=(5 * len(penalties), 5), squeeze=False
+    )
+    axes = axes.ravel()
+
+    for ax, penalty in zip(axes, penalties):
+        values = np.full((len(architectures), len(gammas)), np.nan)
+
+        for params, score in zip(candidates, scores):
+            if penalty_key is not None and params[penalty_key] != penalty:
+                continue
+            arch = tuple(params[arch_key][:-1])
+            values[arch_index[arch], gamma_index[params[gamma_key]]] = score
+
+        labels = [
+            "No hidden layer" if not arch else "–".join(map(str, arch))
+            for arch in architectures
+        ]
+
+        sea.heatmap(
+            values,
+            ax=ax,
+            annot=True,
+            fmt=".3f",
+            cmap=MSE_CMAP,
+            vmin=0,
+            vmax=1,
+            xticklabels=[f"{gamma:g}" for gamma in gammas],
+            yticklabels=labels,
+            cbar_kws={"label": "Mean CV accuracy"},
+        )
+        ax.set_title(f"Penalty: {penalty}" if penalty is not None else "No penalty")
+        ax.set_xlabel("Learning rate (gamma)")
+        ax.set_ylabel("Hidden-layer widths")
+
+    fig.tight_layout()
+    return fig, axes
