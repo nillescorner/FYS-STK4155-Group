@@ -7,10 +7,10 @@ import numpy as np
 import jax
 jax.config.update("jax_enable_x64", True)   # 64-bit floats, so that hand and JAX agree to ~1e-15
 import jax.numpy as jnp
-from _Part_a import Penalty, MSE, MulticlassCrossEntropy, ReLU, LeakyReLU, Sigmoid, Softmax
-from optimizer import zeros_like_grads
+from _Part_a import Penalty, MSE, MulticlassCrossEntropy, ReLU, LeakyReLU, Sigmoid, Softmax, Identity
+from optimizer import zeros_like_grads, Adam
 from sklearn.base import BaseEstimator, RegressorMixin, ClassifierMixin, clone
-from sklearn.utils.validation import check_X_y
+from sklearn.utils.validation import check_X_y, check_is_fitted, validate_data
 
 class NeuralNetwork:
     def __init__(self, network_input_size, layer_output_sizes, activations, cost = MSE(), penalty = Penalty(), seed = 2026):
@@ -299,7 +299,7 @@ class NeuralNetwork:
 
 
 
-class NeuralNetRegressor(BaseEstimator, RegressorMixin):
+class NeuralNetRegressor(RegressorMixin, BaseEstimator):
     """Regressor using the Project 2 neural network and sklearn estimator API.
 
     Parameters
@@ -342,12 +342,13 @@ class NeuralNetRegressor(BaseEstimator, RegressorMixin):
     LLM assisted
     """
 
-    def __init__(self, hidden, activation_functions, optimizer, optimizer_args = None, 
+    def __init__(self, layer_output_sizes = [50,1], activation_functions = [Sigmoid, Identity], optimizer= Adam,
+                  optimizer_args = None, 
                   gamma=0.03, lmbd=0.0,
-                  cost = MSE(), penalty = Penalty, penalty_type = None,
-                  epochs=150, batch_size=10, eval_every=1, seed=2026):
+                  cost = MSE, penalty = Penalty, penalty_type = None,
+                  epochs=150, batch_size=10, eval_every=1, seed=2026, check_gradients = False):
         # store the hyperparameters under the same names; no computation here
-        self.hidden = hidden
+        self.layer_output_sizes = layer_output_sizes
         self.activation_functions = activation_functions
         self.gamma = gamma
         self.lmbd = lmbd
@@ -362,6 +363,7 @@ class NeuralNetRegressor(BaseEstimator, RegressorMixin):
         self.batch_size = batch_size
         self.eval_every = eval_every
         self.seed = seed
+        self.check_gradients = check_gradients
         
 
     def fit(self, X, y):
@@ -392,10 +394,14 @@ class NeuralNetRegressor(BaseEstimator, RegressorMixin):
         penalty_obj = self.penalty(self.penalty_type, self.lmbd)
         optimizer_obj = self.optimizer(self.gamma, **(self.optimizer_args or {}))  #initializing optimizer    
 
+        activation_functions = []
+        for activation_function in self.activation_functions:
+            activation_functions.append(activation_function())
+
         self.NN = NeuralNetwork(network_input_size = X.shape[1],
-                                    layer_output_sizes = self.hidden,
-                                    activations= self.activation_functions,
-                                    cost = self.cost,
+                                    layer_output_sizes = self.layer_output_sizes,
+                                    activations= activation_functions,
+                                    cost = self.cost(),
                                     penalty= penalty_obj,
                                     seed=self.seed)
 
@@ -407,6 +413,19 @@ class NeuralNetRegressor(BaseEstimator, RegressorMixin):
                                        eval_every= self.eval_every)
 
         self.layers_ = self.NN.layers
+
+        if self.check_gradients: #LLM assisted
+            rng = np.random.default_rng(self.seed)
+            n_check = min(32, len(X))
+            check_idx = rng.choice(len(X), size=n_check, replace=False)
+
+            error = self.NN.gradient_check(X[check_idx], y[check_idx])
+
+            if not np.isfinite(error) or error > 1e-8:
+                raise ValueError(
+                    f"Gradient check failed: max absolute difference = {error:.2e}"
+                )
+
 
         return self
 
@@ -423,5 +442,182 @@ class NeuralNetRegressor(BaseEstimator, RegressorMixin):
         y : ndarray of shape (n_samples,)
             Predicted target values.
         """
+
+        # Check if fit has been called
+        check_is_fitted(self)
+
+        # Input validation
+        X = validate_data(self, X, reset=False)
         # the network output as a 1D array of length len(X)
         return np.asarray(self.NN.feed_forward(X)).ravel()
+
+
+
+
+
+
+
+class NeuralNetClassifier(ClassifierMixin, BaseEstimator):
+    """Classifier using the Project 2 neural network and sklearn estimator API.
+
+    Parameters
+    ----------
+    hidden : sequence of int
+        Number of units in each hidden layer.
+    activation_functions : sequence of callable
+        Activation functions, one per network layer, including the output
+        layer.
+    optimizer : type
+        Optimizer class to instantiate for fitting
+    optimizer_args : dict or None, default=None
+        Additional keyword arguments passed to the optimizer constructor.
+    gamma : float, default=0.03
+        Optimizer learning rate.
+    lmbd : float, default=0.0
+        Regularization strength passed to ``penalty``.
+    cost : callable, default=MSE()
+        Cost function used to train the network.
+    penalty : type, default=Penalty
+        Penalty class instantiated during fitting.
+    penalty_type : {None, "L1", "L2"}, default=None
+        Type of regularization passed to ``penalty``.
+    epochs : int, default=150
+        Number of training epochs.
+    batch_size : int, default=10
+        Number of samples in each training batch.
+    eval_every : int, default=1
+        Evaluate and record training cost every this many epochs.
+    seed : int, default=2026
+        Random seed used to initialize the network and shuffle training data.
+
+    Usage:
+    ---------
+ 
+    LLM assisted
+    """
+
+    def __init__(self,  layer_output_sizes = [50,10], activation_functions = [ReLU, Softmax],
+                  optimizer= Adam, optimizer_args = None, 
+                  gamma=0.03, lmbd=0.0,
+                  cost = MulticlassCrossEntropy, penalty = Penalty, penalty_type = None,
+                  epochs=150, batch_size=10, eval_every=1, seed=2026, check_gradients = False):
+        # store the hyperparameters under the same names; no computation here
+        self.layer_output_sizes = layer_output_sizes
+        self.activation_functions = activation_functions
+        self.gamma = gamma
+        self.lmbd = lmbd
+
+        self.cost = cost
+        self.penalty = penalty
+        self.penalty_type = penalty_type
+        self.optimizer = optimizer
+        self.optimizer_args = optimizer_args
+        
+        self.epochs = epochs
+        self.batch_size = batch_size
+        self.eval_every = eval_every
+        self.seed = seed
+        self.check_gradients = check_gradients
+        
+
+    def fit(self, X, y):
+        """Fit the neural network classifier to the training data.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Training input samples.
+        y : array-like of shape (n_samples,)
+            Continuous target values for the training samples.
+
+        Returns
+        -------
+        self : NeuralNetClassifier
+            Fitted estimator.
+
+        LLM assisted
+        """
+        
+        # X has shape (n, 1), y shape (n,): build the layers from self.seed,
+        # train with your SGD for self.epochs epochs, store the layers in self.layers_
+
+
+        X, y = check_X_y(X, y) # checks X and y
+        # y = y.reshape(-1, 1) # reshapes y
+     
+        penalty_obj = self.penalty(self.penalty_type, self.lmbd)
+        optimizer_obj = self.optimizer(self.gamma, **(self.optimizer_args or {}))  #initializing optimizer    
+
+        activation_functions = []
+        for activation_function in self.activation_functions:
+            activation_functions.append(activation_function())
+
+        self.NN = NeuralNetwork(network_input_size = X.shape[1],
+                                    layer_output_sizes = self.layer_output_sizes,
+                                    activations= activation_functions,
+                                    cost = self.cost(),
+                                    penalty= penalty_obj,
+                                    seed=self.seed)
+
+
+        # Input validation
+        X, y = validate_data(self, X, y, reset=False)
+
+        self.classes_, y_encoded = np.unique(y, return_inverse=True)
+        y_onehot = np.eye(len(self.classes_))[y_encoded]
+
+        self.history = self.NN.train(X = X, y = y_onehot,
+                                       optimizer = optimizer_obj,
+                                       epochs= self.epochs,
+                                       batch_size= self.batch_size, 
+                                       seed=self.seed,
+                                       eval_every= self.eval_every)
+
+        self.layers_ = self.NN.layers
+
+
+        if self.check_gradients: #LLM assisted
+            rng = np.random.default_rng(self.seed)
+            n_check = min(32, len(X))
+            check_idx = rng.choice(len(X), size=n_check, replace=False)
+
+            error = self.NN.gradient_check(X[check_idx], y_onehot[check_idx])
+
+            if not np.isfinite(error) or error > 1e-8:
+                raise ValueError(
+                    f"Gradient check failed: max absolute difference = {error:.2e}"
+                )
+            
+
+
+        return self
+
+    def predict_proba(self, X):
+        """Predict target values for input samples.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Samples for which to predict target values.
+
+        Returns
+        -------
+        y : ndarray of shape (n_samples,)
+            Predicted target values.
+        """
+
+        # Check if fit has been called
+        check_is_fitted(self)
+
+
+        # the network output as a 1D array of length len(X)
+        return np.asarray(self.NN.feed_forward(X))
+
+
+    def predict(self, X):
+        probabilities = self.predict_proba(X)
+        return self.classes_[np.argmax(probabilities, axis=1)]
+
+
+
+
