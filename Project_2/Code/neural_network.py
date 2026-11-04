@@ -202,7 +202,7 @@ class NeuralNetwork:
             Params: 
                 network (NeuralNetwork): the network to train
                 X, y (jnp.ndarray): training data
-                optimizer (int): SGD, RMSprop or Adam
+                optimizer (SGD, RMSprop or Adam)
                 epochs (int): number of passes over the training data
                 batch_sizes (int or None): None: plain gradient descent, otherwise SGD with minibatches
                 seed (int): seed for reshuffeling the data every epoch 
