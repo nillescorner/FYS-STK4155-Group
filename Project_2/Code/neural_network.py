@@ -192,7 +192,7 @@ class NeuralNetwork:
 
 
     def train(
-        self, X, y, optimizer, epochs=150, batch_size=None, seed=2026,
+        self, X, y, optimizer, epochs=500, batch_size=None, seed=2026,
         X_val=None, y_val=None, eval_every=1):
         
         """
@@ -323,7 +323,7 @@ class NeuralNetRegressor(RegressorMixin, BaseEstimator):
         Penalty class instantiated during fitting.
     penalty_type : {None, "L1", "L2"}, default=None
         Type of regularization passed to ``penalty``.
-    epochs : int, default=150
+    epochs : int, default=500
         Number of training epochs.
     batch_size : int, default=10
         Number of samples in each training batch.
@@ -346,7 +346,7 @@ class NeuralNetRegressor(RegressorMixin, BaseEstimator):
                   optimizer_args = None, 
                   gamma=0.03, lmbd=0.0,
                   cost = MSE, penalty = Penalty, penalty_type = None,
-                  epochs=150, batch_size=10, eval_every=1, seed=2026, check_gradients = False):
+                  epochs=500, batch_size=10, eval_every=1, seed=2026, check_gradients = False):
         # store the hyperparameters under the same names; no computation here
         self.layer_output_sizes = layer_output_sizes
         self.activation_functions = activation_functions
@@ -481,7 +481,7 @@ class NeuralNetClassifier(ClassifierMixin, BaseEstimator):
         Penalty class instantiated during fitting.
     penalty_type : {None, "L1", "L2"}, default=None
         Type of regularization passed to ``penalty``.
-    epochs : int, default=150
+    epochs : int, default=500
         Number of training epochs.
     batch_size : int, default=10
         Number of samples in each training batch.
@@ -500,7 +500,7 @@ class NeuralNetClassifier(ClassifierMixin, BaseEstimator):
                   optimizer= Adam, optimizer_args = None, 
                   gamma=0.03, lmbd=0.0,
                   cost = MulticlassCrossEntropy, penalty = Penalty, penalty_type = None,
-                  epochs=150, batch_size=10, eval_every=1, seed=2026, check_gradients = False):
+                  epochs=500, batch_size=10, eval_every=1, seed=2026, check_gradients = False):
         # store the hyperparameters under the same names; no computation here
         self.layer_output_sizes = layer_output_sizes
         self.activation_functions = activation_functions
