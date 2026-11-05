@@ -51,7 +51,8 @@ TRAIN_LS = "-"
 VAL_LS = "--"
 
 #colormap for heatmaps
-MSE_CMAP = LinearSegmentedColormap.from_list("pink_seq", ["#3D0F2E", "#5E1540", "#8E1F55",  "#D6336C", "#F4B6CB", "#FDF0F4"])
+MORE_COLORS = ["#3D0F2E", "#5E1540", "#8E1F55",  "#D6336C", "#F4B6CB", "#FDF0F4"]
+MSE_CMAP = LinearSegmentedColormap.from_list("pink_seq", MORE_COLORS)
 
 def set_style():
     """
