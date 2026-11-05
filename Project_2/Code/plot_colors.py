@@ -18,6 +18,9 @@ COLORS = {
 #Four categorical colors: pink, plum, amber, teal.
 SERIES = ["#D6336C", "#7A2DB0", "#D46A1E", "#00908F"]
 
+#inner color for stars
+STAR = "#EED5A0"
+
 #fixed mapping
 OPTIMIZER_COLORS = {
     "GD":            SERIES[0],
@@ -51,7 +54,8 @@ TRAIN_LS = "-"
 VAL_LS = "--"
 
 #colormap for heatmaps
-MSE_CMAP = LinearSegmentedColormap.from_list("pink_seq", ["#3D0F2E", "#5E1540", "#8E1F55",  "#D6336C", "#F4B6CB", "#FDF0F4"])
+MORE_COLORS = ["#3D0F2E", "#5E1540", "#8E1F55",  "#D6336C", "#F4B6CB", "#FDF0F4"]
+MSE_CMAP = LinearSegmentedColormap.from_list("pink_seq", MORE_COLORS)
 
 def set_style():
     """
