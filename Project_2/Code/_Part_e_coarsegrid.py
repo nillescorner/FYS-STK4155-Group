@@ -34,10 +34,10 @@ cv_splits = mnist_data.kfold_splits(n_splits=5)
 
 # starting with a coarser grid 
 """ Checking gradient before running training  """
-neural_network  = NeuralNetClassifier([50, 10], [ReLU(), Softmax()], Adam, cost=MulticlassCrossEntropy(), 
+neural_network  = NeuralNetClassifier([50, 10], [ReLU, Softmax], Adam, cost=MulticlassCrossEntropy, 
                                         seed=2026, check_gradients=True)
 
-neural_network  = NeuralNetClassifier([50, 10], [ReLU(), Softmax()], Adam, cost=MulticlassCrossEntropy(),
+neural_network  = NeuralNetClassifier([50, 10], [ReLU, Softmax], Adam, cost=MulticlassCrossEntropy,
                                         epochs= 50,
                                         seed=2026)
 

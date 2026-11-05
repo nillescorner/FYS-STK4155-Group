@@ -18,6 +18,9 @@ COLORS = {
 #Four categorical colors: pink, plum, amber, teal.
 SERIES = ["#D6336C", "#7A2DB0", "#D46A1E", "#00908F"]
 
+#inner color for stars
+STAR = "#EED5A0"
+
 #fixed mapping
 OPTIMIZER_COLORS = {
     "GD":            SERIES[0],
