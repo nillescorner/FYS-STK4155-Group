@@ -34,10 +34,10 @@ cv_splits = mnist_data.kfold_splits(n_splits=5)
 
 # starting with a coarser grid 
 """ Checking gradient before running training  """
-neural_network  = NeuralNetClassifier([50, 10], [ReLU(), Softmax()], Adam, cost=MulticlassCrossEntropy(), 
+neural_network  = NeuralNetClassifier([50, 10], [ReLU, Softmax], Adam, cost=MulticlassCrossEntropy, 
                                         seed=2026, check_gradients=True)
 
-neural_network  = NeuralNetClassifier([50, 10], [ReLU(), Softmax()], Adam, cost=MulticlassCrossEntropy(),
+neural_network  = NeuralNetClassifier([50, 10], [ReLU, Softmax], Adam, cost=MulticlassCrossEntropy,
                                         epochs= 50,
                                         seed=2026)
 
@@ -53,4 +53,4 @@ fit_NN = search.fit(x_train, y_train)
 
 #saving model. pretty easy yay NOTE: opening train model only works if enviroment is the same (supposedly)
 ext_name = "x".join(str(len(values)) for values in param_grid.values())
-joblib.dump(search, f"models/best_model_{ext_name}.joblib")
+joblib.dump(search, f"models/best_model_{ext_name}_coarsegrid.joblib")
