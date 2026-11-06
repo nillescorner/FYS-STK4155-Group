@@ -23,6 +23,10 @@ import json
 FIG_DIR = Path(__file__).resolve().parent.parent / "figs"   # Project_2/figs
 FIG_DIR.mkdir(exist_ok=True)
 
+#Path to save models in Project_2/models
+MODEL_DIR = Path(__file__).resolve().parent.parent / "Code/models"   # Project_2/models
+MODEL_DIR.mkdir(exist_ok=True)
+
 #Path in order to save results learning rate results so they stays consistent, LLM Assisted
 RESULTS_DIR = Path(__file__).resolve().parent / "intermediary_results"
 RESULTS_DIR.mkdir(exist_ok=True)
