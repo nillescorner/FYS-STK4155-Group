@@ -10,3 +10,6 @@ seaborn
 jax[cuda13]>=0.4.20
 optax>=0.1.7
 tensorflow[and-cuda]
+Jinja2   
+tensorflow_datasets >= 4.9.10
+importlib_resources >=7.1.0

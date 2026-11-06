@@ -11,10 +11,14 @@ from sklearn.metrics import (confusion_matrix as sk_confusion_matrix, ConfusionM
 from plot_colors import *
 set_style()
 
+import tensorflow_datasets as tfds
+import tensorflow as tf
+import joblib
+import os
 
 
 
-def plot_grid_search_results(fig, axes, search):
+def plot_grid_search_results(fig, axes, search, titles= None):
     """Plot cross-validation and training scores for a two-parameter grid.
 
     The grid must contain exactly one parameter ending in ``gamma`` and one
@@ -126,10 +130,11 @@ def plot_grid_search_results(fig, axes, search):
         cmap=MSE_CMAP,
         xticklabels=[f"{value:.1e}" for value in lambdas],
         yticklabels=[f"{value:g}" for value in gammas],
-        cbar_kws={"label": "MSE" if is_neg_mse else "Score"},
+        cbar=False,
     )
-    axes[0].set_title(f"{n_splits}-fold CV {'MSE' if is_neg_mse else 'score'} ± SE")
-    axes[0].set_ylabel(r"$\gamma$")
+    axes[0].set_title(f"{n_splits}-fold CV {'MSE' if is_neg_mse else 'score'} ± SE" if not isinstance(titles,list) else titles[0])
+    if not isinstance(titles,list):
+        axes[0].set_ylabel(r"$\gamma$")
 
     for i, j in zip(*np.where(within)):
         axes[0].add_patch(
@@ -157,12 +162,13 @@ def plot_grid_search_results(fig, axes, search):
         cmap=MSE_CMAP,
         xticklabels=[f"{value:.1e}" for value in lambdas],
         yticklabels=[f"{value:g}" for value in gammas],
-        cbar_kws={"label": "MSE" if is_neg_mse else "Score"},
+        cbar=False,
     )
-    axes[1].set_title(f"Training {'MSE' if is_neg_mse else 'score'}")
+    axes[1].set_title(f"Training {'MSE' if is_neg_mse else 'score'}" if not isinstance(titles,list) else titles[1])
 
-    for ax in axes:
-        ax.set_xlabel(r"$\lambda$")
+    if not isinstance(titles,list):
+        for ax in axes:
+            ax.set_xlabel(r"$\lambda$")
 
     fig.tight_layout()
 
@@ -539,3 +545,124 @@ def plot_architecture_accuracy(search, penalty_key="neuralnetclassifier__penalty
 
     fig.tight_layout()
     return fig, axes
+
+
+def plot_image(fig,ax, i, predictions, true_labels, images):
+    images = np.asarray(images)
+    true_labels = np.asarray(true_labels)
+    predictions = np.asarray(predictions)
+
+    predicted_label = np.argmax(predictions[i])
+    true_label = true_labels[i]
+    color = SERIES[0] if predicted_label == true_label else COLORS['ols']
+
+    ax.grid(False)
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['bottom'].set_visible(False)
+    ax.spines['left'].set_visible(False)
+    ax.imshow(images[i].squeeze(), cmap=plt.cm.binary)
+    ax.set_xlabel(
+        f"{predicted_label} | Prob :{100 * np.max(predictions[i]):.0f}% | (True: {true_label})",
+        color=color,
+    )
+
+
+def plot_value_array(fig,ax, i, predictions, true_labels):
+    predictions = np.asarray(predictions)
+    true_labels = np.asarray(true_labels)
+
+    predicted_label = np.argmax(predictions[i])
+    bars = ax.bar(range(10), predictions[i], color="#777777")
+    ax.set_xticks(range(10))
+    plt.ylim([0, 1])
+    ax.grid(False)
+
+    bars[predicted_label].set_color(SERIES[0])
+    bars[true_labels[i]].set_color(COLORS['ols'])
+
+
+
+def retrain_with_tensorflow(selected_pipeline, model_name, ds_train, ds_test, ds_info):
+    """Rebuild a selected sklearn classifier in Keras, train it, and report test metrics.
+    
+    LLM assisted"""
+    selected_net = selected_pipeline.named_steps["neuralnetclassifier"]
+    params = selected_net.get_params()
+    tf.keras.utils.set_random_seed(params["seed"])
+
+    penalty_type = params["penalty_type"]
+    penalty_strength = params["lmbd"]
+    if penalty_type == "L2":
+        regularizer = tf.keras.regularizers.L2(penalty_strength)
+    elif penalty_type == "L1":
+        regularizer = tf.keras.regularizers.L1(penalty_strength)
+    elif penalty_type is None or penalty_strength == 0:
+        regularizer = None
+    else:
+        raise ValueError(f"Unsupported penalty type: {penalty_type}")
+
+    activation_map = {
+        "ReLU": "relu",
+        "LeakyReLU": tf.keras.layers.LeakyReLU(),
+        "Sigmoid": "sigmoid",
+        "Identity": None,
+    }
+    layer_sizes = params["layer_output_sizes"]
+    activations = params["activation_functions"]
+    if len(layer_sizes) != len(activations):
+        raise ValueError("The selected model must specify one activation per layer.")
+    if activations[-1].__name__ != "Softmax":
+        raise ValueError("Expected the selected classifier to use a Softmax output.")
+
+    regularizer_args = {"kernel_regularizer": regularizer} if regularizer is not None else {}
+    layers = [
+        tf.keras.layers.Input(shape=tuple(ds_info.features["image"].shape)),
+        tf.keras.layers.Flatten(),
+    ]
+    for width, activation_class in zip(layer_sizes[:-1], activations[:-1]):
+        activation_name = activation_class.__name__
+        if activation_name not in activation_map:
+            raise ValueError(f"Unsupported hidden activation: {activation_name}")
+        layers.append(
+            tf.keras.layers.Dense(
+                width,
+                activation=activation_map[activation_name],
+                **regularizer_args,
+            )
+        )
+    # Keep logits as output; from_logits=True applies a numerically stable softmax loss.
+    layers.append(tf.keras.layers.Dense(layer_sizes[-1], **regularizer_args))
+
+    keras_model = tf.keras.Sequential(layers, name=model_name)
+    keras_model.compile(
+        optimizer=tf.keras.optimizers.Adam(learning_rate=params["gamma"]),
+        loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+        metrics=[tf.keras.metrics.SparseCategoricalAccuracy(name="accuracy")],
+    )
+
+    train_size = ds_info.splits["train"].num_examples
+    steps_per_epoch = (train_size + params["batch_size"] - 1) // params["batch_size"]
+    train_data = (
+        ds_train.unbatch()
+        .batch(params["batch_size"])
+        .repeat()
+        .prefetch(tf.data.AUTOTUNE)
+    )
+    print(f"Training {model_name} with: {params}")
+    history = keras_model.fit(
+        train_data,
+        epochs=params["epochs"],
+        steps_per_epoch=steps_per_epoch,
+        verbose=2,
+        shuffle=False,
+    )
+    test_loss, test_accuracy = keras_model.evaluate(ds_test, verbose=0)
+    print(f"{model_name} test loss: {test_loss:.4f}; test accuracy: {test_accuracy:.4f}")
+    os.makedirs("models", exist_ok=True)
+    save_path = f"models/{model_name}.keras"
+    keras_model.save(save_path)
+    print(f"Saved {model_name} to {save_path}")
+    return keras_model, history

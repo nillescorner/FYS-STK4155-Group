@@ -55,7 +55,9 @@ VAL_LS = "--"
 
 #colormap for heatmaps
 MORE_COLORS = ["#3D0F2E", "#5E1540", "#8E1F55",  "#D6336C", "#F4B6CB", "#FDF0F4"]
+MORE_COLORS_2 = ["#3D0F2E", "#151A5E", "#1F5C8E",  "#3351D6", "#B6E8F4", "#F0FDFA"]
 MSE_CMAP = LinearSegmentedColormap.from_list("pink_seq", MORE_COLORS)
+SCORES_CMAP = LinearSegmentedColormap.from_list("blue_seq", MORE_COLORS_2)
 
 def set_style():
     """

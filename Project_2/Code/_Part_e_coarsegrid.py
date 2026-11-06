@@ -53,4 +53,4 @@ fit_NN = search.fit(x_train, y_train)
 
 #saving model. pretty easy yay NOTE: opening train model only works if enviroment is the same (supposedly)
 ext_name = "x".join(str(len(values)) for values in param_grid.values())
-joblib.dump(search, f"models/best_model_{ext_name}.joblib")
+joblib.dump(search, f"models/best_model_{ext_name}_coarsegrid.joblib")
