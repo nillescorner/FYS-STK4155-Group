@@ -115,15 +115,15 @@ def plot_grid_search_results(fig, axes, search):
         for i in range(len(gammas))
     ])
 
-    # for ax in axes:
-    #     ax.grid(False)
+    for ax in axes:
+        ax.grid(False)
 
     sea.heatmap(
         score,
         ax=axes[0],
         annot=labels,
         fmt="",
-        cmap="plasma",
+        cmap=MSE_CMAP,
         xticklabels=[f"{value:.1e}" for value in lambdas],
         yticklabels=[f"{value:g}" for value in gammas],
         cbar_kws={"label": "MSE" if is_neg_mse else "Score"},
@@ -154,7 +154,7 @@ def plot_grid_search_results(fig, axes, search):
         ax=axes[1],
         annot=True,
         fmt=".3f",
-        cmap="plasma",
+        cmap=MSE_CMAP,
         xticklabels=[f"{value:.1e}" for value in lambdas],
         yticklabels=[f"{value:g}" for value in gammas],
         cbar_kws={"label": "MSE" if is_neg_mse else "Score"},
@@ -445,7 +445,8 @@ def plot_three_parameter_grid(fig, ax, search, parameter_keys=None):
             marker="*",
             s=180,
             edgecolors=COLORS["text"],
-            label="Best CV score",
+            linewidths=1.5,
+            label=f"Best CV score: {values[best_local_index]:0.4f}",
         )
 
         axis.set_xlabel(keys[0].split("__")[-1])
@@ -469,7 +470,6 @@ def plot_three_parameter_grid(fig, ax, search, parameter_keys=None):
         "figure": fig,
         "axes": axes,
     }
-
 
 def plot_architecture_accuracy(search, penalty_key="neuralnetclassifier__penalty_type"):
     """Plot mean CV accuracy by hidden-layer architecture and learning rate.
