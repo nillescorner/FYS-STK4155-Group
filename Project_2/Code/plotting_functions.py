@@ -14,7 +14,7 @@ set_style()
 
 
 
-def plot_grid_search_results(fig, axes, search):
+def plot_grid_search_results(fig, axes, search, titles= None):
     """Plot cross-validation and training scores for a two-parameter grid.
 
     The grid must contain exactly one parameter ending in ``gamma`` and one
@@ -126,10 +126,11 @@ def plot_grid_search_results(fig, axes, search):
         cmap=MSE_CMAP,
         xticklabels=[f"{value:.1e}" for value in lambdas],
         yticklabels=[f"{value:g}" for value in gammas],
-        cbar_kws={"label": "MSE" if is_neg_mse else "Score"},
+        cbar=False,
     )
-    axes[0].set_title(f"{n_splits}-fold CV {'MSE' if is_neg_mse else 'score'} ± SE")
-    axes[0].set_ylabel(r"$\gamma$")
+    axes[0].set_title(f"{n_splits}-fold CV {'MSE' if is_neg_mse else 'score'} ± SE" if not isinstance(titles,list) else titles[0])
+    if not isinstance(titles,list):
+        axes[0].set_ylabel(r"$\gamma$")
 
     for i, j in zip(*np.where(within)):
         axes[0].add_patch(
@@ -157,12 +158,13 @@ def plot_grid_search_results(fig, axes, search):
         cmap=MSE_CMAP,
         xticklabels=[f"{value:.1e}" for value in lambdas],
         yticklabels=[f"{value:g}" for value in gammas],
-        cbar_kws={"label": "MSE" if is_neg_mse else "Score"},
+        cbar=False,
     )
-    axes[1].set_title(f"Training {'MSE' if is_neg_mse else 'score'}")
+    axes[1].set_title(f"Training {'MSE' if is_neg_mse else 'score'}" if not isinstance(titles,list) else titles[1])
 
-    for ax in axes:
-        ax.set_xlabel(r"$\lambda$")
+    if not isinstance(titles,list):
+        for ax in axes:
+            ax.set_xlabel(r"$\lambda$")
 
     fig.tight_layout()
 
