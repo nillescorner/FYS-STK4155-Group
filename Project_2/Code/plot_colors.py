@@ -18,6 +18,9 @@ COLORS = {
 #Four categorical colors: pink, plum, amber, teal.
 SERIES = ["#D6336C", "#7A2DB0", "#D46A1E", "#00908F"]
 
+#inner color for stars
+STAR = "#EED5A0"
+
 #fixed mapping
 OPTIMIZER_COLORS = {
     "GD":            SERIES[0],
@@ -51,10 +54,13 @@ TRAIN_LS = "-"
 VAL_LS = "--"
 
 #colormap for heatmaps
-MSE_CMAP = LinearSegmentedColormap.from_list("pink_seq", ["#3D0F2E", "#5E1540", "#8E1F55",  "#D6336C", "#F4B6CB", "#FDF0F4"])
+MORE_COLORS = ["#3D0F2E", "#5E1540", "#8E1F55",  "#D6336C", "#F4B6CB", "#FDF0F4"]
+MSE_CMAP = LinearSegmentedColormap.from_list("pink_seq", MORE_COLORS)
 
 def set_style():
     """
+    LLM assisted. 
+
     Sets matplotlib defaults so every figure in the project looks the same
     """
 
@@ -72,7 +78,7 @@ def set_style():
         "xtick.color": "#6E5F67",                     #color of labels on x axis                    
         "ytick.color": "#6E5F67",                     #color of labels on y axis
         "legend.frameon": False,                        #removes box around label
-        "legend.fontsize": 11,                           #size of text in labels
+        "legend.fontsize": 11,                          #size of text in labels
         "lines.linewidth": 1.5,                         #default linewidth of plotted lines
         "figure.figsize": (6.7, 4.5),                   #default figure size
         "figure.dpi": 110,                              #resolution of figure

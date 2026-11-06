@@ -1,7 +1,7 @@
 # Python >= 3.10 recommended
 # Install with: pip install -r requirements.txt
 
-## need to add tensorflow and seaborn and scikit-learn
+## need to add tensorflow and seaborn and scikit-learn 
 numpy>=1.24
 matplotlib>=3.7
 scikit-learn>=1.3      # pulls in scipy automatically
@@ -10,3 +10,4 @@ optax>=0.1.7           # optimisers for part f)
 pandas
 seaborn
 tensorflow
+Jinja2                 #for savig dataframes to latex files
