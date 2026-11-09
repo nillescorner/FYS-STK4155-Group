@@ -1,0 +1,1055 @@
+\documentclass[reprint,english,notitlepage, floatfix]{revtex4-2}  % defines the basic parameters of the document
+
+% if you want a single-column, remove reprint
+
+% allows special characters (including æøå)
+\usepackage[utf8]{inputenc}
+\usepackage[main=english, norwegian]{babel}
+\usepackage{xfrac}
+\usepackage[table]{xcolor} % nice colors on tabkes tihi
+\usepackage{gensymb}
+\usepackage{booktabs}
+\newcommand{\sci}[2]{#1\times 10^{#2}}
+\usepackage{multirow}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{verbatim}
+
+%test if this helps with weird figs
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\bottomfraction}{0.8}
+\renewcommand{\textfraction}{0.1}
+\renewcommand{\floatpagefraction}{0.8}
+\renewcommand{\dbltopfraction}{0.9}
+\renewcommand{\dblfloatpagefraction}{0.8}
+\setcounter{topnumber}{3}
+\setcounter{dbltopnumber}{2}
+\setcounter{totalnumber}{5}
+\usepackage{placeins}
+
+%remove this if wanted to
+\raggedbottom
+% preamble
+
+%% note that you may need to download some of these packages manually, it depends on your setup.
+%% I recommend downloading TeXMaker, because it includes a large library of the most common packages.
+
+\usepackage{physics,amssymb}  % mathematical symbols (physics imports amsmath)
+\usepackage{graphicx}         % include graphics such as plots
+\usepackage{xcolor}           % set colors
+\usepackage{hyperref}         % automagic cross-referencing (this is GODLIKE)
+\usepackage{tikz}             % draw figures manually
+\usepackage{listings}         % display code
+\usepackage{subcaption}        % imports a lot of cool and useful figure commands
+\usepackage{bm}
+\usepackage{mathrsfs}
+\usepackage{cleveref} % allows the use of \Cref{} and \cref{}, my faves!
+
+\bibliographystyle{apsrev4-2} % style of bibliography
+
+% defines the color of hyperref objects
+% Blending two colors:  blue!80!black  =  80% blue and 20% black
+\hypersetup{ % this is just my personal choice, feel free to change things
+    colorlinks,
+    linkcolor={red!50!black},
+    citecolor={blue!50!black},
+    urlcolor={blue!80!black}}
+
+%% Defines the style of the programming listing
+%% This is actually my personal template, go ahead and change stuff if you want
+\lstset{ %
+	inputpath=,
+	backgroundcolor=\color{white!88!black},
+	basicstyle={\ttfamily\scriptsize},
+	commentstyle=\color{magenta},
+	language=Python,
+	morekeywords={True,False},
+	tabsize=4,
+	stringstyle=\color{green!55!black},
+	frame=single,
+	keywordstyle=\color{blue},
+	showstringspaces=false,
+	columns=fullflexible,
+	keepspaces=true}
+
+
+\begin{document}
+
+
+\title{FYS-STK4155: Project 2 \\ \small Github repository: \url{https://github.com/nillescorner/FYS-STK4155-Group/tree/main/Project_2}}
+\date{\today}               
+\author{Pernille Xu Amundsen, Maria Andersen, Hannah Westgaard}
+
+\numberwithin{equation}{subsection}
+
+
+\newpage
+
+\begin{abstract}
+    Neural networks can learn their own features from raw data, but they are more costly than simpler methods. In this project, we implement a feed-forward network with backpropagation. We apply the network to regression on the one-dimensional Runge function and to classification of handwritten digits in the MNIST data set, and compare it with OLS, Ridge, Lasso and logistic regression. For the Runge function, a network with one hidden layer of 50 sigmoid nodes, trained with SGD and Adam, reached a test MSE of 0.013, which was the lowest error for different adaptive optimizers, which we got by using the learning rate $\gamma = 3.2 \cdot 10^{-3}$. For this smooth, one-dimensional function, one hidden layer with 50 nodes is sufficient, when using sigmoid, as larger networks gave no further improvement.  ReLU and LeakyReLU did best at $\gamma = 0.01$ with test MSEs of 0.0157 and 0.0158. For these activation functions, two hidden layers with 50 nodes were sufficient. With $\ell_1$ and $\ell_2$ penalties  ($\gamma = 10^{-3}$, and $\lambda = 10^{-4}$ for sigmoid and $\lambda=10^{-3}$ for LeakyReLU) the networks reached test MSEs of 0.0147-0.0163 compared to 0.0219 and 0.0220 for Ridge and Lasso with parameters from Project 1. Neural networks were more costly to train, but gave lower MSE than Project 1 methods. The neural network built for Runge was applied to MNIST with minimal structural changes but different parameters. It is clear that the number of hidden layers and their nodes had the greatest effect. The best model achieved an accuracy of 98.1\%, a significant increase from the baseline logistic regression of 93\%, but at 11 times the computational cost. 
+
+    
+\end{abstract}
+
+
+\maketitle  % creates the title, author, date & abstract
+
+\section{Introduction} \label{sec: Introduction}
+
+    Neural networks are a machine learning method that is inspired by the human brain, in the way it finds patterns and makes predictions. They work by stacking artificial simple "neurons" in layers and learns to recognize patterns in order to make an educated guess, just as our brain does every day \cite{IBM_neural_networks}. 
+    
+    Neural networks are widely used in a range of different fields, and in this project we will investigate two different types of problems, regression and classification problems. A typical regression problem is that of house price predictions, which neural networks can be trained on in order to give accurate predictions based on property features of the house. An example of a classification problem could be image recognition, where an image of a fruit is sent in and the network then has to predict what fruit it is. 
+    
+    In project 1 \cite{p1}, we trained a linear regression model, where we chose the features in the design matrix. For a neural network we instead send in the input data, and let the network itself learn its own features. The network does its learning in what is called hidden layers, that are in-between the input layer and the output layer. This makes the network far more flexible, since it can represent features we would not think to include ourselves, but it comes at a much higher computational cost and with many more choices to tune (chapter 8 in \cite{lecture_book}). The central question of this project is therefore when a neural network is with the extra cost compared with simpler methods, such as linear and logistic regression.
+    
+    In order to compare to the simpler linear model we made in Project 1, we will use the same one-dimensional Runge function on our neural network. This will be the regression problem we will test our network on, but we will also look at a classification problem, where we will be using the MNIST database \cite{MNIST}. This is a database containing $70\,000$ images of handwritten digits from 0 to 9, which we will use to train our network and then later see if it can predict the images correctly when tested. 
+    
+    We have, in this project, written our own feed-forward network with backpropagation, and verified that the gradients from our backpropagation agree with automatic differentiation. We then train the network using some of the different gradient methods we used in Project 1: plain GD, SGD, SGD with RMSprop and SGD with Adam. For the regression problem, we compare the network predictions with the predictions from the OLS method from Project 1. For our neural network, we study the effect of changing different parameters, such as the learning rate, the network size and what activation function is used, where we use sigmoid, ReLU and Leaky ReLU. We also add the $\ell_1$ and $\ell_2$ penalty terms, to study how these affect the predictions made. For the classification problem, we use a softmax output layer with cross entropy, and compare the network with logistic regression. 
+    
+    In \autoref{sec: Theory} the theory of the cost functions and their gradient, and activation functions are presented. In \autoref{sec: Methods}, the methods and implementation of the network is described. In \autoref{sec: Results and Discussion}, the results are presented, as well as discussed. The code for this project is found in the \href{https://github.com/nillescorner/FYS-STK4155-Group/tree/main/Project_2}{GitHub repository}. 
+    
+
+\section{Theory} \label{sec: Theory}
+
+\subsection{Cost functions and gradients}
+    \subsubsection{Mean Square Error (MSE)}
+    We will need the expression for the cost function of the mean squared error (MSE), which is given as
+    \begin{align} \label{eq: MSE costfunc OLS}
+        C(\bm{\theta}) = \frac{1}{n}\sum_{i = 1}^n \left(y_i - \tilde{y}_i\right)^ 2 = \frac{1}{n}||\bm{y} - \tilde{\bm{y}}||_2^2,
+    \end{align}
+    where $\bm{\theta}$ are the model parameters, $n$ is number of data points, $y_i$ is the target data point and $\tilde{y}$ is the model prediction. The gradient of this cost function is
+    \begin{align*}
+        \frac{\partial C}{\partial \tilde{y}_i} = \frac{2}{n}\left(\tilde{y}_i - y_i\right),
+     \end{align*}
+     and with a linear model, $\tilde{\bm{y}} = \bm{X}\bm{\theta}$, so the gradient becomes
+     \begin{align}\label{eq: gradient of MSE cost OLS}
+         \nabla_{\bm{\theta}} C = \frac{2}{n} \bm{X}^T \left(\bm{X}\bm{\theta} - \bm{y}\right).
+     \end{align}
+     This cost function, and corresponding gradient is for ordinary least squares (OLS), as there is no penalty term. \\
+     For Ridge, with a $\ell_2$ norm, we have the cost function and corresponding gradient, given as 
+     \begin{align}\label{eq: MSE costfunc Ridge}
+         & C_{L_2}(\bm{\theta}) = \frac{1}{n} ||\bm{y} - \tilde{\bm{y}}||_2^2 + \lambda||\bm{\theta}||_2^2,\\ \label{eq: gradient of MSE cost Ridge}
+         & \nabla_{\bm{\theta}} C_{L_2} = \frac{2}{n} \bm{X}^T \left(\bm{X}\bm{\theta} - \bm{y}\right) + 2\lambda\bm{\theta},
+     \end{align}
+     where $\lambda$ is the penalty. \\
+     For Lasso, with a $\ell_1$ norm, we have the cost function and corresponding gradient, given as
+    \begin{align}\label{eq: MSE costfunc Lasso}
+     & C_{L_1}(\bm{\theta}) = \frac{1}{n} ||\bm{y} - \tilde{\bm{y}}||_2^2 + \lambda||\bm{\theta}||_1,\\ \label{eq: gradient of MSE cost Lasso}
+     & \nabla_{\bm{\theta}} C_{L_1} = \frac{2}{n} \bm{X}^T \left(\bm{X}\bm{\theta} - \bm{y}\right) + \lambda \text{ sgn}(\bm{\theta}),
+    \end{align}
+    where $|\theta_j|$ is not differentiable at 0, so we have the $\text{ sgn}(\bm{\theta})$ function which is given as
+    \begin{align*}
+        \text{sgn}(\bm{\theta}) = 
+        \begin{cases}
+            + 1, & \theta_j > 0 \\
+            0, & \theta_j = 0 \\
+            - 1, & \theta_j < 0
+        \end{cases}
+    \end{align*}
+     
+    \subsubsection{Binary cross entropy}
+    
+    The binary cross entropy is used for binary classification problems, and the cost function is given as (eq.5.13 in \cite{lecture_book})
+    \begin{align}\label{eq: cost func of binary cross entropy}
+        C(\bm{\theta}) = - \sum_{i = 1}^n \left[y_i \log p_i + (1 - y_i) \log (1 - p_i)\right],
+    \end{align}
+    where $p_i = \sigma \left(\theta_0 + \theta_1 x_i\right)$ is the probability, and $\sigma$ is the Sigmoid function (eq. 5.3 in \cite{lecture_book}). The gradient of the cost function (eq. 5.17 in \cite{lecture_book}),  becomes 
+    \begin{align}
+        \nabla_{\bm{\theta}} C = - \bm{X}^T \left(\bm{y} - \bm{p}\right).
+    \end{align}
+    This is again the cost function without a penalty term. We can add the $\ell_1$ and $\ell_2$ norm terms again to get the expressions for Lasso and Ridge. We get
+    \begin{align}
+        & C_{L_2} = C + \lambda ||\bm{\theta}||_2^2, \: \: \nabla_{\bm{\theta}} C_{L_2} = \nabla_{\bm{\theta}} C + 2\lambda\bm{\theta}\\
+        & C_{L_1} = C + \lambda ||\bm{\theta}||_1, \: \: \nabla_{\bm{\theta}} C_{L_1} = \nabla_{\bm{\theta}} C + \lambda\text{ sgn}(\bm{\theta})
+    \end{align}
+    
+    \subsubsection{Multiclass cross entropy}
+    
+    For multiclass cross entropy, the targets are one-hot encoded, meaning that only the sample belonging to the class we are in will contribute. The softmax function will turn the values it gets into probabilities, in the following way
+    \begin{align*}
+        p_{ik} = \frac{\exp(z_{ik})}{\sum_{l = 1}^K\exp(z_{il})}, 
+    \end{align*}
+    and the cost function will be (eq. 5.28 in \cite{lecture_book})
+    \begin{align}\label{eq: cost func of multiclass cross entropy}
+        C = - \sum_{i = 1}^n \sum_{k = 1}^K y_{ik} \log p_{ik},
+    \end{align}
+    where $K$ is the number of classes. To find the gradient of the cost function (eq. 5.29 in \cite{lecture_book}) we first find the derivative of the softmax, then we find the derivative of the cost with respect to the probabilities, and lastly use the chain rule so that we in the end obtain
+    \begin{align}\label{eq: gradient for cost of multicross}
+        \nabla_{\bm{\theta}} C = - \bm{X}^T \left( \bm{y}_k - \bm{p}_k\right)
+    \end{align}
+    
+
+\subsection{Activation functions}\label{subsec: act_funcs}
+
+    We will in this project, test three different activation functions: the Sigmoid function, the Rectified Linear Unit (ReLU) function and the Leaky ReLU function. \\
+    The Sigmoid function, and its first derivative (eq. 8.22 in \cite{lecture_book}, is given as 
+    \begin{align}\label{eq: Sigmoid function}
+        & \sigma (z) = \frac{1}{1 + e^{-z}},\\
+        & \sigma '(z) = \frac{e^{-z}}{\left(1 + e^{-z}\right)^2} = \sigma(z) \left[1 - \sigma(z)\right]. \label{eq:sigmoid_der}
+    \end{align}
+    The ReLU function, and its first derivative (eq. 8.23 in \cite{lecture_book}, is given as
+    \begin{align}\label{eq: ReLU function}
+        & \text{ReLU}(z) = \text{max} (0, z),\\
+        & \text{ReLU}'(z) = 
+        \begin{cases}
+            1, & z > 0 \\
+            0, & z < 0 \label{eq: relu_der}
+        \end{cases}.
+    \end{align}
+    The Leaky ReLU function, and its first derivative (eq. 8.24 in \cite{lecture_book}, is given as
+    \begin{align}\label{eq: LeakyReLU_function}
+        & \text{LReLU}(z) = 
+        \begin{cases}
+            z, & z > 0 \\
+            \alpha z, & z \leq 0
+        \end{cases}, \: \: \alpha = 0.01\\
+        & \text{LReLU}'(z) = 
+        \begin{cases}
+            1, & z > 0 \\
+            \alpha, & z < 0 \label{eq: leakyrelu_der}
+        \end{cases}.
+    \end{align}
+    
+
+\section{Methods}\label{sec: Methods}
+
+\subsection{Data}\label{sec:data}
+
+In this project we test our neural network on a regression problem, using the Runge function, and a classification problem, using the MNIST database. 
+
+As in project 1 \cite{p1}, we generate $n = 100$ points uniformly in $x \in [-1, 1]$ and targets $y = f(x) + \epsilon$, where $f$ is the Runge function and $\sigma \sim \mathcal{N}(0, \sigma^2)$, with $\sigma^2  = 0.01$ is the noise. The data is split into 80 \, \% training and 20\, \% test data, with the same split as project 1, so that the network and OLS are evaluated on the same points. The network takes in the raw $x$ data as its only input feature, as it learns its own features. The input is scaled and centred, using the mean and standard deviation of the training data only. 
+
+For the classification problem we use the MNIST data set. We use the standard split into 60 \, 000 training and 10\, 000 test images. Each $28 \times 28$ image is flattened to a vector of 784 features, and the pixel values are scaled to $[0, 1]$. The labels are one-hot encoded for the multiclass cross entropy. The test images is used only once for the final evaluation. 
+
+
+\subsection{Implementation of the network}\label{sec:implementation}
+
+The network is implemented as a class \texttt{NeuralNetwork}, which stores the weights and biases of each layer together with one activation function per layer, a cost function and an optional penalty term. Activation function, cost function and penalties are implemented in separate classes, where we can collect the function and its derivative, as written in \autoref{sec: Theory}. This allows the network to be set up with any combination of these, without changing the structure of the actual network. The optimizers implemented separately, they take the gradient computed by the network and return the parameter updates. 
+
+The samples are stored in the rows of the input matrix, and the weight matrix of layer $l$ has shape $(n_{l-1}, n_l)$, where $n_l$ is the number of nodes in the layer. The feed-forward pass computes
+\begin{align*}
+    & \boldsymbol{z}^l = \boldsymbol{a}^{l-1} \boldsymbol{W}^l + \boldsymbol{b}^l,\\
+    & \boldsymbol{a}^l = f(\boldsymbol{z}^l),
+\end{align*}
+with $\boldsymbol{a}^0$ being the input (sec. \href{https://educationalmaterialuio.github.io/MachineLearningUiO/doc/LectureNotes/_build/html/chapter8.html#notation-and-the-feed-forward-pass}{8.5} in \cite{lecture_book}). Each layer therefore has $(n_{l-1} + 1) \, n_l$ parameters. 
+
+The weights are drawn from a normal distribution $\mathcal{N}(0, 1 / n_{l-1})$, so that the variance of $\boldsymbol{z}^l$ is independent of the number of inputs to the layer. With unscaled weights, $\boldsymbol{z}$ grows with the width, which saturates the sigmoid and makes the gradients vanish. The biases are set to a small constant, $0.01$, so that all nodes start in the active region of the ReLU-type activations (sec. \href{https://educationalmaterialuio.github.io/MachineLearningUiO/doc/LectureNotes/_build/html/chapter8.html#vanishing-and-exploding-gradients}{8.9} in \cite{lecture_book}).
+
+For regression, the output layer has a single node with a linear activation, $f^L(z) = z$, since the output must be able to take any real value. For classification, the output layers is the same size as the possible classifications with softmax output. In the case MNIST, there are 10 nodes with each node representing one digit.
+
+The gradients are computed with backpropagation, and the error of the output layer is 
+\begin{align*}
+    \boldsymbol{\delta}^L = f'(\boldsymbol{z}^L) \circ \frac{\partial C}{\partial \boldsymbol{a}^L} ,
+\end{align*}
+and it is propagated backward through the layers as 
+\begin{align}\label{eq:delta_recursion}
+    \boldsymbol{\delta}^l = \left(\boldsymbol{W}^{l + 1} \boldsymbol{\delta}^{l + 1} \right) \circ f'(\boldsymbol{z}^l),
+\end{align}
+giving the gradients
+\begin{align*}
+    &\frac{\partial C}{\partial w_{ij}^l}  = \delta _j^l a_i^{l-1},\\
+    & \frac{\partial C}{\partial b_{j}^l}  =  \delta^l_j.
+\end{align*}
+
+Unrolling (\autoref{eq:delta_recursion}) down to layer $\bm{l}$ gives,
+
+\begin{align}\label{eq:delta_unrolled}
+    \boldsymbol{\delta}^l = \left[ \prod_{k=l}^{L-1} \operatorname{diag}\left(f'(\boldsymbol{z}^k)\right) \boldsymbol{W}^{k+1} \right] \boldsymbol{\delta}^L,
+\end{align}
+
+a product of $\bm{L} - \bm{l}$ factors. If these factors are lower than one, they usually shrink geometrically, if they're above one they grow geometrically. Neither is survivable \cite{chapter8}. 
+
+The derivative of the softmax function is not elementwise, so for the softmax output combined with the cross entropy we instead use the simplified output error $\boldsymbol{\delta}^L = \boldsymbol{P} - \boldsymbol{Y}$ (sec. \href{https://educationalmaterialuio.github.io/MachineLearningUiO/doc/LectureNotes/_build/html/chapter8.html#the-four-equations-of-backpropagation}{8.8.4} in \cite{lecture_book}).
+
+When an $\ell_1$ or $\ell_2$ penalty is used, its gradient \autoref{eq: gradient of MSE cost Lasso} or \autoref{eq: gradient of MSE cost Ridge} is added to to the gradient of each weight matrix. The $\ell_2$ penalty shrinks the weights towards zero, whereas the $\ell_1$ penalty can set a small weights to zero. The penalty is applied to the weights only and not to the biases, since the biases only shift the activations and do not contribute to the flexibility of the model. 
+
+\subsubsection{Verification}
+
+To verify the backpropagation, we compare the gradients it gives with the gradients of the same cost function computed by automatic differentiation with \texttt{jax.grad} \cite{jax}. The comparison is made for the initial weights, and we report the largest absolute difference over all weights and biases (Section ~\ref{sec:res_verification}).
+
+\subsection{Training and optimizers}
+In project 1, the cost function could be found analytically and gave the linear regressor a starting point due to the cost function being convex as a result of the relatively simple gradient landscape. For a neural network this is no longer valid as the non-linearity of the activation functions in hidden layers make the cost function non-convex, with no closed form solution. The result depends entirely on how the optimizer descends through the cost function. The initial weights, the learning rate and the size of the minibatches decide both whether the training converges at all, and to which minimum. Incorrectly chosen learning rates leads to divergence or convergence in flat regions. Different initial weights can lead to different final solutions. For that reason, same initial weights are used across methods and learning rates, and is why we repeat key results for several seeds.
+
+The network is trained with the gradient methods from project 1, adapted to update the weights and biases of every layer. We will use: plain gradient descent (GD), stochastic gradient descent (SGD), and SGD with adaptive learning rates of RMSprop and Adam (all these methods and their equations are described in project 1 \cite{p1}). GD computes the gradient from the full training set, 80 points, and makes one update per epoch, while the stochastic methods use minibatches of 16 samples, giving $80 / 16 = 5$ updates per epoch for the Runge data. For MNIST, the updates per epoch are set as in \cref{apdx:tab:_part_e_models}. For RMSprop we use the decay rate of $\rho = 0.9$, and for Adam the decay rates $\beta_1 = 0.9$ and $\beta_2 = 0.999$, with $\epsilon = 10^{-8}$ in both to avoid division by zero. These values are the typical values, given in \cite{lecture_book}, and only the learning rate $\gamma$ is tuned. Unless stated otherwise, the networks are trained for 500 epochs. 
+
+In each epoch, the training data is shuffled and divided into minibatches. For each minibatch, the gradients are computed with backpropagation, the optimizer computes the update, and the weights and biases are updated.
+
+We used a fixed seed (2026) for data generation, the train-test split, weight initialisation and minibatch shuffling. The same random numbers are drawn on every run and the results are reproducible. Differences in results come from the hyperparameters or optimizers, not from randomness. However, results can still depend on the initial weights and minibatch order, so we averaged over five seeds when comparing architectures. We only did this when comparing architectures since it's computationally costly as an extra seed repeats a full run.
+
+
+\subsection{Experiments and hyperparameter search}
+
+To find a suitable learning rate for each gradient method, we perform a grid search over nine logarithmically spaced values of the learning rate $\gamma \in \{10^{-4} , 10^{0}\}$. For each combination of learning rate and gradient method (GD, SGD, SGD + RMSprop, SGD + Adam), we train a network with one hidden layer of 50 sigmoid nodes for 500 epochs, starting from the same initial weights, and record the test MSE after the last epoch. Runs where the MSE grows without bounds are marked as diverged.
+
+For each method, the learning rate with the lowest MSE is chosen, and the best overall is used in further analysis. Note that the learning rate is selected on the test MSE, rather than on a separate validation set, so the reported test MSE of the selected model is slightly optimistic. 
+
+
+To save computation time we reused the best optimizer for sigmoid (SGD + Adam) for ReLU and LeakyReLU and swept the same over learning rates. Similarly to sigmoid, $\gamma$ was chosen from the lowest test MSE, so this MSE is slightly optimistic. 
+
+With $\gamma$ fixed, we varied the network size with 1-5 hidden layers and 1-100 nodes per layer for each of the activation function without a validation set for a fair comparison with Project 1. Overfitting appears as a growing gap between training and test error \cite{project2_task}, so we graphed both over long training runs. We also trained deeper networks to test for unstable gradients.
+
+With the chosen architecture, we tuned $\lambda$ and $\gamma$ for the $\ell_1$ and $\ell_2$ penalties using 5-fold cross-validation on the training data, scaling inside each fold to avoid leakage and withholding a test set until the very end. We pick the most regularized combination (largest $\lambda$, smallest $\gamma)$ whose MSE is within one standard error (1SE) of the lowest MSE (the 1SE rule), where
+
+\begin{align*}
+    \text{SE} = \frac{\hat{\sigma}}{\sqrt{k-1}},
+\end{align*}
+
+and $\hat{\sigma}$ is the standard deviation of the validation MSEs over the k = 5 folds derived by Scikit-learn. 
+
+The chosen networks are evaluated once on the withheld test set and compared with the Ridge and Lasso using the best parameters from Project 1. 
+
+Since cross-validation over 500 epochs is costly, we only use one seed. However, cross-validation gives five different combinations of train and validation splits which will give an estimate of the uncertainty. (see \cite{p1} for more on cross-validation). 
+
+The training for the MNIST dataset follows a mostly similar approach, but with Multiclass cross-entropy as the cost function instead of MSE. We first run through a coarse grid as in \cref{fig:Part_e_CoarseGrid} with fewer epochs to get a general idea of suitable parameters for training finer models. In order to minimize time setting up training grids, a wide grid with 105 combinations (see \cref{apdx:tab:_part_e_models} for parameters), each with 150 epochs was used. Here we varied all hyperparameters ($\lambda, \gamma$, penalty type, number of nodes per layer) except for the hidden layer activation functions which were all ReLU, with softmax outputs. The models output probability distributions for each digit, where the digit with the highest probability is deemed as the predicted digit during evaluation. 
+
+Out of the big grid trained, two models were chosen. The best model, meaning the model with the highest accuracy, and the best cheapest model, being that within the 1SE rule. We could group our models into four 'clusters' based on fitting time and accuracy, where we chose our cheapest cluster model (marked in \cref{fig:Part_e_ScoreVsFit}). Parameters for the best and the cheapest cluster model were extracted and retrained using the Keras module in TensorFlow (TF). From hereof three sets of models will be discussed. 1. the rough grid models, 2. \textit{Our Own Best Model}, \textbf{OOBM}, and the best model of the significantly cheaper model referred to as \textit{Our Own Cheapest Model}, \textbf{OOCM}, and 3. the TF models based OOBM and OOCM respectively named \textbf{TFBM} and \textbf{TFCM}.
+
+\subsection{Evaluation and baselines}
+
+The performance of the regression models is measured by the mean squared error (MSE, \autoref{eq: MSE costfunc OLS}) on the test set, computed on the scaled targets. Since centring the targets only shift them by a constant, the MSE is the same as on the original scale. The data contains noise with variance $\sigma^2 = 0.01$. It is the noise floor, the lowest MSE any model can we expected to reach, and compare the models by how close they come to it. 
+
+As a baseline for the regression, we use OLS with the degree that gave the lowest MSE in project 1 (degree 8). The OLS solution is computed in closed form with the same train/test split and the same scaling as for the network. The two methods are evaluated on exactly the same test points. 
+
+When we use the $\ell_1$ and $\ell_2$ norms, the baselines are Lasso and Ridge regression from Project 1, with degree = 11 and $\lambda = 7.28 \times 10^{-5}$ and $\lambda = 3.56 \times 10^{-5}$ respectively. 
+
+For MNIST we set a logistic regression model, \textbf{LG}, as the baseline. It is the bare minimum of a neural network. We are looking for any increase in the reported metrics from the baseline, which is what really determines how good our model is.
+
+Evaluating classifiers is slightly more complicated. Though a low cost is ideal, a classifier is better evaluated by it confusion matrix (CM), where number of combinations of true labels vs predictions are plotted. A perfect result would be entirely diagonal from top left to bottom right as it represents true positives(TP). All other labels represent false positives(FP). We can also have true negatives(TN) and false negatives(FN). What is defined as a correct prediction can vary as threshold can be manually defined. To investigate the threshold, we use the receiver operating characteristic (ROC), where the threshold for a correct prediction is varied. The Area Under the Receiver Operating Characteristic Curve (ROC AUC) tells us how well a binary classifier does, where a value of 1 is perfect and 0.5 means random guessing\cite{SKlearn_metrics}. 
+
+
+\begin{align}
+    \text{Accuracy} =& \frac{TP + TN}{TP + TN + FP + FN} \label{eq:Accuracy}\\[1em]
+    \text{Precision} =& \frac{TP}{TP + FP} \label{eq:Precision}\\[1em]
+    \text{Recall} =& \frac{TP}{TP + FN} \label{eq:Recall}\\[1em]
+    F_1 =& \frac{2 \cdot \text{Precision} \cdot \text{Recall}}{\text{Precision} + \text{Recall}}  \notag \\ 
+    =&\frac{2\,TP}{2\,TP + FP + FN} \label{eq:F1}
+\end{align}
+
+Accuracy (\cref{eq:Accuracy}) is a decent measure when the classes are balanced, as in our case. It reports all correct predictions over the total. Precision (\cref{eq:Precision}) reports fraction of TPs of all positives, while recall (\cref{eq:Recall}) true positives were found out of all positives, including the ones wrongly labelled as negative. Precision and recall often go hand in hand, where if the threshold for a positive is lowered the precision increases, but recall decreases as false negatives increase too. Which is most important depends on the goal of the model. F1 (\cref{eq:F1}) combines the two, describing the models ability to correctly identify positives, and is only high when both precision and recall are. One has to interpret accuracy, precision, recall and the F1-score in light of the CM\cite{lecture_book}. 
+
+
+\section{Results and Discussion}\label{sec: Results and Discussion}
+
+\subsection{Verification of the implementation}\label{sec:res_verification}
+% Short: gradient check vs jax.grad (~1e-16) for all architectures and activations.
+% Optional: comparison with Scikit-Learn/PyTorch.
+% This shows that all the following results rest on a correct implementation.
+
+The gradient given by backpropagation is checked against the automatic differentiation of \texttt{jax.grad} from the JAX library \cite{jax}, with both gradients given by the initial weights of each network, on the scaled training data. For a Runge network with one hidden layer of 50 sigmoid nodes, the largest difference is $ 2.8 \cdot 10 ^ {-16}$
+\autoref{tab:network_sizes} shows gradient checks across four differently sized networks all staying between $10^{-17}$ and $10^{-15}$.
+
+These differences are of the same order as the machine precision of 64-bit floating point numbers, which is about $2.2 \cdot 10^{-16}$. This tells us that the gradients we get from backpropagation are correct, and the results will therefore not be affected by errors in the gradient of our network. 
+
+\subsection{Regression with a sigmoid network}\label{sec:res_b} % maria, part b).  
+
+\subsubsection{Learning rate sweep and gradient method}\label{sec:learning rate sweep}
+% Heat map (gamma x optimizer), Table: best gamma per optimizer,
+% 2x2 convergence plot. Discuss: GD vs SGD (number of updates), why Adam/RMSprop
+% are more robust, where training diverges.
+
+When using sigmoid-only network, to get the most accurate result, we want to use the optimizer method that performs the best, along with the best learning rate. To find an optimal value we do a learning rate sweep in the interval $\gamma \in [10^{-4}, 10^{0}]$. \autoref{fig:heatmap_lr_optimizers} shows the test MSE of the $1 \times 50$ sigmoid network for each combination of learning rate and gradient method, and \autoref{tab:optimizers} gives the best learning rate for each method.  The darker colour shows the lower MSE, and the methods with adaptive learning rates clearly perform better. SGD + Adam reaches the lowest test MSE, $0.0127$ at $\gamma = 3.2 \cdot 10^{-3}$. 
+
+Part of the difference between GD and SGD comes from the number of updates, with 80 training points and minibatches of 16, SGD makes five updates per epoch, while GD makes one. In the following we will use SGD + Adam with $\gamma = 3.2 \cdot 10^{-3}$.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Best learning rate $\gamma$ and the corresponding test MSE for each gradient method,
+    from a scan over $\gamma \in [10^{-4}, 10^{0}]$. All runs use a
+    $1 \times 50$ sigmoid network.}
+    \label{tab:optimizers}
+    \begin{tabular}{lcc}
+        \toprule
+        Optimizer & Best $\gamma$ & Test MSE \\
+        \midrule
+        GD (full batch)  & $1.0 \cdot 10^{-1}$ & 0.0432 \\
+        SGD              & $1.0 \cdot 10^{-1}$ & 0.0229 \\
+        SGD + RMSprop    & $3.2 \cdot 10^{-2}$ & 0.0161 \\
+        SGD + Adam       & $3.2 \cdot 10^{-3}$ & \textbf{0.0127} \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\begin{figure*}[htbp]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figs/Part_b_heatmap_lr_optimizers.pdf}
+    \caption{Test MSE on the Runge data after 500 epochs over a grid of learning rates and gradient methods for the $1 \times 50$ sigmoid network with a linear output show that the adaptive methods reach the lowest MSE and work well over a wider range of $\gamma$, while plain GD and SGD need larger learning rates and diverge for $\gamma = 1$.}
+    \label{fig:heatmap_lr_optimizers}
+\end{figure*}
+
+\subsubsection{Network size}
+
+\autoref{tab:network_sizes} shows that adding a second hidden or increasing the number of nodes increases the number of parameters, but leaves the MSE unchanged. 
+
+In \autoref{fig:fit_network_sizes} the networks with two hidden layers performs better at the peak of the function, and in \autoref{fig:mse_network_sizes} they reach their lowest MSE in fewer epochs. With a single seed, and only 100 data points, the differences between the different sized networks are smaller than we can resolve. For this smooth, one-dimensional function, one hidden layer with 50 nodes is therefore sufficient, when using sigmoid. 
+
+\begin{table}[htbp]
+    \centering
+    \caption{Train and test MSE for different network sizes (hidden layers $\times$ nodes per layer),
+    trained with Adam ($\gamma = 3.2 \cdot 10^{-3}$). The last
+    column is the largest difference between the gradients from our backpropagation and from
+    \texttt{jax.grad}.}
+    \label{tab:network_sizes}
+    \begin{tabular}{lcccc}
+        \toprule
+        Network & Parameters & Train MSE & Test MSE & Gradient check \\
+        \midrule
+        $1 \times 50$  & 151    & 0.0147 & 0.0127 & $2.8 \cdot 10^{-16}$ \\
+        $1 \times 100$ & 301    & 0.0148 & 0.0127 & $4.4 \cdot 10^{-16}$ \\
+        $2 \times 50$  & 2\,701  & 0.0140 & 0.0129 & $2.2 \cdot 10^{-16}$ \\
+        $2 \times 100$ & 10\,401 & 0.0138 & 0.0127 & $2.8 \cdot 10^{-17}$ \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+
+\subsubsection{Comparison with OLS}
+% Table: NN vs OLS (+ noise floor), fit plot with NN and OLS.
+% Discuss: Runge phenomenon at the edges, cost vs gain.
+
+\autoref{tab:nn_vs_ols} compares the best network with OLS using the best polynomial degree from project 1. The network reaches a test MSE of $0.0131$, compared with $0.0187$ for OLS. The noise floor $\sigma^2 = 0.01$ is also included, the network comes within $0.0031$, and OLS within $0.0087$ of the noise floor. The network reduces the error by about two thirds of OLS, even before the learning rate is tuned.
+
+The number of parameters for the different methods show that the neural network is more flexible than OLS, but this comes at a cost. OLS has 9 parameters and a closed form solution, while the network has 151 parameters, and depends on the random initialization. 
+
+In \autoref{fig:fit_nn_vs_ols} the difference between the fit to the Runge function, for the neural network and OLS, becomes more clear. OLS underestimates the peak of the function, and oscillates near $x = \pm 1$, whereas the network follows the true function over the whole interval. The MSE as a function of epoch for the training and test data for this neural network is found in \autoref{fig:mse_train_test_adam}, where we can see that it drops the first 100 epochs, and then stabilizes above the noise floor. 
+
+\begin{table}[htbp]
+    \centering
+    \caption{Test MSE for the neural network and for OLS with the best polynomial degree
+    from project 1, on the same train/test split of the Runge data ($n = 100$, $\sigma = 0.1$). Network is trained with Adam, with the learning rate $\gamma = 0.01$.
+    The noise floor $\sigma^2$ is the lowest MSE a perfect model can reach.}
+    \label{tab:nn_vs_ols}
+    \begin{tabular}{lcc}
+        \toprule
+        Model & Parameters & Test MSE \\
+        \midrule
+        OLS, degree 8                                    & 9   & 0.0187 \\
+        Neural network, $1 \times 50$ & 151 & 0.0131 \\
+        \midrule
+        Noise floor $\sigma^2$                           & --  & 0.0100 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[t]{0.5\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{figs/Part_bfit_nn_vs_ols.pdf}
+        \caption{Neural network and OLS.}
+        \label{fig:fit_nn_vs_ols}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[t]{0.5\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{figs/Part_b_fit_network_sizes.pdf}
+        \caption{Different network sizes.}
+        \label{fig:fit_network_sizes}
+    \end{subfigure}
+    \caption{(a) A $1 \times 50$ sigmoid network trained with Adam ($\gamma = 0.01$),
+    compared with OLS . The polynomial
+    oscillates near $x = \pm 1$ and underestimates the peak, while the network does not.
+    (b) Networks with one or two hidden layers of 50 or 100 sigmoid nodes, all trained with Adam
+    ($\gamma = 3.2 \cdot 10^{-3}$). The networks with more layers perform better at the peak.}
+    \label{fig:runge_fits}
+\end{figure}
+
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[t]{0.5\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{figs/Part_b_mse_train_test_adam.pdf}
+        \caption{Train and test MSE, $1 \times 50$ network.}
+        \label{fig:mse_train_test_adam}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[t]{0.5\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{figs/Part_b_mse_network_sizes.pdf}
+        \caption{Test MSE for different network sizes.}
+        \label{fig:mse_network_sizes}
+    \end{subfigure}
+    \caption{ The noise floor at $\sigma^2 = 0.01$ is the lowest MSE a perfect model can reach.
+    (a) The $1 \times 50$ sigmoid network from Fig.~\ref{fig:fit_nn_vs_ols}, trained with Adam
+    ($\gamma = 0.01$).
+    (b) Test MSE for the four network sizes from Fig.~\ref{fig:fit_network_sizes}, trained with Adam
+    ($\gamma = 3.2 \cdot 10^{-3}$). All sizes converge to a test MSE of about 0.013.}
+    \label{fig:runge_mse}
+\end{figure}
+
+\subsection{Activation functions and depth}\label{sec:res_c}
+% nille, part c)
+
+\subsubsection{Learning rate sweep for ReLU and LeakyReLU}\label{subsec:lr_sweep_partc}
+
+With SGD + Adam the best learning rate for ReLU and LeakyReLU is $\gamma = 0.01$, with test MSEs of 0.0157 and 0.0158. Sigmoid  does best at $\gamma = 3.2\times10^{-3}$ and reaches a lower test MSE of 0.0128. The ReLU family tolerates larger learning rates because its derivative is 1 for all positive inputs (\autoref{eq: relu_der}, \autoref{eq: leakyrelu_der}). The sigmoid derivative (\autoref{eq:sigmoid_der}) never exceeds $1/4$ and goes to zero for large $|z|$, so large updates push sigmoid nodes into saturation, where they learn very slowly \cite{chapter8}. However, a higher tolerated $\gamma$ does not mean a better fit.
+
+\subsubsection{Testing different network sizes}
+
+ \autoref{fig:part_c_heatmap_mses} show that networks with one node per layer can be discarded for all activation functions. In the case of ReLU with 1 hidden layer, the MSE remains large and is a clear case of dying ReLU.Beyond these small networks, we see that depth and width have little effect on the test MSE. The best test MSE lies between 0.010 and 0.014 for all activation functions. The best networks per activation function over 5 seeds were Sigmoid $2\times25$, ReLU $5\times50$ and LeakyReLU $5\times100$, all within 1SE of each other. Computation time grows with both depth and width since both increase the number of parameters (\autoref{fig:part_c_heatmap_mses_time}).
+ 
+\begin{figure*}[htbp]
+    \centering
+    \includegraphics[width=\linewidth]{figs/Part_c_heatmap_mses.pdf}
+    \caption{Excluding the small networks of 1-5 nodes and 1 layer, the number of nodes and the depth of the network does not significantly improve the test MSE for the Runge data. For networks on this size, the activation functions are nearly indistinguishable. }
+    \label{fig:part_c_heatmap_mses}
+\end{figure*}
+
+In deeper networks, the test MSE for sigmoid rises with depth, whereas ReLU and LeakyReLU stay stable (\autoref{fig:part_c_longtrain}). For sigmoid, the gradients reaching the early layers leave the weights essentially unchanged. The saturated nodes contribute almost nothing and the networks become almost untrainable. The derivative for ReLU and LeakyReLU is 1 for positive inputs, so the factor in (\autoref{eq:delta_unrolled}) neither shrink or explode the gradient. 
+ 
+
+\begin{figure*}[htbp]
+    \centering
+\includegraphics[width=\textwidth]{figs/Part_c_deeper_networks_curves.pdf}
+    \caption{The depth of the network increases the test MSE of the sigmoid activation function due to vanishing gradients, wheras ReLU and LeakyReLU stay unchanged}
+    \label{fig:part_c_deeper_networks}
+\end{figure*}
+
+\subsubsection{Testing for overfitting}
+
+\autoref{fig:part_c_longtrain} show that every activation function eventually overfits. Sigmoid overfits at 2700 epochs for the (($4\times100$) and ReLU ($4\times25$) and LeakyReLU ($4\times100$) after about 3000-4000 epochs. For our main analysis, we've used 500 epochs. \autoref{fig:convergence_optimizers}, show that SGD + Adam has converged by then. And these models show that 500 epochs is well before any overfitting. 
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[t]{0.5\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{figs/Part_c_longtrain_4x25.pdf}
+        \caption{Long training on 4 x 25 network}
+        \label{fig:part_c_longtrain_4x25}
+    \end{subfigure}
+    
+    \vspace{0.5em}
+    
+    \begin{subfigure}[t]{0.5\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{figs/Part_c_longtrain_4x100.pdf}
+        \caption{Long training on 4 x 100 network}
+        \label{fig:part_c_longtrain_4x100}
+    \end{subfigure}
+    \caption{Sigmoid and LeakyReLU overfits for networks with more nodes whereas ReLU seemingly overfits for a network with less nodes. Both have same hidden layers. None of the overfitting happens close to 500 epochs which is the hyperparameter we've used for our main analysis.}
+    \label{fig:part_c_longtrain}
+\end{figure}
+
+\subsubsection{Choosing a fitting architecture}
+
+Since adding layers and nodes apart from the first barely changes the test MSE \autoref{fig:part_c_heatmap_mses}, we choose a $2 \times 50$ network. It fits the Runge functions as well as larger networks, is cheaper to train due to less parameters and it is far from the depths of 8 or more where vanishing gradients appear.
+
+We continue with sigmoid and LeakyReLU since sigmoid is a fundamentally different activation function compared to ReLU and LeakyReLU, which are in the same family. As LeakyReLU avoids the dying ReLU problem which seen from \autoref{fig:part_c_heatmap_mses} from the smallest networks.
+
+\subsection{$\ell_1$ and $\ell_2$ norms}\label{sec:res_d} % nille, part d)
+% Heat maps lambda x gamma for L1 and L2.
+% Compare L2 with Ridge and L1 with Lasso from project 1.
+
+
+\autoref{fig:part_d_heatmap_mses} we see that sigmoid is more sensitive to higher $\lambda$'s compared to LeakyReLU, with much higher MSEs at $\lambda = 0.001$ and $\lambda=0.01$ for both $\ell_2$ and $\ell_1$ norms. With \autoref{tab:part_d_nn_one_se} in mind, the lowest 5-fold CV MSE is similar for both activation functions.. From \autoref{fig:part_d_nn_vs_rnl}, the majority of the validation MSEs derived from lower penalties $\lambda$ follow the 1SE rule for lowest CV MSE.
+
+
+\begin{table}[htbp]
+    \centering
+\caption{The lowest cross-validated MSE is nearly the same for both activation functions in the 2 x 50 network for both penalties. Whereas the one standard error choices for sigmoid is higher than the one standard error choices for LeakyReLU}
+    \label{tab:part_d_nn_one_se}
+    \setlength{\tabcolsep}{4pt}
+    \resizebox{\columnwidth}{!}{%
+    \begin{tabular}{llcccccc}
+        \toprule
+        & & \multicolumn{3}{c}{Lowest} & \multicolumn{3}{c}{1SE} \\
+        \cmidrule(lr){3-5} \cmidrule(lr){6-8}
+        Activation & Norm & $\lambda$ & $\gamma$ & MSE ($10^{-2}$) & $\lambda$ & $\gamma$ & MSE ($10^{-2}$) \\
+        \midrule
+        \multirow{2}{*}{Sigmoid}
+            & L2 & $0$       & $10^{-3}$ & $1.77 \pm 0.38$ & $10^{-4}$ & $10^{-3}$ & $2.00 \pm 0.35$ \\
+            & L1 & $10^{-4}$ & $10^{-1}$ & $1.74 \pm 0.36$ & $10^{-4}$ & $10^{-3}$ & $1.89 \pm 0.36$ \\
+        \midrule
+        \multirow{2}{*}{LeakyReLU}
+            & L2 & $10^{-3}$ & $10^{-3}$ & $1.73 \pm 0.39$ & $10^{-3}$ & $10^{-3}$ & $1.73 \pm 0.39$ \\
+            & L1 & $10^{-4}$ & $10^{-3}$ & $1.73 \pm 0.37$ & $10^{-3}$ & $10^{-3}$ & $1.81 \pm 0.38$ \\
+        \bottomrule
+    \end{tabular}%
+    }
+\end{table}
+
+\begin{figure*}[htbp]
+    \centering
+    \begin{subfigure}{\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figs/Part_d_heatmap_mses_Sigmoid.pdf}
+        \caption{Sigmoid}
+        \label{fig:part_d_heatmap_mses_sigmoid}
+    \end{subfigure}
+
+    \vspace{0.1em}
+
+    \begin{subfigure}{\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figs/Part_d_heatmap_mses_LeakyReLU.pdf}
+        \caption{LeakyReLU}
+        \label{fig:part_d_heatmap_mses_leakyrelu}
+    \end{subfigure}
+
+    \caption{5-fold CV MSE for the 2x50 network with L2 and L1 penalty. The lowest MSE is marked in gold and is nearly the same for both activation functions. All MSEs within one standard error of the lowest are marked with blue dashed borders. The MSE marked with a white circle is the MSE chosen via the 1SE rule. The 1SE rule gave higher MSEs for Sigmoid than for LeakyReLU.}
+    \label{fig:part_d_heatmap_mses}
+\end{figure*}
+
+
+
+Using the hyperparameters from the 1SE rule, we get the test MSEs as 0.0163 and 0.0147 for $\ell_2$ and $\ell_1$ for sigmoid and 0.0151 and 0.0156 for $\ell_2$ and $\ell_1$ for LeakyReLU. This is a large improvement from the test MSEs from Project 1 using the best degree and best $\lambda$ which gave $0.0219$ and $0.0220$ for Ridge and Lasso, respectively.
+
+
+\begin{table}[htbp]
+    \centering
+\caption{The neural network derive better test MSE from both activation functions using the $\ell_1$ and $\ell_2$ norms using the one standard error choice compared to the Lasso and Ridge from Project 1 with the most optimal parameters}
+    \label{tab:part_d_nn_vs_poly}
+    \setlength{\tabcolsep}{4pt}
+    \resizebox{\columnwidth}{!}{%
+    \begin{tabular}{lcccc}
+        \toprule
+        Model & $\lambda$ & $\gamma$ & CV MSE (10^{-2})  & Test MSE (10^{-2}) \\
+        \midrule
+        NN Sigmoid L2    & $10^{-4}$         & $10^{-3}$ & $2.00 \pm 0.35$ & $1.63$ \\
+        NN Sigmoid L1    & $10^{-4}$         & $10^{-3}$ & $1.89 \pm 0.36$ & $\mathbf{1.47}$ \\
+        NN LeakyReLU L2  & $10^{-3}$         & $10^{-3}$       & $1.73 \pm 0.39$ & $1.51$ \\
+        NN LeakyReLU L1  & $10^{-3}$         & $10^{-3}$       & $1.81 \pm 0.38$ & $1.56$ \\
+        \midrule
+        Ridge (deg.\ 11) & $3.6\cdot10^{-5}$ & --              & --              & $2.19$ \\
+        Lasso (deg.\ 11) & $7.3\cdot10^{-5}$ & --              & --              & $2.20$ \\
+        \bottomrule
+    \end{tabular}%
+    }
+\end{table}
+
+From \autoref{fig:part_d_nn_vs_rnl} we see that the neural networks using the $\ell_2$ and $\ell_1$ norms will visibly flatten the oscillations at the edges of the Runge function that Ridge and Lasso could not from Project 1. We see that the sigmoid redraws a smoother functions whereas LeakyReLU is more jagged but still follows the same shape. 
+
+\begin{figure*}[htbp]
+    \centering
+    \begin{subfigure}{\linewidth}
+        \centering
+        \includegraphics[width=0.9\linewidth]{figs/Part_d_nn_vs_rnl_from_p1_Sigmoid.pdf}
+        \caption{Sigmoid}
+        \label{fig:part_d_nn_vs_rnl_sigmoid}
+    \end{subfigure}
+
+    \begin{subfigure}{\linewidth}
+        \centering
+        \includegraphics[width=0.9\linewidth]{figs/Part_d_nn_vs_rnl_from_p1_LeakyReLU.pdf}
+        \caption{LeakyReLU}
+        \label{fig:part_d_nn_vs_rnl_leakyrelu}
+    \end{subfigure}
+
+    \caption{The one standard error networks with $\ell_2$ and $\ell_1$ penalty compared with Ridge and Lasso using their optimal parameters from Project 1. Both activation functions perform better than Ridge and Lasso on the Runge data. The networks visibly dampen the oscillations near the endpoints, which was the main problem when fitting the Runge function in Project 1.}
+    \label{fig:part_d_nn_vs_rnl}
+\end{figure*}
+
+
+
+
+\subsection{Classification of MNIST}\label{sec:res_e}  %hannah, part e)
+% Hyperparameter search, accuracy table, comparison with logistic regression
+% (0 hidden layers) and Scikit-Learn/PyTorch, confusion matrix + interpretation.
+
+\begin{figure*}[tp]
+    \centering
+    \begin{subfigure}[t]{0.55\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{figs/Part_e_logisticregression_rocauc_cm.pdf}
+        \caption{Our logistic regression baseline (see \cref{apdx:tab:_part_e_models}) classifies the worst out of all models. It predicts wrong multiple times on all digits. The ROC AUC is 1 or 0.99 in all cases, meaning it predicts decently well but not perfectly.}
+        \label{fig:Part_e_logisticregression_rocauc_cm}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[t]{0.4\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{figs/Part_e_ScoreVsFit.pdf}
+        \caption{The computational cost vs the score (accuracy) of our own neural network can be grouped into four clusters, with 'Best' denoted as OOBM and 'Best cluster 2' as OOCM. OOCM costs half as much as OOBM. 'Logistic regression' is our baseline.}
+        \label{fig:Part_e_ScoreVsFit}
+    \end{subfigure}
+    \caption{Baseline logistic regression (a) and fit time versus accuracy for all trained models (b).}
+    \label{fig:Part_e_baseline_cost}
+\end{figure*}
+
+
+\begin{figure*}[htbp]
+    \centering
+    \begin{subfigure}[t]{0.49\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{figs/Part_e_CM.pdf}
+        \caption{Confusion matrix showing that all four models predict the wrong digit only a fraction of the time, with no clear point of failure with only the matrix as reference. One can point out that OOBM and OOCM fail for similar combinations for predicted and true labels, while TFBM and TFCM do the same but for different combinations of labels.}
+        \label{fig:Part_e_CM}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[t]{0.49\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{figs/Part_e_rocauc.pdf}
+        \caption{ROCs show that predictions high true positive rates for all thresholds over all models. The results are nearly indistinguishable to the naked eye and all yield an AUC of 1.}
+        \label{fig:Part_e_rocauc}
+    \end{subfigure}
+    \caption{With the CM, it is clear that the models perform differently, but not which performs better. A clear winner cannot be announced.}
+    \label{fig:part_e_ROCAUC_CM}
+\end{figure*}
+
+
+\begin{figure*}[htbp]
+    \centering
+    \begin{subfigure}[t]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{figs/Part_e_precision_comparison_single_plot.pdf}
+        \caption{The TF models outperform for digit 9, but fall somewhat behind on digits 9, 7 and 1 for precision.}
+        \label{fig:Part_e_precision}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[t]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{figs/Part_e_comparison_recall.pdf}
+        \caption{The TF and OO models perform differently for each digit, with no clear winner for recall.}
+        \label{fig:Part_e_recall}
+    \end{subfigure}
+    \begin{subfigure}[t]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{figs/Part_e_f1_comparison_single_plot.pdf}
+        \caption{F1, which combines recall and precision, shows clear gain for all digits, particularly ones that are visually the closest (8 and 5). All models perform similarly well. }
+        \label{fig:Part_e_F1}
+    \end{subfigure}
+    \caption{When comparing our four models to the baseline logistic regression they all do better. The gain in recall is perhaps of most significance, as it means less FNs. Further details are in \cref{tab:classification-reports}, with the logistic regression model's scores in \cref{tab:classification-report}.}
+    \label{fig:Part_e_classification_report}
+\end{figure*}
+
+
+The baseline logistic regression model (LG), performs badly and frequently gives FPs (\cref{fig:Part_e_logisticregression_rocauc_cm}), with an average accuracy of 0.93 (\cref{tab:classification-report}), but is significantly better than a random prediction. Its recall is especially bad, with key examples being digit 2, 5 and 8 with recall at 0.905 , 0.871 and 0.894. 
+
+Models OOCM, OOBM,  TFCM and TFBM aim to improve upon these rates, with CMs and ROCs in  (\cref{fig:part_e_ROCAUC_CM} showing that they do. Their classification scores in \cref{tab:classification-reports} visualized in \cref{fig:Part_e_classification_report} further amplify this result, particularly for the cases of digits 2, 5 and 3 which did particularly bad for LG. The accuracy OOCM, OOBM, TFCM and TFBM is 0.976, 0.979, 0.981 and  0.981 respectively. When comparing parameters of the models in different clusters we see that more hidden layers and more nodes generally gave a higher accuracy, but were still highly dependent on other parameters. No penalty type, penalty or learning rate alone determined the performance of the model.
+
+When comparing fit time with accuracy (\cref{fig:Part_e_ScoreVsFit}) OOBM is 2x as computationally expensive as OOCM, despite gain in accuracy being only 0.003. TFCM and TFBM which were trained using TensorFlow both gave higher accuracy despite parameters being the same as fr OOCM and OOBM. This tells us that our neural networks have numerical quirks that make the TF models and our own models differ. If one wanted the best of the best models, one would not train a TF model based on another network. One would instead do their own set of numerical experiments to determine the best parameters for a TF model. 
+
+With \cref{fig:Part_e_classification_report} in mind, one can deem TFBM to be the best, as its F1 scores remain mostly the highest or second highest and accuracy is at 0.981. Choosing TFBM cannot be strongly argued for though, as the total increase is relatively small. Computational cost was not logged, though TFCM was quicker to train and fit than TFBM. Digits wrongly classified by TFBM seen in \cref{fig:Part_e_misclassified_bestTF} are at times hard to determine for human eyes too. 
+
+Time in itself is not a good metric to gauge computational cost, as available computational power differs per device. All MNIST models were trained in the same environment with the same computational resources and can therefore be compared. In real-world applications fitting time can be the limiter, deeming OOCM as the most applicable model.
+
+When training a model of higher complexity than needed for MNIST, it is unreasonable to do it with such a wide grid as done here. One would ideally run more architecture, penalty and epoch numerical experiments as done for Runge. Due to time constraints, we preferred to throw a wide net instead, though it cost us computational resources instead. This approach will likely be tweaked significantly for future work. 
+
+The effect of our choice to not test further can be seen in the training history in \cref{fig:Part_e_training_history}. The best hyperparameters were likely not found, as the cost for OOBM stagnates at $10^{-1}$, when for other models it surpasses $10^{-2}$. This may also have to do with the choice of activation function, as for all hidden layers ReLU was chosen, which is known to occasionally stagnate. A better result could have been achieved with LeakyReLU, or a combination of several activation functions for the hidden layers. 
+
+%\clearpage
+
+\section{Conclusion} \label{sec: Conclusion}
+
+SGD + Adam gave the lowest test MSE among the gradient methods and was used for all regression runs. Apart from very small networks (1-5 nodes), network size had little effect on the test MSE and for 1-5 hidden layers the thee activation functions were nearly indistinguishable. Sigmoid worsened due to vanishing gradients, whereas ReLU and LeakyReLU stayed stable. We chose a $2 \times 50$ network it is within 1 std of the lowest test MSE and cheaper to train. Over-fitting only set in after 2700-4000 epochs, which is beyond the 500 epochs used for main analysis. 
+
+With $\ell_1$ and $\ell_2$ penalties, the networks reached test MSEs of 0.0147-0.0163 compared with 0.0219 for Lasso and 0.0219 for Ridge from Project 1. The networks visibly dampened the oscillations near the endpoints of the Runge function, which regularization in Project 1 could not. Sigmoid gave the best fit as its smooth output matches the smooth Runge function.
+
+However these results have come at a cost. The network has many hyperparameters (epochs, optimizer, learning rate, depth, nodes, activation function and $\lambda$). It is much slower to train and tune compared to Ridge and Lasso. 
+
+
+The results are mainly limited in three ways. By the optimizer, learning rate and architectures were chosen by the lowest test MSE, without a validation set, so the MSEs are slightly optimistic. By few data points as we kept the 100 data points to Project 1 for direct comparison, which only gave 20 test points. And by $\ell_1$ and $\ell_2$ fits using only one seed to save computation time. In future work we would use more data points, split into training, validation and test, where test is used only once at the end and average the $\ell_1$ and $\ell_2$ results over five seeds as we did for the architectures. 
+
+In the case of MNIST, similar trends were observed, but amount of hidden layers and nodes were the main indicator of computational cost. Otherwise interplay between hyperparameters gave different accuracies and fitting times. It was found that our best model has an accuracy of 97.9\%, while the best TensorFlow model was at 98.1\%, despite being trained on the same hyperparams. A numerical difference in how the models are trained is likely at fault. A better model could be developed using TensorFlow yielding higher accuracy and lower computational cost. 
+
+A common takeaway for both the Runge and MNIST neural networks is that accuracy costs computational power. A network with many parameters, layers and nodes is much slower to train and fit. Real-world applications may not afford the time for complex models, making us chose the less accurate models as a trade-off.
+
+
+% -------------------------------- References -------------------------------------------
+%TC:ignore
+\onecolumngrid
+\bibliography{references}
+
+\appendix 
+
+\section*{Acknowledgments}
+
+We would like to thank our amazing group teacher Amund for amazing help during the amazing group sessions. See \autoref{fig:Amund} for Amund in his element.
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=\linewidth,  height=6cm]{figs/amund.JPEG}
+    \caption{Our amazing group teacher Amund Solum Alsvik and some guy standing way too close to him. (Psst, is he bothering you wide cowboy?)}
+    \label{fig:Amund}
+\end{figure}
+% -------------------------------- Appendix -------------------------------------------
+
+\section{Use of AI/LLM tools} \label{app:LLM}
+
+%USE CODE FROM W39 TO PRINT FINALIZED TABLE FOR THIS LATER ON. Add anything here plz
+\subsection{\textbf{Tools used}.} Claude (claude.ai, October 2026):
+Models:
+
+\begin{itemize}
+    \item Opus 5.5, Effort: Medium.
+    \item Copilot GPT-6-Luna 
+\end{itemize}
+
+
+
+\subsection{Text writing and editing}
+\noindent
+\begin{tabularx}{\linewidth}{l l X}
+Section & Level & Notes\\ \hline
+Abstract & 0 & No LLM was used \\
+Introduction & 1 & Spell checks \\
+Theory & 0 & No LLM was used \\
+Methods & 2 & LLM used to find the best way to structure the section. LLM was used to help rewrite more concretely. \\
+Results \& Discussion & 2 & LLM used to format the majority of figures and tables derived from code to \LaTeX{} syntax. LLM used as an academic sparring partner using own ideas and conclusions for some of the discussion. LLM was used to help rewrite more concise. \\
+Conclusion & 1 & LLM was used to help rewrite more concise. \\
+\end{tabularx}
+
+\subsection{Code generation and assistance}
+\noindent
+\begin{tabularx}{\linewidth}{l l X}
+File / notebook & Level & Description\\ \hline
+\texttt{\_Part\_a.py} & 1 & Minor debugging. \\
+\texttt{\_Part\_b.py} & 1 & Minor debugging. \\
+\texttt{\_Part\_c.ipynb} & 2 & Minor debugging. LLM used for a majority of the plotting. \\
+\texttt{\_Part\_d.ipynb} & 3 & Debugging. LLM did all of the plotting and did all of the printing of results when comparing the network to Ridge and Lasso from Project 1. \\
+\texttt{\_Part\_e.py} & 3 & LLM helped make plotting helper functions, as well as retraining function using keras. Made docstrings for functions.\\
+\texttt{\_Part\_e.ipynb} & 3 & LLM helped create the fit-time cluster DataFrames and a cluster-colored LaTeX table of model configurations, including mean and standard deviation values. Added plot markers to fit time vs score figure. Helped build a TensorFlow retraining helper based on selected scikit-learn model settings. Added baseline-comparison for F1, recall and precision plot. Helped get wrong predictions out for image plotting and probability dist based on TF code. \\
+\texttt{\_Part\_e\_*.py} & 3 & LLM helped with setting up retraining for our own neural network and TensorFlow networks. \\ 
+\texttt{general\_functions.py} & 2 & LLM rewrote existing code from functions into classes, as this was discovered to be a better way to structure the code after the code was already written. Added helper class for optional passable arguments. \\
+\texttt{linear\_regression.py} & 1 & Reused from Project 1 where we used LLM to help debug and comment code. \\
+\texttt{neural\_networks.py} & 2 & LLM rewrote existing code from functions into classes, as this was discovered to be a better way to structure the code after the code was already written. \\
+\texttt{optimizer.py} & 2 & Train function was optimized by implementing \texttt{def step} and doing gradient and optimizer in the same step with the help of LLM to reduce runtime. \\
+\texttt{plot\_colors.py} & 2 & LLM used to set up \texttt{set.style()} function. \\
+\end{tabularx}
+
+
+\clearpage
+\section{Additional Figures and Tables}
+\begin{figure*}[htbp]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figs/Part_b_convergence_optimizers.pdf}
+    \caption{Training (solid) and test (dashed) MSE on the Runge data as a function of epochs, for each
+    gradient method at its best learning rate from Fig.~\ref{fig:heatmap_lr_optimizers}:
+    GD and SGD with $\gamma = 10^{-1}$, SGD + RMSprop with $\gamma = 3.2 \cdot 10^{-2}$ and SGD + Adam
+    with $\gamma = 3.2 \cdot 10^{-3}$. All panels use a $1 \times 50$ sigmoid network, minibatches of 16
+    for the stochastic methods, and the same initial weights (seed 2026). The dotted line is the noise
+    floor $\sigma^2 = 0.01$. The panels share axes, and the MSE is shown on a logarithmic scale.
+    SGD + Adam converges smoothly to near the noise floor, while plain GD and SGD are still
+    far above it after 500 epochs.}
+    \label{fig:convergence_optimizers}
+\end{figure*}
+
+\begin{figure*}[htbp]
+    \centering
+\includegraphics[width=0.8\textwidth]{figs/Part_c_heatmap_lrs.pdf}
+    \caption{The best learning rate for ReLU and LeakyReLU are 0.01 with a test MSE of 0.0157 and 0.0158 respectively}
+    \label{fig:part_c_heatmap_lrs}
+\end{figure*}
+
+\begin{figure*}[htbp]
+    \centering
+\includegraphics[width=\textwidth]{figs/Part_c_heatmap_mses_time.pdf}
+    \caption{Increasing the number of hidden layers and the number of nodes increases the computation time for all activation functions.}
+    \label{fig:part_c_heatmap_mses_time}
+\end{figure*}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=1\linewidth]{figs/Part_e_CoarseGrid.pdf}
+    \caption{Coarse grid accuracy heatmap over parameter grid with $\gamma$  = [1e-4, 3e-4, 1e-3, 3e-3, 1e-2],
+              $\lambda$ [0, 1e-6, 1e-5, 1e-4, 1e-3] and
+              penalties =  ['L2', 'L1', None]. 50 epochs, with one hidden layer of 50 nodes with ReLU and softmax output.}
+    \label{fig:Part_e_CoarseGrid}
+\end{figure}
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{Classification report results for Logistic regression (LG) model as marked in \cref{apdx:tab:_part_e_models} with CM and ROC AUC as in \cref{fig:Part_e_logisticregression_rocauc_cm}. Per-class precision, recall and F1-score on the test set. Support is the number of test samples per class.}
+\label{tab:classification-report}
+\begin{tabular}{lcccr}
+\toprule
+Class & Precision & Recall & F1-score & Support \\
+\midrule
+0 & 0.954 & 0.979 & 0.966 & 980 \\
+1 & 0.969 & 0.981 & 0.975 & 1135 \\
+2 & 0.932 & 0.905 & 0.918 & 1032 \\
+3 & 0.907 & 0.917 & 0.912 & 1010 \\
+4 & 0.936 & 0.933 & 0.934 & 982 \\
+5 & 0.908 & 0.871 & 0.889 & 892 \\
+6 & 0.943 & 0.952 & 0.948 & 958 \\
+7 & 0.925 & 0.926 & 0.926 & 1028 \\
+8 & 0.879 & 0.894 & 0.887 & 974 \\
+9 & 0.918 & 0.911 & 0.914 & 1009 \\
+\midrule
+Accuracy & \multicolumn{3}{c}{0.928} & 10000 \\
+Macro avg. & 0.927 & 0.927 & 0.927 & 10000 \\
+Weighted avg. & 0.928 & 0.928 & 0.928 & 10000 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\begin{figure}
+    \centering
+    \includegraphics[width=1\linewidth]{figs/Part_e_training_history.pdf}
+    \caption{Training history logged every 5th evaluation of select models. The best model's cost reduces and converges, but remains high compared to the best model with no penalty.}
+    \label{fig:Part_e_training_history}
+\end{figure}
+
+
+\begin{figure}
+    \centering
+    \includegraphics[width=1\linewidth]{figs/Part_e_misclassified_bestTF.pdf}
+    \caption{With the TFBM model, digits where the prediction was wrong were picked out. In several of the cases, determining the correct digit with the human eye is challenging.}
+    \label{fig:Part_e_misclassified_bestTF}
+\end{figure}
+\begin{table}[htbp]
+\centering
+\small
+\setlength{\tabcolsep}{2.5pt}
+\caption{Per-class precision (P), recall (R) and F1-score for the four models on the test set. Support is the number of test samples per class. \Cref{fig:Part_e_classification_report} displays the difference visually, with accompanying models and their parameters in \cref{apdx:tab:_part_e_models}.}
+\label{tab:classification-reports}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lccccccccccccr}
+\toprule
+& \multicolumn{3}{c}{OO: Cheapest} & \multicolumn{3}{c}{OO: Best} & \multicolumn{3}{c}{TF: Cheapest} & \multicolumn{3}{c}{TF: Best} & \\
+\cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10} \cmidrule(lr){11-13}
+Class & P & R & F1 & P & R & F1 & P & R & F1 & P & R & F1 & Support \\
+\midrule
+0 & 0.98 & 0.987 & 0.983 & 0.979 & 0.992 & 0.985 & 0.979 & 0.993 & 0.986 & 0.979 & 0.993 & 0.986 & 980 \\
+1 & 0.982 & 0.992 & 0.987 & 0.989 & 0.992 & 0.991 & 0.99 & 0.996 & 0.993 & 0.99 & 0.996 & 0.993 & 1135 \\
+2 & 0.98 & 0.974 & 0.977 & 0.99 & 0.953 & 0.971 & 0.988 & 0.977 & 0.982 & 0.988 & 0.977 & 0.982 & 1032 \\
+3 & 0.972 & 0.983 & 0.977 & 0.979 & 0.977 & 0.978 & 0.97 & 0.985 & 0.977 & 0.97 & 0.985 & 0.977 & 1010 \\
+4 & 0.967 & 0.979 & 0.973 & 0.978 & 0.984 & 0.981 & 0.982 & 0.977 & 0.979 & 0.982 & 0.977 & 0.979 & 982 \\
+5 & 0.975 & 0.979 & 0.977 & 0.981 & 0.979 & 0.98 & 0.987 & 0.97 & 0.979 & 0.987 & 0.97 & 0.979 & 892 \\
+6 & 0.988 & 0.967 & 0.977 & 0.972 & 0.989 & 0.98 & 0.983 & 0.986 & 0.985 & 0.983 & 0.986 & 0.985 & 958 \\
+7 & 0.977 & 0.974 & 0.975 & 0.989 & 0.972 & 0.98 & 0.981 & 0.982 & 0.982 & 0.981 & 0.982 & 0.982 & 1028 \\
+8 & 0.972 & 0.967 & 0.97 & 0.948 & 0.98 & 0.964 & 0.982 & 0.971 & 0.977 & 0.982 & 0.971 & 0.977 & 974 \\
+9 & 0.971 & 0.96 & 0.966 & 0.982 & 0.971 & 0.977 & 0.97 & 0.973 & 0.972 & 0.97 & 0.973 & 0.972 & 1009 \\
+\midrule
+accuracy & \multicolumn{3}{c}{0.976} & \multicolumn{3}{c}{0.979} & \multicolumn{3}{c}{0.981} & \multicolumn{3}{c}{0.981} & 10000 \\
+macro avg. & 0.976 & 0.976 & 0.976 & 0.979 & 0.979 & 0.979 & 0.981 & 0.981 & 0.981 & 0.981 & 0.981 & 0.981 & 10000 \\
+weighted avg. & 0.976 & 0.976 & 0.976 & 0.979 & 0.979 & 0.979 & 0.981 & 0.981 & 0.981 & 0.981 & 0.981 & 0.981 & 10000 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table} 
+\clearpage
+
+\definecolor{Cluster1}{HTML}{F8DEE7}
+\definecolor{Cluster2}{HTML}{E0D9DE}
+\definecolor{Cluster3}{HTML}{E8E3E6}
+\definecolor{Cluster4}{HTML}{EADDF2}
+\scriptsize
+\setlength{\tabcolsep}{4pt}
+\begin{longtable}{r r r l l r r l}
+\caption{Clustered model configurations shown in \cref{fig:Part_e_ScoreVsFit}. Shading: \textcolor{Cluster1}{\rule{1em}{1em}} Cluster 1; \textcolor{Cluster2}{\rule{1em}{1em}} Cluster 2; \textcolor{Cluster3}{\rule{1em}{1em}} Cluster 3; \textcolor{Cluster4}{\rule{1em}{1em}} Cluster 4. Fixed parameters: 150 epochs with minibatch size of 10, softmax output and cost being multiclass cross entropy. Scores and fit times are mean $\pm$ standard deviation. }\\
+
+\toprule
+Train score & Test score & Fit time & Nodes per layer & Penalty type & Penalty & Learning rate & Plot marker \\
+\midrule
+\endfirsthead
+\toprule
+Train score & Test score & Fit time & Nodes per layer & Penalty type & Penalty & Learning rate & Plot marker \\
+\midrule
+\endhead
+\midrule
+\multicolumn{8}{r}{Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+\rowcolor{Cluster1} 0.939 $\pm$ 0.001 & 0.925 $\pm$ 0.001 & 161.1 $\pm$ 20.1 & [10] & L1 & 0 & 1e-04 & Logistic regression \\
+\rowcolor{Cluster1} 0.939 $\pm$ 0.001 & 0.925 $\pm$ 0.001 & 149.1 $\pm$ 8.1 & [10] & L2 & 0 & 1e-04 & -- \\
+\rowcolor{Cluster1} 0.937 $\pm$ 0.001 & 0.925 $\pm$ 0.001 & 141.7 $\pm$ 18.7 & [10] & L1 & 1e-05 & 1e-04 & -- \\
+\rowcolor{Cluster1} 0.937 $\pm$ 0.001 & 0.924 $\pm$ 0.001 & 145.9 $\pm$ 20.2 & [10] & L2 & 1e-05 & 1e-04 & -- \\
+\rowcolor{Cluster1} 0.929 $\pm$ 0.001 & 0.921 $\pm$ 0.002 & 141.1 $\pm$ 20.6 & [10] & L1 & 1e-04 & 1e-04 & -- \\
+\rowcolor{Cluster1} 0.932 $\pm$ 0.001 & 0.923 $\pm$ 0.002 & 134.0 $\pm$ 22.0 & [10] & L2 & 1e-04 & 1e-04 & -- \\
+\rowcolor{Cluster1} 0.942 $\pm$ 0.001 & 0.921 $\pm$ 0.002 & 137.9 $\pm$ 27.8 & [10] & L1 & 0 & 3e-04 & -- \\
+\rowcolor{Cluster1} 0.942 $\pm$ 0.001 & 0.921 $\pm$ 0.002 & 137.9 $\pm$ 18.3 & [10] & L2 & 0 & 3e-04 & -- \\
+\rowcolor{Cluster1} 0.939 $\pm$ 0.001 & 0.922 $\pm$ 0.002 & 146.6 $\pm$ 20.3 & [10] & L1 & 1e-05 & 3e-04 & -- \\
+\rowcolor{Cluster1} 0.939 $\pm$ 0.001 & 0.922 $\pm$ 0.002 & 133.4 $\pm$ 14.3 & [10] & L2 & 1e-05 & 3e-04 & -- \\
+\rowcolor{Cluster1} 0.929 $\pm$ 0.001 & 0.920 $\pm$ 0.002 & 139.8 $\pm$ 23.4 & [10] & L1 & 1e-04 & 3e-04 & -- \\
+\rowcolor{Cluster1} 0.932 $\pm$ 0.001 & 0.921 $\pm$ 0.002 & 133.1 $\pm$ 16.7 & [10] & L2 & 1e-04 & 3e-04 & -- \\
+\rowcolor{Cluster1} 0.941 $\pm$ 0.001 & 0.914 $\pm$ 0.002 & 140.1 $\pm$ 20.1 & [10] & L1 & 0 & 1e-03 & -- \\
+\rowcolor{Cluster1} 0.941 $\pm$ 0.001 & 0.914 $\pm$ 0.002 & 143.0 $\pm$ 38.7 & [10] & L2 & 0 & 1e-03 & -- \\
+\rowcolor{Cluster1} 0.938 $\pm$ 0.001 & 0.917 $\pm$ 0.003 & 153.6 $\pm$ 23.6 & [10] & L1 & 1e-05 & 1e-03 & -- \\
+\rowcolor{Cluster1} 0.936 $\pm$ 0.001 & 0.918 $\pm$ 0.003 & 141.5 $\pm$ 20.4 & [10] & L2 & 1e-05 & 1e-03 & -- \\
+\rowcolor{Cluster1} 0.927 $\pm$ 0.001 & 0.917 $\pm$ 0.003 & 152.0 $\pm$ 28.2 & [10] & L1 & 1e-04 & 1e-03 & -- \\
+\rowcolor{Cluster1} 0.929 $\pm$ 0.001 & 0.918 $\pm$ 0.003 & 148.4 $\pm$ 42.9 & [10] & L2 & 1e-04 & 1e-03 & -- \\
+\rowcolor{Cluster1} 0.939 $\pm$ 0.001 & 0.925 $\pm$ 0.001 & 146.6 $\pm$ 13.5 & [10] & nan & nan & 1e-04 & -- \\
+\rowcolor{Cluster1} 0.942 $\pm$ 0.001 & 0.921 $\pm$ 0.002 & 146.1 $\pm$ 10.8 & [10] & nan & nan & 3e-04 & -- \\
+\rowcolor{Cluster1} 0.941 $\pm$ 0.001 & 0.914 $\pm$ 0.002 & 155.5 $\pm$ 4.4 & [10] & nan & nan & 1e-03 & -- \\
+\rowcolor{Cluster2} 1.000 $\pm$ 0.000 & 0.968 $\pm$ 0.002 & 418.8 $\pm$ 77.8 & [50, 10] & L1 & 0 & 1e-04 & -- \\
+\rowcolor{Cluster2} 1.000 $\pm$ 0.000 & 0.968 $\pm$ 0.002 & 401.1 $\pm$ 86.3 & [50, 10] & L2 & 0 & 1e-04 & -- \\
+\rowcolor{Cluster2} 1.000 $\pm$ 0.000 & 0.971 $\pm$ 0.002 & 489.3 $\pm$ 113.0 & [50, 10] & L1 & 1e-05 & 1e-04 & -- \\
+\rowcolor{Cluster2} 1.000 $\pm$ 0.000 & 0.969 $\pm$ 0.002 & 509.7 $\pm$ 120.6 & [50, 10] & L2 & 1e-05 & 1e-04 & -- \\
+\rowcolor{Cluster2} 0.991 $\pm$ 0.000 & 0.971 $\pm$ 0.002 & 555.8 $\pm$ 125.0 & [50, 10] & L1 & 1e-04 & 1e-04 & -- \\
+\rowcolor{Cluster2} 0.998 $\pm$ 0.000 & 0.973 $\pm$ 0.002 & 392.5 $\pm$ 87.1 & [50, 10] & L2 & 1e-04 & 1e-04 & -- \\
+\rowcolor{Cluster2} 1.000 $\pm$ 0.000 & 0.968 $\pm$ 0.002 & 384.0 $\pm$ 70.8 & [50, 10] & L1 & 0 & 3e-04 & -- \\
+\rowcolor{Cluster2} 1.000 $\pm$ 0.000 & 0.968 $\pm$ 0.002 & 411.0 $\pm$ 58.8 & [50, 10] & L2 & 0 & 3e-04 & -- \\
+\rowcolor{Cluster2} 0.999 $\pm$ 0.001 & 0.969 $\pm$ 0.003 & 438.3 $\pm$ 61.3 & [50, 10] & L1 & 1e-05 & 3e-04 & -- \\
+\rowcolor{Cluster2} 1.000 $\pm$ 0.000 & 0.971 $\pm$ 0.002 & 500.7 $\pm$ 62.2 & [50, 10] & L2 & 1e-05 & 3e-04 & -- \\
+\rowcolor{Cluster2} 0.991 $\pm$ 0.001 & 0.971 $\pm$ 0.002 & 417.5 $\pm$ 33.9 & [50, 10] & L1 & 1e-04 & 3e-04 & -- \\
+\rowcolor{Cluster2} 0.998 $\pm$ 0.000 & 0.975 $\pm$ 0.001 & 454.2 $\pm$ 58.5 & [50, 10] & L2 & 1e-04 & 3e-04 & -- \\
+\rowcolor{Cluster2} 0.999 $\pm$ 0.001 & 0.970 $\pm$ 0.002 & 503.5 $\pm$ 74.5 & [50, 10] & L1 & 0 & 1e-03 & -- \\
+\rowcolor{Cluster2} 0.999 $\pm$ 0.001 & 0.970 $\pm$ 0.002 & 383.5 $\pm$ 98.1 & [50, 10] & L2 & 0 & 1e-03 & -- \\
+\rowcolor{Cluster2} 0.997 $\pm$ 0.001 & 0.971 $\pm$ 0.002 & 410.4 $\pm$ 85.6 & [50, 10] & L1 & 1e-05 & 1e-03 & -- \\
+\rowcolor{Cluster2} 0.997 $\pm$ 0.001 & 0.971 $\pm$ 0.002 & 505.1 $\pm$ 57.7 & [50, 10] & L2 & 1e-05 & 1e-03 & -- \\
+\rowcolor{Cluster2} 0.985 $\pm$ 0.001 & 0.971 $\pm$ 0.001 & 474.5 $\pm$ 40.7 & [50, 10] & L1 & 1e-04 & 1e-03 & -- \\
+\rowcolor{Cluster2} 0.992 $\pm$ 0.001 & 0.974 $\pm$ 0.002 & 404.6 $\pm$ 73.7 & [50, 10] & L2 & 1e-04 & 1e-03 & -- \\
+\rowcolor{Cluster2} 1.000 $\pm$ 0.001 & 0.966 $\pm$ 0.002 & 457.3 $\pm$ 83.3 & [50, 50, 10] & L1 & 0 & 1e-04 & -- \\
+\rowcolor{Cluster2} 1.000 $\pm$ 0.001 & 0.966 $\pm$ 0.002 & 518.3 $\pm$ 71.1 & [50, 50, 10] & L2 & 0 & 1e-04 & -- \\
+\rowcolor{Cluster2} 1.000 $\pm$ 0.000 & 0.970 $\pm$ 0.001 & 506.4 $\pm$ 55.2 & [50, 50, 10] & L1 & 1e-05 & 1e-04 & -- \\
+\rowcolor{Cluster2} 1.000 $\pm$ 0.001 & 0.969 $\pm$ 0.001 & 500.6 $\pm$ 64.5 & [50, 50, 10] & L2 & 1e-05 & 1e-04 & -- \\
+\rowcolor{Cluster2} 0.995 $\pm$ 0.000 & 0.971 $\pm$ 0.002 & 531.2 $\pm$ 68.6 & [50, 50, 10] & L1 & 1e-04 & 1e-04 & -- \\
+\rowcolor{Cluster2} 1.000 $\pm$ 0.000 & 0.972 $\pm$ 0.002 & 480.7 $\pm$ 62.4 & [50, 50, 10] & L2 & 1e-04 & 1e-04 & -- \\
+\rowcolor{Cluster2} 0.999 $\pm$ 0.001 & 0.970 $\pm$ 0.001 & 482.4 $\pm$ 100.1 & [50, 50, 10] & L1 & 0 & 3e-04 & -- \\
+\rowcolor{Cluster2} 0.999 $\pm$ 0.001 & 0.970 $\pm$ 0.001 & 467.7 $\pm$ 78.4 & [50, 50, 10] & L2 & 0 & 3e-04 & -- \\
+\rowcolor{Cluster2} 0.999 $\pm$ 0.000 & 0.973 $\pm$ 0.001 & 576.9 $\pm$ 70.2 & [50, 50, 10] & L1 & 1e-05 & 3e-04 & -- \\
+\rowcolor{Cluster2} 0.999 $\pm$ 0.001 & 0.972 $\pm$ 0.002 & 529.6 $\pm$ 73.9 & [50, 50, 10] & L2 & 1e-05 & 3e-04 & -- \\
+\rowcolor{Cluster2} 0.993 $\pm$ 0.001 & 0.973 $\pm$ 0.002 & 507.5 $\pm$ 52.2 & [50, 50, 10] & L1 & 1e-04 & 3e-04 & -- \\
+\rowcolor{Cluster2} 0.997 $\pm$ 0.002 & 0.974 $\pm$ 0.002 & 475.6 $\pm$ 19.4 & [50, 50, 10] & L2 & 1e-04 & 3e-04 & -- \\
+\rowcolor{Cluster2} 0.998 $\pm$ 0.001 & 0.972 $\pm$ 0.002 & 485.7 $\pm$ 17.8 & [50, 50, 10] & L1 & 0 & 1e-03 & -- \\
+\rowcolor{Cluster2} 0.998 $\pm$ 0.001 & 0.972 $\pm$ 0.002 & 498.9 $\pm$ 21.2 & [50, 50, 10] & L2 & 0 & 1e-03 & -- \\
+\rowcolor{Cluster2} 0.997 $\pm$ 0.001 & 0.972 $\pm$ 0.002 & 542.0 $\pm$ 18.9 & [50, 50, 10] & L1 & 1e-05 & 1e-03 & -- \\
+\rowcolor{Cluster2} 0.997 $\pm$ 0.000 & 0.973 $\pm$ 0.001 & 519.1 $\pm$ 34.8 & [50, 50, 10] & L2 & 1e-05 & 1e-03 & -- \\
+\rowcolor{Cluster2} 0.986 $\pm$ 0.002 & 0.971 $\pm$ 0.002 & 542.5 $\pm$ 20.3 & [50, 50, 10] & L1 & 1e-04 & 1e-03 & -- \\
+\rowcolor{Cluster2} 0.990 $\pm$ 0.003 & 0.972 $\pm$ 0.002 & 573.8 $\pm$ 24.1 & [50, 50, 10] & L2 & 1e-04 & 1e-03 & -- \\
+\rowcolor{Cluster2} 1.000 $\pm$ 0.000 & 0.968 $\pm$ 0.002 & 358.9 $\pm$ 5.6 & [50, 10] & nan & nan & 1e-04 & -- \\
+\rowcolor{Cluster2} 1.000 $\pm$ 0.000 & 0.968 $\pm$ 0.002 & 363.5 $\pm$ 10.3 & [50, 10] & nan & nan & 3e-04 & -- \\
+\rowcolor{Cluster2} 0.999 $\pm$ 0.001 & 0.970 $\pm$ 0.002 & 407.1 $\pm$ 27.3 & [50, 10] & nan & nan & 1e-03 & -- \\
+\rowcolor{Cluster2} 1.000 $\pm$ 0.001 & 0.966 $\pm$ 0.002 & 471.8 $\pm$ 19.1 & [50, 50, 10] & nan & nan & 1e-04 & -- \\
+\rowcolor{Cluster2} 0.999 $\pm$ 0.001 & 0.970 $\pm$ 0.001 & 459.9 $\pm$ 27.5 & [50, 50, 10] & nan & nan & 3e-04 & -- \\
+\rowcolor{Cluster2} 0.998 $\pm$ 0.001 & 0.972 $\pm$ 0.002 & 505.6 $\pm$ 17.6 & [50, 50, 10] & nan & nan & 1e-03 & -- \\
+\rowcolor{Cluster2} 0.999 $\pm$ 0.000 & 0.976 $\pm$ 0.001 & 594.8 $\pm$ 13.5 & [100, 50, 25, 10] & nan & nan & 1e-03 & Best cluster 2 \\
+\rowcolor{Cluster3} 0.997 $\pm$ 0.002 & 0.977 $\pm$ 0.001 & 858.8 $\pm$ 47.8 & [100, 50, 25, 10] & L2 & 1e-05 & 1e-03 & -- \\
+\rowcolor{Cluster3} 0.986 $\pm$ 0.002 & 0.972 $\pm$ 0.003 & 827.9 $\pm$ 48.8 & [100, 50, 25, 10] & L1 & 1e-04 & 1e-03 & -- \\
+\rowcolor{Cluster3} 0.991 $\pm$ 0.001 & 0.974 $\pm$ 0.003 & 778.7 $\pm$ 37.4 & [100, 50, 25, 10] & L2 & 1e-04 & 1e-03 & -- \\
+\rowcolor{Cluster3} 1.000 $\pm$ 0.000 & 0.976 $\pm$ 0.002 & 822.6 $\pm$ 21.6 & [100, 50, 25, 10] & nan & nan & 3e-04 & -- \\
+\rowcolor{Cluster4} 1.000 $\pm$ 0.000 & 0.975 $\pm$ 0.001 & 985.9 $\pm$ 56.1 & [100, 50, 10] & L1 & 0 & 1e-04 & -- \\
+\rowcolor{Cluster4} 1.000 $\pm$ 0.000 & 0.975 $\pm$ 0.001 & 1001.9 $\pm$ 132.2 & [100, 50, 10] & L2 & 0 & 1e-04 & -- \\
+\rowcolor{Cluster4} 1.000 $\pm$ 0.000 & 0.976 $\pm$ 0.001 & 1072.9 $\pm$ 37.9 & [100, 50, 10] & L1 & 1e-05 & 1e-04 & -- \\
+\rowcolor{Cluster4} 1.000 $\pm$ 0.000 & 0.977 $\pm$ 0.001 & 1056.2 $\pm$ 34.4 & [100, 50, 10] & L2 & 1e-05 & 1e-04 & -- \\
+\rowcolor{Cluster4} 0.997 $\pm$ 0.001 & 0.975 $\pm$ 0.001 & 1058.1 $\pm$ 78.5 & [100, 50, 10] & L1 & 1e-04 & 1e-04 & -- \\
+\rowcolor{Cluster4} 1.000 $\pm$ 0.000 & 0.978 $\pm$ 0.002 & 1060.4 $\pm$ 77.4 & [100, 50, 10] & L2 & 1e-04 & 1e-04 & Best cheapest \\
+\rowcolor{Cluster4} 1.000 $\pm$ 0.000 & 0.976 $\pm$ 0.001 & 1128.5 $\pm$ 34.8 & [100, 50, 10] & L1 & 0 & 3e-04 & -- \\
+\rowcolor{Cluster4} 1.000 $\pm$ 0.000 & 0.976 $\pm$ 0.001 & 1052.4 $\pm$ 55.7 & [100, 50, 10] & L2 & 0 & 3e-04 & -- \\
+\rowcolor{Cluster4} 0.999 $\pm$ 0.000 & 0.978 $\pm$ 0.001 & 1188.3 $\pm$ 60.6 & [100, 50, 10] & L1 & 1e-05 & 3e-04 & -- \\
+\rowcolor{Cluster4} 0.999 $\pm$ 0.000 & 0.977 $\pm$ 0.001 & 1193.7 $\pm$ 55.5 & [100, 50, 10] & L2 & 1e-05 & 3e-04 & -- \\
+\rowcolor{Cluster4} 0.993 $\pm$ 0.001 & 0.974 $\pm$ 0.003 & 1100.6 $\pm$ 64.8 & [100, 50, 10] & L1 & 1e-04 & 3e-04 & -- \\
+\rowcolor{Cluster4} 0.998 $\pm$ 0.000 & 0.978 $\pm$ 0.002 & 1125.7 $\pm$ 119.1 & [100, 50, 10] & L2 & 1e-04 & 3e-04 & Best \\
+\rowcolor{Cluster4} 0.999 $\pm$ 0.000 & 0.977 $\pm$ 0.002 & 1140.5 $\pm$ 91.3 & [100, 50, 10] & L1 & 0 & 1e-03 & -- \\
+\rowcolor{Cluster4} 0.999 $\pm$ 0.000 & 0.977 $\pm$ 0.002 & 1080.9 $\pm$ 125.7 & [100, 50, 10] & L2 & 0 & 1e-03 & -- \\
+\rowcolor{Cluster4} 0.997 $\pm$ 0.001 & 0.975 $\pm$ 0.002 & 1250.6 $\pm$ 32.6 & [100, 50, 10] & L1 & 1e-05 & 1e-03 & -- \\
+\rowcolor{Cluster4} 0.997 $\pm$ 0.001 & 0.976 $\pm$ 0.001 & 1044.4 $\pm$ 114.4 & [100, 50, 10] & L2 & 1e-05 & 1e-03 & -- \\
+\rowcolor{Cluster4} 0.986 $\pm$ 0.001 & 0.972 $\pm$ 0.003 & 1103.3 $\pm$ 91.9 & [100, 50, 10] & L1 & 1e-04 & 1e-03 & -- \\
+\rowcolor{Cluster4} 0.991 $\pm$ 0.002 & 0.974 $\pm$ 0.002 & 1109.8 $\pm$ 163.2 & [100, 50, 10] & L2 & 1e-04 & 1e-03 & -- \\
+\rowcolor{Cluster4} 1.000 $\pm$ 0.001 & 0.973 $\pm$ 0.001 & 1297.8 $\pm$ 32.9 & [100, 50, 25, 10] & L1 & 0 & 1e-04 & -- \\
+\rowcolor{Cluster4} 1.000 $\pm$ 0.001 & 0.973 $\pm$ 0.001 & 1209.2 $\pm$ 131.9 & [100, 50, 25, 10] & L2 & 0 & 1e-04 & -- \\
+\rowcolor{Cluster4} 1.000 $\pm$ 0.000 & 0.973 $\pm$ 0.001 & 1089.4 $\pm$ 163.9 & [100, 50, 25, 10] & L1 & 1e-05 & 1e-04 & -- \\
+\rowcolor{Cluster4} 1.000 $\pm$ 0.000 & 0.975 $\pm$ 0.002 & 1148.8 $\pm$ 104.4 & [100, 50, 25, 10] & L2 & 1e-05 & 1e-04 & -- \\
+\rowcolor{Cluster4} 0.998 $\pm$ 0.000 & 0.973 $\pm$ 0.002 & 1121.6 $\pm$ 104.6 & [100, 50, 25, 10] & L1 & 1e-04 & 1e-04 & -- \\
+\rowcolor{Cluster4} 1.000 $\pm$ 0.000 & 0.976 $\pm$ 0.002 & 1209.8 $\pm$ 116.6 & [100, 50, 25, 10] & L2 & 1e-04 & 1e-04 & -- \\
+\rowcolor{Cluster4} 1.000 $\pm$ 0.000 & 0.976 $\pm$ 0.002 & 1235.4 $\pm$ 48.5 & [100, 50, 25, 10] & L1 & 0 & 3e-04 & -- \\
+\rowcolor{Cluster4} 1.000 $\pm$ 0.000 & 0.976 $\pm$ 0.002 & 1029.4 $\pm$ 103.3 & [100, 50, 25, 10] & L2 & 0 & 3e-04 & -- \\
+\rowcolor{Cluster4} 0.999 $\pm$ 0.001 & 0.976 $\pm$ 0.002 & 1113.9 $\pm$ 99.9 & [100, 50, 25, 10] & L1 & 1e-05 & 3e-04 & -- \\
+\rowcolor{Cluster4} 1.000 $\pm$ 0.000 & 0.977 $\pm$ 0.002 & 1092.2 $\pm$ 69.1 & [100, 50, 25, 10] & L2 & 1e-05 & 3e-04 & -- \\
+\rowcolor{Cluster4} 0.994 $\pm$ 0.001 & 0.973 $\pm$ 0.002 & 1162.2 $\pm$ 46.4 & [100, 50, 25, 10] & L1 & 1e-04 & 3e-04 & -- \\
+\rowcolor{Cluster4} 0.998 $\pm$ 0.001 & 0.978 $\pm$ 0.003 & 1076.7 $\pm$ 118.8 & [100, 50, 25, 10] & L2 & 1e-04 & 3e-04 & -- \\
+\rowcolor{Cluster4} 0.999 $\pm$ 0.000 & 0.976 $\pm$ 0.001 & 1134.8 $\pm$ 56.1 & [100, 50, 25, 10] & L1 & 0 & 1e-03 & -- \\
+\rowcolor{Cluster4} 0.999 $\pm$ 0.000 & 0.976 $\pm$ 0.001 & 1015.1 $\pm$ 70.2 & [100, 50, 25, 10] & L2 & 0 & 1e-03 & -- \\
+\rowcolor{Cluster4} 0.996 $\pm$ 0.001 & 0.976 $\pm$ 0.001 & 1047.7 $\pm$ 44.3 & [100, 50, 25, 10] & L1 & 1e-05 & 1e-03 & -- \\
+\rowcolor{Cluster4} 1.000 $\pm$ 0.000 & 0.975 $\pm$ 0.001 & 916.5 $\pm$ 28.7 & [100, 50, 10] & nan & nan & 1e-04 & -- \\
+\rowcolor{Cluster4} 1.000 $\pm$ 0.000 & 0.976 $\pm$ 0.001 & 974.5 $\pm$ 68.7 & [100, 50, 10] & nan & nan & 3e-04 & -- \\
+\rowcolor{Cluster4} 0.999 $\pm$ 0.000 & 0.977 $\pm$ 0.002 & 921.4 $\pm$ 41.9 & [100, 50, 10] & nan & nan & 1e-03 & -- \\
+\rowcolor{Cluster4} 1.000 $\pm$ 0.001 & 0.973 $\pm$ 0.001 & 972.3 $\pm$ 12.5 & [100, 50, 25, 10] & nan & nan & 1e-04 & -- \label{apdx:tab:_part_e_models}
+\end{longtable}
+%TC:endignore
+
+
+\end{document}
