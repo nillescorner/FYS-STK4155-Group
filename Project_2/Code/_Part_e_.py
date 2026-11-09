@@ -322,161 +322,6 @@ def plot_training_history(fig, ax, search, metric="MSE", label = 'Train', color 
     return fig, ax
 
 
-
-def plot_three_parameter_grid(fig, ax, search, parameter_keys=None):
-    """Plot a fitted three-parameter grid search in 3D.
-
-    When ``search.param_grid`` is a list, each grid dictionary is shown in
-    its own subplot. Unless ``parameter_keys`` is provided, the three
-    parameters with multiple candidates in each dictionary are plotted.
-    Categorical values are mapped to labeled tick positions, and point
-    colors show mean CV scores.
-
-    Parameters
-    ----------
-    fig : matplotlib.figure.Figure
-        Figure for the plot.
-    ax : matplotlib.axes.Axes
-        A 3D axis for one grid, one 3D axis per grid dictionary, or ``None``
-        to create the required subplot(s) in ``fig``.
-    search : sklearn.model_selection.GridSearchCV
-        Fitted grid search with one parameter-grid dictionary or a list of
-        dictionaries.
-    parameter_keys : sequence of str or None, default=None
-        Exactly three parameter keys to plot. If omitted, the three varying
-        parameters are selected automatically for each dictionary. Pipeline
-        parameter names should be passed in full.
-
-    Returns
-    -------
-    dict
-        Mean cross-validation scores, best parameters, figure, and axes.
-
-    Examples
-    --------
-    Plot a list of grids, with one subplot per dictionary::
-
-        fig = plt.figure(figsize=(6 * len(search.param_grid), 6))
-        results = plot_three_parameter_grid(fig, None, search)
-        plt.show()
-    
-    LLM assisted
-    """
-    if not hasattr(search, "cv_results_"):
-        raise ValueError("Pass a fitted GridSearchCV object.")
-
-    grids = search.param_grid if isinstance(search.param_grid, list) else [search.param_grid]
-    if not grids:
-        raise ValueError("search.param_grid must contain at least one grid.")
-
-    if ax is None:
-        axes = np.asarray(
-            fig.subplots(
-                1, len(grids), subplot_kw={"projection": "3d"}, squeeze=False
-            )
-        ).ravel()
-    elif isinstance(search.param_grid, list):
-        axes = np.asarray(ax, dtype=object).ravel()
-        if len(axes) != len(grids):
-            raise ValueError(
-                "Provide one 3D axis per parameter grid, or pass ax=None."
-            )
-    else:
-        axes = np.asarray([ax], dtype=object)
-
-    rows = search.cv_results_["params"]
-    all_scores = np.asarray(search.cv_results_["mean_test_score"])
-    score_min, score_max = np.min(all_scores), np.max(all_scores)
-    plotted_scores = []
-    subplot_best_params = []
-
-    for grid_index, (grid, axis) in enumerate(zip(grids, axes)):
-        keys = (
-            [key for key, candidates in grid.items() if len(candidates) > 1]
-            if parameter_keys is None
-            else list(parameter_keys)
-        )
-        if len(keys) != 3:
-            raise ValueError(
-                f"Grid {grid_index} has {len(keys)} varying/selected parameters; "
-                "exactly three are required."
-            )
-        missing = [key for key in keys if key not in grid]
-        if missing:
-            raise ValueError(f"Grid {grid_index} does not contain: {missing}")
-
-        # GridSearchCV stores each candidate with the keys from its source grid.
-        grid_rows = [
-            (row_index, row)
-            for row_index, row in enumerate(rows)
-            if set(row) == set(grid)
-            and all(row[key] in grid[key] for key in grid)
-        ]
-        if not grid_rows:
-            raise ValueError(f"No results matched parameter grid index {grid_index}.")
-
-        row_indices, selected_rows = zip(*grid_rows)
-        values, tick_labels = [], []
-        for key in keys:
-            candidates = list(grid[key])
-            row_values = [row[key] for row in selected_rows]
-            is_numeric = np.issubdtype(np.asarray(candidates).dtype, np.number)
-
-            if is_numeric:
-                values.append(np.asarray(row_values, dtype=float))
-                tick_labels.append(None)
-            else:
-                categories = list(dict.fromkeys(candidates))
-                values.append(
-                    np.asarray([categories.index(value) for value in row_values])
-                )
-                tick_labels.append([str(value) for value in categories])
-
-        scores = all_scores[list(row_indices)]
-        best_local_index = int(np.argmax(scores))
-        plotted_scores.extend(scores)
-        subplot_best_params.append(selected_rows[best_local_index])
-
-        points = axis.scatter(
-            *values,
-            c=scores,
-            cmap=MSE_CMAP,
-            vmin=score_min,
-            vmax=score_max,
-            edgecolors=COLORS["text"],
-        )
-        axis.scatter(
-            *(value[best_local_index] for value in values),
-            color=COLORS["nn"],
-            marker="*",
-            s=180,
-            edgecolors=COLORS["text"],
-            linewidths=1.5,
-            label=f"Best CV score: {values[best_local_index]:0.4f}",
-        )
-
-        axis.set_xlabel(keys[0].split("__")[-1])
-        axis.set_ylabel(keys[1].split("__")[-1])
-        axis.set_zlabel(keys[2].split("__")[-1])
-        for plot_axis, labels in zip(
-            (axis.xaxis, axis.yaxis, axis.zaxis), tick_labels
-        ):
-            if labels is not None:
-                plot_axis.set_ticks(np.arange(len(labels)))
-                plot_axis.set_ticklabels(labels)
-        axis.set_title(f"Grid {grid_index + 1}: CV score")
-        axis.legend()
-        fig.colorbar(points, ax=axis, label="Mean CV score")
-
-    fig.tight_layout()
-    return {
-        "cv_score": np.asarray(plotted_scores),
-        "best_params": search.best_params_,
-        "subplot_best_params": subplot_best_params,
-        "figure": fig,
-        "axes": axes,
-    }
-
 def plot_architecture_accuracy(search, penalty_key="neuralnetclassifier__penalty_type"):
     """Plot mean CV accuracy by hidden-layer architecture and learning rate.
 
@@ -548,6 +393,31 @@ def plot_architecture_accuracy(search, penalty_key="neuralnetclassifier__penalty
 
 
 def plot_image(fig,ax, i, predictions, true_labels, images):
+    """Display an MNIST image and annotate it with the predicted and true labels.
+
+    The annotation is colored according to whether the prediction matches the
+    true label.
+
+    Parameters
+    ----------
+    fig : matplotlib.figure.Figure
+        Figure associated with ``ax``.
+    ax : matplotlib.axes.Axes
+        Axes on which to display the image.
+    i : int
+        Index of the example to display in the input arrays.
+    predictions : array-like of shape (n_examples, n_classes)
+        Predicted class scores or probabilities.
+    true_labels : array-like of shape (n_examples,)
+        Ground-truth class labels.
+    images : array-like
+        Input images, typically with shape ``(n_examples, height, width, 1)``.
+
+    Returns
+    -------
+    None
+        The image and annotation are drawn on ``ax``.
+    """
     images = np.asarray(images)
     true_labels = np.asarray(true_labels)
     predictions = np.asarray(predictions)
@@ -571,6 +441,26 @@ def plot_image(fig,ax, i, predictions, true_labels, images):
 
 
 def plot_value_array(fig,ax, i, predictions, true_labels):
+    """Plot class scores for one example and highlight predicted and true labels.
+
+    Parameters
+    ----------
+    fig : matplotlib.figure.Figure
+        Figure associated with the current axes.
+    ax : matplotlib.axes.Axes
+        Axes on which to draw the class-score bars.
+    i : int
+        Index of the example to display in the input arrays.
+    predictions : array-like of shape (n_examples, n_classes)
+        Predicted class scores or probabilities.
+    true_labels : array-like of shape (n_examples,)
+        Ground-truth class labels.
+
+    Returns
+    -------
+    None
+        The class-score bars are drawn on ``ax``.
+    """
     predictions = np.asarray(predictions)
     true_labels = np.asarray(true_labels)
 
