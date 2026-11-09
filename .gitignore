@@ -10,3 +10,5 @@ __pycache__/
 #venv enviorment 
 .venv/
 
+#Generative AI usage 
+Project_2/UsesOfGenerativeAI.md
