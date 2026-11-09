@@ -1,4 +1,4 @@
-## Project 1 - FYS-STK4155
+## Project 2 - FYS-STK4155
 
 Hello and welcome to the Project 2 folder in our FYS-STK4155 repository for the group consisting of Pernille Xu Amundsen, Maria Andersen and Hannah Westgaard. 
 
@@ -9,17 +9,24 @@ The project is structured as:
 ```
 Project_2/
 ├── Code/
+│   ├── intermediary_results/   
+│   ├── models/              
 │   ├── _Part_a.py                  
 │   ├── _Part_b.py                  
-│   ├── _Part_c.py                 
-│   ├── _Part_d.py                 
+│   ├── _Part_c.ipynb                 
+│   ├── _Part_d.ipynb                
 │   ├── _Part_e.py                 
-│   ├── _Part_f.py                  
+│   ├── _Part_e_coarsegrid.py
+│   ├── _Part_e_layers_penalties_bestcheapest.py               
+│   ├── _Part_e_layers_penalties.py
+│   ├── _Part_e_TF_retraining.py
+│   ├── _Part_e.ipynb
 │   │
 │   ├── general_functions.py
+│   ├── linear_regression.py
 │   ├── neural_network.py        
 │   ├── optimizer.py       
-│   └── colors.py                   # Color scheme throughout project
+│   └── plot_colors.py              # Color scheme and font sizes
 ├── figs/                           # Generated figures used in Report
 ├── report/                         # Finalized Report (PDF)
 └── README.md
@@ -35,14 +42,24 @@ pip install -r requirements.txt
 ---
 
 #### Running the code
-All scripts import functions, variables etc from the same folder, so run them from inside Code by
+All scripts import functions, variables etc from the same folder, thus use
 
 ```bash
-cd Code
+cd Code 
+```
+in order to import relevant functions and variables from files within the same Code folder.
+
+Each _Part_x.py or _Part_x.ipynb file corresponds to the matching part of the project description and can be run independently.
+.ipynb have been already run and have output already available. For the .py files, run
+
+```bash
 python _Part_x.py
 ```
 
-Each _Part_x-py file corresponds to the matching part of the project description and can be run independantly.
+to run the program.
+
+For `Part_b.py`, one has to choose whether to plot or save figs by passing an argument in the command line.
+If one wishes to plot, pass nothing. If one wishes to save figures, pass --save-figs in addition.  
 
 ## Use of LLMs
 
