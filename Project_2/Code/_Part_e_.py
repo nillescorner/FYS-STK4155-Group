@@ -554,7 +554,7 @@ def plot_image(fig,ax, i, predictions, true_labels, images):
 
     predicted_label = np.argmax(predictions[i])
     true_label = true_labels[i]
-    color = SERIES[0] if predicted_label == true_label else COLORS['ols']
+    color = SERIES[3] if predicted_label == true_label else COLORS['nn']
 
     ax.grid(False)
     ax.set_xticks([])
@@ -565,7 +565,7 @@ def plot_image(fig,ax, i, predictions, true_labels, images):
     ax.spines['left'].set_visible(False)
     ax.imshow(images[i].squeeze(), cmap=plt.cm.binary)
     ax.set_xlabel(
-        f"{predicted_label} | Prob :{100 * np.max(predictions[i]):.0f}% | (True: {true_label})",
+        f"{predicted_label} | P:{100 * np.max(predictions[i]):.0f}% | (True: {true_label})",
         color=color,
     )
 
